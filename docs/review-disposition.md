@@ -1,6 +1,6 @@
 # Review disposition and ownership correction
 
-The current revision follows the instruction to resolve gaps in their owning specifications. It supersedes the earlier attempt to close every integration issue locally. Detailed upstream proposals now appear in the draft itself, with owners, rationale, and closure criteria.
+The current revision distinguishes requirements that Federation can define using existing extension points from changes to another specification's semantics. ATTEST is consumed as written, including its profiling support; its Last Call is not a prerequisite change request. Detailed upstream proposals remain for WAG and actor/grant composition.
 
 | Earlier issue or local choice | Current disposition |
 |---|---|
@@ -9,9 +9,9 @@ The current revision follows the instruction to resolve gaps in their owning spe
 | Local WAG typing, sender constraint, authority, and replay rules | Replaced with concrete proposals to WAG and its collaborating specifications. No unresolved proposal is presented as existing WAG interoperability. |
 | Locally relaxed WAG refresh rule | Removed. Current WAG behavior remains unchanged; any refresh change belongs upstream. |
 | Mandatory IdP adapter access token | Removed, including acquisition, audience, eligibility, and reuse machinery. Direct mapped-actor construction is an Actor Profile/ID-JAG proposal; connection evidence is a separate SPIFFE OAuth composition gap. |
-| Shared-agent `agent_id` registration | Removed. The draft specifies the evidence and trust requirements for an ATTEST extension to define upstream. |
-| First-use credential digest/key association | Removed as a normative protocol. Its theft and replica limitations explain why upstream credential-binding semantics are needed. |
-| Local authentication-method/discovery names | Removed. Existing SPIFFE/ATTEST capabilities remain available under their defining specifications; missing discovery is listed upstream. |
+| Shared-agent evidence | Defined here as an ATTEST profile with the narrowly named `attested_agent_id` claim, required attester `iss`, exact namespace binding, and a self-contained claim registration request. Base ATTEST is unchanged. |
+| First-use credential digest/key association | Remains removed. Federation now defines bearer-assurance, reuse, and key-role requirements directly; any additional proof mechanism uses the base specification's extension facilities. |
+| Profile selection, trust, and discovery | Trusted configuration selects the Federation mode and accepted existing methods. Client restrictions intersect IdP trust. New generic discovery is separate optional work, not an ATTEST modification prerequisite. |
 | SPIFFE JWT-SVID support | Retained for native authentication and Federation resolution, including issuer-less JWT-SVIDs. Missing grant composition is identified separately. |
 | Additional required ATTEST timestamps and SPIFFE client-ID equality rules | Removed. Credential processing follows the owning specifications; exact Federation mapping remains required. |
 | Local exchange/response errors and scope/resource/refresh narrowings | Removed. Federation applies policy; consuming profiles own the wire contract. |
@@ -19,14 +19,14 @@ The current revision follows the instruction to resolve gaps in their owning spe
 | Instance identification | Remains outside current wire scope. Continuity and propagation requirements are detailed upstream without restoring an unpublished dependency. |
 | Provisioning and disablement | Local authorization honors applied changes and freshness limits. Cross-system guarantees require the proposed lifecycle contract. |
 | Supporting examples and test inventory | Rewritten to distinguish current identity/authentication behavior from acceptance criteria for unresolved upstream work. No placeholder full-protocol examples remain. |
-| IANA Considerations | No IANA actions requested by Federation. The owning specifications are responsible for their identifiers. |
+| IANA Considerations | Federation requests registration of its own `attested_agent_id` claim. It leaves grant and base authentication identifiers with their owners. |
 
-A gap is closed when the relevant specification defines the behavior and independent implementations can pass the listed closure cases. A private convention, a new local token, or merely documenting a proposal does not close it. This repository records proposals; it does not claim that upstream maintainers have accepted them.
+Federation-owned requirements are normative in this draft and have their own conformance cases. Upstream proposals remain open until the owning specification defines the necessary behavior and independent implementations pass the closure cases. The draft does not claim upstream acceptance.
 
 Earlier review improvements remain applicable: configurable clock skew, issuer-scoped key trust, distinct client/agent/instance roles, normal handling of unknown parameters and claims, explicit transitive dependencies, concise normative text, and generated-document checks.
 
 ## Validation
 
-HTML and text build successfully with kramdown-rfc and xml2rfc. All 67 XML cross-references resolve, every reference is used, and the generated HTML has 494 unique anchors with no broken internal links. The 17 documentation links to draft sections and both JSON examples also validate. `git diff --check` passes.
+HTML and text build successfully with kramdown-rfc and xml2rfc. All 84 XML cross-references resolve, every reference is used, and the generated HTML has 565 unique anchors with no broken internal links. All 20 documentation links to draft sections and four JSON blocks validate; the example P-256 public key is on the curve. `git diff --check` passes.
 
-The submission-named text still receives five idnits `POSSIBLE_DOWNREF` flags for normative Internet-Drafts (SPIFFE OAuth, WIMSE credentials, ATTEST, Actor Profile, and ID-JAG), plus two indentation warnings on the generated table-of-contents appendix entries. These remain reported dependencies and formatting diagnostics; the build is not described as a clean idnits pass.
+Submission-named text still receives five idnits `POSSIBLE_DOWNREF` flags for normative Internet-Drafts (SPIFFE OAuth, WIMSE credentials, ATTEST, Actor Profile, and ID-JAG), plus two indentation warnings on generated table-of-contents appendix entries. No new idnits findings were introduced by the profile.

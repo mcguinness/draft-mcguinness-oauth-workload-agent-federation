@@ -61,9 +61,9 @@ before authorizing downstream access. It distinguishes agent identity,
 delegation, and instance context. Workload Authorization Grant is the
 intended mechanism for self-acting access; Identity Assertion JWT
 Authorization Grant and Actor Profile provide the basis for delegated
-access. The document identifies the upstream changes needed to compose
-these mechanisms without defining a replacement grant, adapter token,
-or credential extension.
+access. It defines the additional evidence, trust, and validation
+requirements for agent federation using existing credential extension
+points, and identifies grant changes that require upstream agreement.
 
 --- middle
 
@@ -122,6 +122,7 @@ metadata defined by their owning specifications.
 
 The identity-resolution and authorization requirements in
 {{identity}}, {{inputs}}, and {{authorization}} are normative.
+They include the Client Attestation profile in {{agent-evidence}}.
 They do not define a complete token-endpoint flow for every input and
 output. {{upstream-gaps}} is informative and records proposed changes,
 their rationale, and observable closure criteria. Those proposals have
@@ -131,7 +132,7 @@ This revision does not define:
 
 * A new authorization grant, JWT type, token-type URI, or API token.
 * A mandatory intermediate IdP access token for identity normalization.
-* A shared-agent claim or a new Client Attestation proof mode.
+* A new Client Attestation proof mode or a change to base ATTEST.
 * Replacement WAG issuance, audience, refresh, or redemption rules.
 * An enrollment, key-replacement, or instance-propagation protocol.
 
@@ -156,15 +157,22 @@ an arbitrary signed JWT as a grant or actor credential.
 | Self-acting workload grant and its registrations | WAG |
 | Who may act for whom; actor representation and chain processing | Actor Profile and consuming authorization profiles |
 | ID-JAG input/output composition and downstream processing | ID-JAG |
-| Workload authentication, credential proofs, and related discovery | SPIFFE OAuth, WIMSE, and ATTEST |
+| Base workload authentication and credential proofs | SPIFFE OAuth, WIMSE, and ATTEST |
+| Agent evidence, attester trust, and credential selection for Federation | This profile, using existing credential extension points |
 | Stable installation or execution identity | Identification |
 | Agent ownership, groups, provisioning, and disablement signals | Provisioning and lifecycle work, coordinated with Federation |
 | Enrollment, clone detection, verified key replacement | Platform evidence mechanisms initially |
 | Interoperable model or runtime assurance | Deferred until producers and consumers agree on semantics |
 
-The detailed proposals belong in this document while they are discussed
-upstream. Once an owning specification adopts a proposal, this document
-can reference its rules and finish the corresponding composition.
+Federation defines its own requirements where a base specification
+already permits profiling or extension. For example, {{ATTEST, Section 13}} permits
+profiles; {{agent-evidence}} defines this document's profile using that
+facility and additional claims permitted by {{ATTEST, Section 4}}.
+
+Changes to another specification's grant semantics, identifiers, or
+actor-construction rules still require coordination. The proposals in
+{{upstream-gaps}} explain those changes. Once agreed, this document can
+reference the adopted rules and finish the corresponding composition.
 
 # Conventions and Terminology
 
@@ -205,6 +213,9 @@ requirements remain with the selected credential and grant profiles.
 | Trust | Approved credential authority and tenant context | {{identity}} |
 | Identity | Exact, unambiguous mapping to an active Registered Agent | {{identity}} |
 | Evidence | Validate the selected credential; distinguish client, agent, and key evidence | {{inputs}} |
+| Shared-client ATTEST | Require signed `iss` and `attested_agent_id`; apply the configured mode, namespace, and failure rules | {{attest-gap}} |
+| Attester trust | Intersect approved attester authority with client restrictions | {{trust-gap}} |
+| Credential use | Apply the selected proof mode and explicit reuse/key-binding limits | {{credential-requirements}} |
 | Authorization | Current binding, status, assignments, target, and scope policy | {{authorization}} |
 | Delegation | Explicit authorization for the resolved agent to act for the user | {{delegation-approval}} |
 | Attribution | Preserve issuer-qualified agent identity and subject/actor roles | {{agent-correlation}} |
@@ -240,7 +251,7 @@ rules of the credential itself.
 |---|---|---|
 | Platform JWT | Approved issuer and exact subject, with configured additional selectors | Workload evidence; not automatically OAuth client authentication |
 | Client Attestation, agent has its own client | Validated attester and client identity | Client-to-agent mapping is explicit |
-| Shared-client Client Attestation | Client identity plus separately authenticated agent evidence | Agent evidence semantics need {{attest-gap}} |
+| Shared-client Client Attestation | Approved attester, client `sub`, and signed `attested_agent_id` | Federation extension defined in {{attest-gap}} |
 | SPIFFE JWT-SVID | Approved trust domain and exact SPIFFE ID in `sub` | OAuth client association follows SPIFFE OAuth |
 | SPIFFE X.509-SVID | Approved trust domain and exact SPIFFE ID in the URI SAN | OAuth client authentication follows SPIFFE OAuth |
 | SPIFFE WIT-SVID | Approved trust domain and exact SPIFFE ID in `sub` | Credential and proof validation follow SPIFFE OAuth and WIMSE |
@@ -343,25 +354,157 @@ The proposed subject-token and actor-token uses of platform evidence
 are described in {{wag-gaps}} and {{actor-gap}}. This document does not
 create an intermediate token to make those uses appear supported.
 
-## Client Attestation {#agent-evidence}
+## Client Attestation Profile {#agent-evidence}
 
-For an agent with its own OAuth client, the IdP MUST authenticate that
-client under {{ATTEST}} and resolve the approved attester/client
-binding. Implementations use the authentication and proof mode defined
-by ATTEST, including its key checks, freshness processing, and errors.
-This document does not make optional attestation claims mandatory or
-register an alternative authentication method.
+This section defines Federation requirements on top of {{ATTEST}}.
+An IdP supporting this input MUST apply them in addition to ATTEST
+validation. Support for each agent mode is OPTIONAL. An implementation
+claiming a mode MUST implement its requirements below. These modes use
+ATTEST's existing claim and profiling facilities.
 
-A Client Attestation for a shared client establishes that client and
-its proof key; it does not alone select a subordinate agent. The IdP
-MUST NOT infer a particular Registered Agent from that shared identity.
-The additional authenticated evidence needed for shared-agent
-resolution is the subject of {{attest-gap}}.
+### Profile Selection {#attest-selection}
 
-Trust in an attester is limited by the IdP's configuration. Even an
-authenticated client's choice of attester does not authorize a new
-credential authority. Interoperable client endorsement or discovery,
-if needed, belongs in the trust work described in {{trust-gap}}.
+The IdP MUST determine profile applicability from trusted configuration
+for the Source Tenant, approved attester, and OAuth client. Before
+accepting requests, that configuration MUST identify:
+
+* Whether the client has its own Registered Agent or hosts several
+  agents using the shared-client mode in {{attest-gap}}.
+* The permitted attesters and the applicable Federation Bindings.
+* The accepted ATTEST authentication methods and proof algorithms.
+
+The client MUST be provisioned with the applicable mode and accepted
+methods before using this input. An unauthenticated client identifier
+can locate configuration, but MUST NOT establish its authority; the
+IdP MUST confirm the client identity through ATTEST validation.
+Presence or absence of an agent claim MUST NOT switch modes. A failed
+shared-client request MUST NOT fall back to an own-client mapping.
+
+This is the out-of-band profile-selection mechanism permitted by
+{{ATTEST, Section 13}}. ATTEST metadata advertises its authentication
+capabilities; it does not by itself advertise this Federation profile.
+No new discovery field is needed for these configured relationships.
+
+### Agent with Its Own Client
+
+The IdP MUST authenticate the client under ATTEST and resolve the
+approved attester/client binding to one Registered Agent. The `sub`
+continues to identify the OAuth client. An `attested_agent_id` claim,
+if present, MUST NOT override the configured own-client binding.
+
+### Agent Behind a Shared Client {#attest-gap}
+
+This document defines the `attested_agent_id` JWT claim for agent
+evidence in a Client Attestation. Its value is a non-empty,
+case-sensitive string identifying one agent in the namespace of the
+attester and OAuth client. The attester MUST NOT reassign that value
+to a different agent within that namespace.
+
+The claim asserts that the Client Instance represented by the
+attestation is authorized to authenticate as that agent using the
+attestation's confirmation key. It does not assert user delegation,
+resource authority, or an independently verified execution identity.
+Its value is an external identifier, not necessarily the Registered
+Agent identifier assigned by the IdP.
+
+An attester issuing a shared-client attestation for this profile MUST:
+
+* Include `attested_agent_id` and an `iss` identifying the attester in
+  the integrity-protected claims set of the Client Attestation JWT.
+* Use a non-empty StringOrURI value for `iss` that matches the approved
+  attester identifier in the Federation Binding.
+* Retain the OAuth client identifier in `sub` and the Client Instance
+  Key in `cnf.jwk`, with their ATTEST meanings.
+
+The IdP MUST:
+
+1. Validate the Client Attestation and the selected ATTEST proof before
+   using its agent claim. An agent identifier carried only in the
+   request or proof is not attester-authenticated agent evidence.
+2. Validate `iss` and `attested_agent_id` as required above. The key
+   validating the attestation MUST be authorized for that exact `iss`;
+   the claim MUST NOT authorize discovery of a new attester.
+3. Resolve the exact tuple (`iss`, `sub`, `attested_agent_id`) through
+   an enabled Federation Binding to exactly one active Registered
+   Agent and Source Tenant. If an attester/client pair serves several
+   platform tenants, its agent identifiers MUST distinguish them;
+   otherwise the deployment MUST use distinct attester namespaces.
+4. Use the confirmation key from that same validated attestation for
+   ATTEST proof validation. Claims from separate attestations MUST NOT
+   be combined to construct an agent identity or key association.
+
+A missing, empty, or incorrectly typed required claim, an unapproved
+attester, or an invalid attestation/proof MUST cause rejection. For a
+profile-specific claim validation failure, the IdP MUST return
+`invalid_client_attestation`; other ATTEST failures retain ATTEST's
+error and challenge processing. A well-formed attestation with no
+active authorized binding fails the Federation decision and uses the
+consuming grant's applicable error, not a fabricated proof failure.
+
+A base ATTEST implementation can ignore this additional claim. Such an
+implementation does not support shared-client Federation resolution.
+The claim is required by this selected profile, not by base ATTEST.
+
+### Proofs, Renewal, and Compatibility {#attest-proof}
+
+The configured ATTEST method MUST govern proof processing. In
+`attest_jwt_client_auth_dpop` mode, the client and IdP MUST use ATTEST's
+combined mode, including its key-matching and nonce rules. In
+`attest_jwt_client_auth` mode, they MUST use the ATTEST PoP JWT; any
+accompanying DPoP proof retains its separate role under ATTEST.
+
+The IdP MUST NOT treat a separately proven DPoP key as endorsed by the
+attester solely because it accompanies a valid attestation. When the
+selected grant policy requires an attested output key, the IdP MUST
+verify that it matches the attestation's confirmation key. Unsupported
+method or key combinations MUST fail; they MUST NOT trigger another
+authentication mode or skip a required proof.
+
+For each use of a renewed or reused attestation, the IdP MUST reapply
+profile validation and current Federation policy. A replacement key
+requires a valid attestation authorizing that key for the named agent.
+Neither the previous key nor an unchanged agent identifier alone
+establishes that authorization. Attester enrollment and evidence
+collection remain deployment mechanisms.
+
+The additions to ATTEST are explicit:
+
+| Item | Federation requirement |
+|---|---|
+| Applicability | Trusted, provisioned mode selection; no claim-triggered fallback |
+| Shared-client claims | `iss` and `attested_agent_id` are REQUIRED in the attestation |
+| Agent resolution | Exact attester/client/agent tuple and active Federation Binding |
+| Trust | Attester authority and client restrictions in {{trust-gap}} |
+| Proof and renewal | Key-role and current-policy checks in this section |
+
+ATTEST's `typ`, client `sub`, proof formats, transport, metadata, and
+refresh-token binding remain unchanged. This profile does not require
+`iat` in the Client Attestation or introduce a proof method. Grant
+issuance and refresh permission remain with the consuming profile.
+
+### Attester Trust and Client Restrictions {#trust-gap}
+
+The IdP MUST configure which attesters may assert which client and
+agent namespaces in each Source Tenant. Signature verification alone
+MUST NOT grant an attester authority over every Registered Agent.
+
+A client administrator MAY restrict the acceptable attesters through
+the authenticated registration or configuration process. Such a
+restriction is the client's endorsement for this profile; it is not a
+new ATTEST message. The IdP MUST:
+
+* Authenticate the party configuring the restriction and verify its
+  authority over that client registration.
+* Accept an attester only within both the IdP's approved trust scope
+  and any configured client restriction. An empty intersection MUST
+  prevent acceptance; absence of a client restriction leaves the
+  IdP's approved set in effect.
+* Apply approved changes using the freshness rules in {{status-changes}}.
+  Request-supplied metadata MUST NOT expand or replace the approved set.
+
+These rules are sufficient for configured deployments. Interoperable
+discovery of client restrictions, if later needed, can be defined as a
+separate extension without changing ATTEST or blocking this profile.
 
 ## SPIFFE JWT-SVID {#jwt-svid-input}
 
@@ -404,9 +547,38 @@ resolve the exact identity through {{identity}}.
 
 The WIT's confirmation key and the authentication proof retain their
 specified roles. DPoP alone MUST NOT substitute for a required WIT
-or attestation proof. The supported proof modes, key relationships,
-and metadata for composition with a grant belong to their defining
-specifications, as described in {{credential-gap}}.
+or attestation proof. Federation applies the credential-use requirements
+in {{credential-requirements}}; any new proof mechanism needs its own
+specification and registrations as described in {{credential-gap}}.
+
+## Credential Use Requirements {#credential-requirements}
+
+For each accepted credential input, the IdP MUST configure its role,
+required proof mechanism, and the assurance required for an output key.
+It MUST validate each proof under the selected mechanism; support for
+one proof mode MUST NOT imply support for another. This is a Federation
+composition requirement, not a request to change the base credentials.
+
+For bearer JWT-SVID and platform JWT inputs, the IdP MUST NOT infer
+platform authorization of a DPoP key from co-presentation or from a
+first-use credential-to-key cache. A deployment requiring issuer-
+endorsed key possession MUST use evidence that cryptographically binds
+the key. A deployment accepting bearer evidence MUST account for theft
+of that evidence in its issuance policy.
+
+A reused credential MUST be validated with the current request's
+required proof and current binding policy. Credential reuse MUST NOT
+bypass proof replay checks or implicitly enroll a replacement key.
+The IdP MUST NOT describe a platform identity shared by replicas as
+unique instance evidence. Additional instance assurance requires the
+evidence and consuming profile discussed in {{instance-identification}}.
+
+Existing credential discovery and authentication-method values retain
+their specified meanings. When metadata does not distinguish the
+required composition, support MUST be established through trusted
+configuration before use. A client MUST NOT infer an authentication-
+method metadata value from a JWT assertion-type URI. Further generic
+discovery or proof mechanisms are separate work in {{credential-gap}}.
 
 # Federation Authorization {#authorization}
 
@@ -485,7 +657,9 @@ retain the issuer and tenant context.
 This section is informative. It is the coordination agenda for this
 profile, not an extension registry or a second set of grant rules.
 The baseline revisions assessed are WAG-00, ID-JAG-04, Actor Profile-00,
-SPIFFE OAuth-02, and ATTEST-11. Each request identifies its owner,
+SPIFFE OAuth-02, and ATTEST-11. Federation requirements using existing
+extension points are defined in {{inputs}}; they are not awaiting
+changes to those base documents. Each request here identifies its owner,
 why Federation needs it, and how to determine whether the gap is
 closed. Changes require agreement in the owning specification.
 
@@ -497,8 +671,7 @@ closed. Changes require agreement in the owning specification.
 | Authority bounds and continuing access | WAG and ID-JAG | Existing claim and refresh rules remain unchanged |
 | Direct credential to governed actor | Actor Profile, consumed by ID-JAG and Federation | No mandatory normalization access token |
 | X.509-SVID as issuance evidence | SPIFFE OAuth and consuming authorization profiles | No JWT fabricated to stand in for connection evidence |
-| Shared-client agent evidence | ATTEST or a focused ATTEST extension | Shared-client authentication does not identify an agent |
-| Proof modes, bearer reuse, and discovery | SPIFFE OAuth, WIMSE, ATTEST | No local authentication-method or key-association protocol |
+| Additional proof mechanisms and generic discovery | Separate credential extensions, coordinated with their consumers | Current modes and Federation requirements remain usable |
 | Instance context | Identification and a consuming profile | No instance claims or propagation rules here |
 | Provisioning and disablement signals | Provisioning and lifecycle specifications | No guarantee of immediate cross-system revocation |
 
@@ -715,79 +888,36 @@ actor evidence. If an upstream specification ultimately selects an
 intermediate credential, it owns that credential's semantics and
 lifecycle; Federation consumes that result.
 
-## ATTEST: Agents Behind a Shared Client {#attest-gap}
+## Additional Credential Mechanisms and Discovery {#credential-gap}
 
-ATTEST authenticates a client and its proof key; it does not define a
-shared-client agent namespace. A platform hosting `support-bot-7` and
-`billing-bot-2` behind one client cannot distinguish them using client
-identity alone.
+{{agent-evidence}} defines the shared-client attestation extension,
+proof selection, and attester restrictions in this document.
+{{credential-requirements}} defines how Federation uses bearer and
+key-bound evidence using the existing credential mechanisms.
 
-**Proposed change in ATTEST or a focused ATTEST extension.** Define:
+**Remaining problem.** Existing metadata may not identify every
+credential/grant combination. A deployment may also require stronger
+holder evidence than a bearer JWT-SVID or platform JWT supplies. A
+first-use cache cannot authenticate the first claimant and can reject
+replicas that receive identical cached credentials.
 
-* The authenticated agent identifier and its scope: attester, client,
-  tenant, or an explicit combination. Select the claim name upstream;
-  Federation does not register the generic `agent_id` name.
-* The attester's authority to assert that agent and the evidence
-  binding the named agent's authorized execution to the proof key.
-* Validation and mismatch errors, extension negotiation, and behavior
-  when a base ATTEST implementation does not support agent resolution.
-* Renewal and key-replacement semantics, distinguishing reissued
-  evidence from permission to impersonate a different agent.
+**Possible separate work.** If interoperable discovery beyond trusted
+configuration is needed, define the relevant capability and registration
+in a credential extension or consuming profile. If a new proof mechanism
+is needed, define its evidence, key-binding assurance, replay protection,
+renewal behavior, and registrations through the base specification's
+extension facilities.
 
-**Closure criteria.** Two agents behind the same client remain
-separately attributable, and one cannot select the other's identity
-by changing an unsigned request parameter. A base ATTEST validator
-never reports agent-level assurance solely from client authentication.
-Federation then maps the standardized evidence to its governed agent.
+For WIT-SVID, any additional ATTEST integration needs an explicit
+credential/proof contract. Existing WIT-SVID authentication under SPIFFE
+OAuth and WIMSE remains usable; an ATTEST method name alone does not
+advertise every such composition.
 
-## Credential Proofs, Reuse, and Discovery {#credential-gap}
-
-**Owners:** SPIFFE OAuth, WIMSE, and ATTEST, with the consuming grant
-profiles. The credentials are supported for their defined roles;
-this gap concerns their additional composition with governed-agent
-grant issuance.
-
-**Problem.** A bearer JWT-SVID or platform JWT can be stolen before
-issuance. An accompanying DPoP proof does not bind that input to a
-platform-approved key. A local first-use digest-to-key cache restricts
-later reuse but cannot authenticate the first claimant; it can also
-reject independent replicas receiving an identical cached credential.
-That cache is not a substitute for agreed credential-binding semantics.
-
-**Proposed changes.** Specify the assurance each input supplies and
-the acceptable relationship between authentication and output-binding
-keys. For WIT-SVID, align credential proofs, any ATTEST proof mode, and
-DPoP without requiring redundant proofs by accident. Define supported
-renewal/reuse behavior and what a platform needs to issue for replicas
-using different keys. Preserve the distinction between credential
-replay, proof replay, and grant replay.
-
-Complete the corresponding discovery registrations upstream. In
-particular, SPIFFE OAuth defines the `jwt-spiffe` assertion type but
-that does not itself define a token-endpoint authentication-method
-metadata value. ATTEST's proof-mode metadata likewise does not advertise
-all WIT or shared-agent compositions.
-
-**Closure criteria.** A client can select a defined proof mode and
-understand its assurance and renewal behavior. Tests cover bearer
-credential theft, mismatched keys, cached credentials across replicas,
-key renewal, and unsupported discovery combinations. Federation adds
-neither an authentication-method name nor a first-use key-enrollment
-protocol to fill those gaps.
-
-## Attester Trust and Client Endorsement {#trust-gap}
-
-Initially, approved attesters and any client-specific restrictions can
-be configured at the IdP. Client endorsement means a client's
-expressed restriction on which attesters it accepts; it cannot expand
-the IdP's independently configured trust. This is a proposed trust
-relationship, not an existing ATTEST wire feature asserted here.
-
-A small ATTEST trust profile is justified only if implementations need
-interoperable discovery. That work would define how endorsement is
-authenticated, its client/tenant scope, revocation, and its intersection
-with IdP policy. The closure test is that client-controlled metadata
-cannot make an unapproved attester authoritative.
+**Closure criteria.** Independent clients can identify the added
+capability and its assurance. Tests cover unsupported combinations,
+credential theft, key mismatch, and reuse across replicas. Changes to
+base credential semantics require agreement with their owners; new
+consumer requirements belong in the consuming profile.
 
 ## Identification and Context Propagation {#instance-identification}
 
@@ -893,6 +1023,14 @@ trusted scope. Exact bindings, tenant boundaries, issuer-scoped key
 lookup, and limits on attester authority constrain that scope; a new
 JWT type does not repair excessive trust.
 
+The shared-client profile relies on the attester to verify the agent
+affiliation and key authorization asserted by `attested_agent_id`.
+Its signature protects that assertion; it does not independently prove
+the underlying platform evidence. If several agents share a private
+key, its holder can present any valid attestation issued for that key.
+Deployments requiring isolation between those agents need separate key
+control and attester policy that enforces it.
+
 Cross-system disablement and token revocation require the mechanisms
 in {{lifecycle-gap}}. Without an applicable signal or online check, an
 already issued token can remain usable until expiration. Refresh
@@ -918,12 +1056,23 @@ clear rules about whose activity it describes.
 
 # IANA Considerations {#iana}
 
-This document requests no IANA actions. WAG owns its grant identifiers
-and registrations; ATTEST or its extension owns any shared-agent
-claim; the credential and authorization specifications own their
-metadata. {{upstream-gaps}} describes the requested work without
-assigning placeholder values or registering another specification's
-identifiers here.
+## JSON Web Token Claim Registration
+
+This document requests registration of the following claim in the
+"JSON Web Token Claims" registry established by {{RFC7519, Section 10.1}}:
+
+* Claim Name: `attested_agent_id`
+* Claim Description: Identifier of an agent that the attested Client
+  Instance is authorized to authenticate as, scoped to the attester
+  and OAuth client.
+* Change Controller: IETF
+* Specification Document(s): {{attest-gap}} of this document.
+
+This is a Federation extension claim carried in a Client Attestation;
+it does not modify ATTEST's registry entries or base validation rules.
+WAG identifiers and any new generic proof or discovery registrations
+remain with their defining specifications. This document requests no
+new grant type, authentication method, or proof method.
 
 --- back
 

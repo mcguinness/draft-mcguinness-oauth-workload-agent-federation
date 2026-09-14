@@ -5,9 +5,9 @@
 This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Agent Federation".
 
 The draft defines external-identity resolution and agent authorization policy.
-It proposes the upstream WAG, Actor Profile, ID-JAG, and credential changes
-needed for complete grant flows; it does not define replacement grants or
-adapter tokens. See the [upstream coordination index](docs/coordination.md).
+It defines a Client Attestation profile for agent evidence and trust using
+existing ATTEST extension points. It also proposes the WAG, Actor Profile,
+and ID-JAG changes needed for complete grant flows. See the [upstream coordination index](docs/coordination.md).
 
 * [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-workload-agent-federation)

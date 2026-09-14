@@ -81,7 +81,7 @@ A consuming flow may require separate OAuth client authentication. Possession of
 
 ## Agent with its own attested client
 
-An attester authenticates the agent's own OAuth client under ATTEST. The IdP maps the validated attester/client identity to `agent-42`. The client authentication and its proof follow ATTEST without new mandatory attestation claims.
+An attester authenticates the agent's own OAuth client under ATTEST. The IdP maps the validated attester/client identity to `agent-42`. The client authentication and proof follow ATTEST. The configured own-client mode requires no `attested_agent_id` claim.
 
 For user-delegated access, valid user and client credentials are not sufficient: the IdP also needs approval for `agent-42` to act for `user-17` for the target resource and scopes. Constructing a governed actor from the external credential follows the proposed Actor Profile extension point; this scenario does not substitute a newly issued adapter token.
 
@@ -91,7 +91,40 @@ For user-delegated access, valid user and client credentials are not sufficient:
 
 A platform uses one OAuth client for `support-bot-7` and `billing-bot-2`. Base ATTEST proves that shared client and its key. An unsigned agent selector, or an unrecognized claim named `agent_id`, does not distinguish the two agents authoritatively.
 
-The proposed ATTEST extension needs authenticated agent evidence, its namespace, the attester's authority, proof-key binding, and extension negotiation. Once standardized, Federation can map those distinct identities to separate governed agents. Until then, this document does not define an interoperable shared-agent authentication path.
+The IdP and client are configured to use Federation's shared-client profile and an accepted ATTEST authentication method. The attester issues a Client Attestation with the following decoded header and payload. These are illustrative public values, not a signed test vector or deployment key.
+
+```json
+{
+  "typ": "oauth-client-attestation+jwt",
+  "alg": "ES256",
+  "kid": "attester-key-1"
+}
+```
+
+```json
+{
+  "iss": "https://platform.example/attester",
+  "sub": "shared-agent-client",
+  "attested_agent_id": "support-bot-7",
+  "exp": 1789423500,
+  "cnf": {
+    "jwk": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "axfR8uEsQkf4vOblY6RA8ncDfYEt6zOg9KE5RdiYwpY",
+      "y": "T-NC4v4af5uO5-tKfA-eFivOM1drMV7Oy7ZAaDe_UfU"
+    }
+  }
+}
+```
+
+Federation maps the exact tuple (`https://platform.example/attester`, `shared-agent-client`, `support-bot-7`) to `agent-42`. An attestation for `billing-bot-2` resolves a different approved binding. The attester is trusted for these client and agent namespaces; any client-configured restriction also applies.
+
+The client presents this attestation using ATTEST's existing headers and proof. Combined DPoP mode uses its matching confirmation key. Normal mode uses the ATTEST PoP JWT, with any separate DPoP proof validated in its own role. The signed agent claim supplies the Federation evidence; an unsigned selector cannot replace it.
+
+Missing or malformed required profile claims produce `invalid_client_attestation`. The IdP never falls back to own-client mapping on failure. A valid attestation with an inactive or missing Federation Binding instead fails authorization under the consuming profile. Optional attestation `iat` is intentionally omitted.
+
+This credential profile is defined in Federation and does not require an ATTEST change. WAG issuance or direct mapped-actor composition remains subject to its separate upstream proposal.
 
 <a id="app-consumption"></a>
 <a id="ras-auth"></a>
