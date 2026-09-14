@@ -56,7 +56,7 @@ authorized executions also require other authorization profiles.
 
 | Situation | Authorization representation | Optional instance context under a future consuming profile |
 |---|---|---|
-| Agent acts as itself | `sub` = governed agent; WAG has no `act` | Instance of the agent subject |
+| Agent acts as itself | `sub` = governed agent; AFG has no `act` | Instance of the agent subject |
 | Agent acts for a user | `sub` = user; `act` = governed agent under the delegation profile | Instance executing as that actor |
 | Agent restarts or replaces a replica | Authorization identity stays unchanged | New execution identifier; installation continuity follows Identification's evidence rules |
 | Agent delegates to another governed agent | Actor relationship changes under the consuming delegation profile | Context follows the new actor; the previous actor's instance is not relabeled as the new actor's |
@@ -66,74 +66,64 @@ authorized executions also require other authorization profiles.
 defines `act` as a representation of delegation and the acting party. It does
 not require every authenticated runtime to become an actor.
 
-Earlier Federation text defined subject-instance context for WAG and
+Earlier Federation text defined subject-instance context for its self-acting grant and
 actor-instance context for ID-JAG. The current revision removed that wire
 behavior with the unpublished INSTANCE dependency. Preserve those associations
 as design requirements for a future consuming extension, without restoring a
 normative dependency or implying current interoperability.
 
-<a id="wag-gaps"></a>
+## Self-acting grant decision
 
-## WAG Gaps Filled by This Document
+The draft now defines an **Agent Federation Grant (AFG)** independently of
+[Workload Authorization Grant](https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00).
+AFG has IdP issuance, DPoP binding, a single RAS issuer audience, explicit
+scope/resource limits, and single-use redemption. Supporting WAG does not
+imply support for AFG. WAG is informative, not a normative dependency.
 
-This note is informative. WAG-00 leaves IdP issuance through
-exchange open. The definitions below allow this profile to be
-implemented while related drafts are coordinated. Once WAG adopts
-an item, this document can reference that definition.
+The draft's IANA Considerations contain the complete requests for
+`urn:ietf:params:oauth:token-type:afg` and `application/oauth-afg+jwt`.
+The requests belong to this specification and are not claims of completed
+IANA registration. No registrations are requested on WAG's behalf.
 
-| Item | Definition in this profile | Coordination needed |
-|---|---|---|
-| Token type | `urn:ietf:params:oauth:token-type:wag` | Common identifier for RFC 8693 request and response; proposed registration belongs in WAG |
-| JWT type | `oauth-wag+jwt` | Proposed media type registration belongs in WAG |
-| Sender constraint | `cnf.jkt`, DPoP proof, and key match at redemption | Resolve WAG's open possession requirement using ID-JAG's bound-grant procedure |
-| Authorization claims | Required `scope` and `resource`, using ID-JAG definitions | Add claims to WAG so the RAS can enforce the grant's authorization ceiling |
-| Redemption errors | [Redemption Errors](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#redemption-errors) | Align grant, proof, nonce, resource, and scope failures across both outputs |
-| Replay prevention | Atomic single use of `(iss, jti)` through expiration plus skew | Define consistent grant consumption regardless of issuer |
-| Acting relationship | WAG excludes `act` | Reserve WAG for self-acting access |
-| IdP issuance | Tenant-specific IdP issuer and canonical Registered Agent `sub` | Acknowledge IdP placement in WAG; retain identity-resolution mechanics here |
+Both AFG and ID-JAG default to no refresh token. A RAS can enable refresh
+only with an authorized client, sender binding, and continuing authorization
+checks. AFG does not inherit WAG's refresh-token prohibition. The obsolete
+WAG `namespace` and `ctx` placeholders have been removed.
 
-Further agreement is needed on:
+## Other coordination items
 
-* The single issuer-identifier audience, already accepted by WAG.
-* Agent Properties registrations, including the RFC 9068 and OpenID
-  Connect definitions for `groups`, `roles`, and `name`.
-* WAG's Informational status as a normative dependency of this
-  standards-track profile.
-* Advertising WAG through
-  `identity_chaining_requested_token_types_supported`.
-
-## Other Coordination Items
-
-The following items remain open:
-
-* **Actor identifiers:** pairwise agent identifiers need an Actor
-  Profile extension. This document preserves the actor token's `sub`.
-* **Grant audience:** ID-JAG's RAS issuer audience takes precedence
-  over Actor Profile's generic token-endpoint guidance; that precedence
-  needs agreement in Actor Profile.
-* **Redemption grant type:** ID-JAG and WAG's normative text uses
-  `jwt-bearer`, while ID-JAG's bound-grant example and [JWT-DPOP](https://datatracker.ietf.org/doc/html/draft-parecki-oauth-jwt-dpop-grant-01)
-  use `jwt-dpop`. This document follows the normative `jwt-bearer`
-  text with DPoP and will follow ID-JAG if it adopts `jwt-dpop`.
-* **JWT-SVID discovery:** JWT-SVID authentication follows SPIFFE OAuth's
-  `urn:ietf:params:oauth:client-assertion-type:jwt-spiffe` assertion type.
-  That draft does not define a corresponding discovery method name.
-  Federation therefore agrees support through trusted configuration;
-  an interoperable advertisement should be coordinated upstream.
-* **SPIFFE and ATTEST:** `spiffe_wit` currently uses a separate Client
-  Attestation PoP JWT plus DPoP with the same key. Its metadata needs
-  alignment with ATTEST's evolving proof modes. General WIT actor
-  inputs need separate mapping and trust-domain rules when `iss` is
-  absent.
-* **Instance identification:** the unpublished INSTANCE dependency has been
-  removed. Instance identifiers, mapped context, and lifecycle granularity are
-  outside this version's conformance requirements.
+* **Actor identifiers:** pairwise agent identifiers need an Actor Profile
+  extension. This document preserves the actor token's `sub`.
+* **Redemption grant type:** the draft follows ID-JAG's normative `jwt-bearer`
+  redemption with DPoP. If ID-JAG adopts `jwt-dpop`, align the common redemption
+  procedure and both grants' examples with that change.
+* **JWT-SVID discovery:** SPIFFE OAuth defines the `jwt-spiffe` assertion type
+  but no corresponding discovery method name. Federation agrees support
+  through trusted configuration; coordinate an interoperable advertisement
+  upstream.
+* **SPIFFE and ATTEST:** align `spiffe_wit` metadata with ATTEST's evolving
+  proof modes. The current profile requires the WIT authentication proof and
+  DPoP to use the same key.
+* **Shared-agent ATTEST binding:** the `agent_id` extension and its registration
+  remain self-contained here for -00. Coordinate ownership with ATTEST; move
+  the claim and validation rules together into ATTEST or a small published
+  extension if the working group chooses that home. Do not introduce an
+  unpublished normative dependency in the interim.
+* **Instance identification:** instance claims and propagation remain out of
+  conformance scope. The design boundaries above belong to a future consuming
+  profile.
 
 ## Direct mapped actor input proposal
 
-Status: design alternative, not implemented by the current wire profile.
-The existing adapter is a choice of this draft, not a universal restriction
-in Actor Profile. For a future direct path, a delegated request could use:
+Status: deferred from -00; evaluate for -01 with Actor Profile coordination.
+The adapter is retained in -00 as an explicit profile choice. Actor Profile's
+JWT access-token input requires validation, issuer trust, absence of `act`,
+and proof checks before constructing the actor; the adapter's identity role
+is to put the governed agent in the credential's `sub`. Direct inputs would
+remove that issuance step, but need a defined mapping before actor construction.
+Actor Profile's existing direct-input rules use the credential's `sub`, which
+may identify a shared client rather than the governed agent. This is a
+coordination issue, not a claim that direct credentials are inherently unsafe. For a future direct path, a delegated request could use:
 
 ```http
 POST /token HTTP/1.1
@@ -156,9 +146,9 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
 
 The proposal needs an explicit rule for each of these points before adoption:
 
-1. Treat the attestation, platform JWT, or WIT-SVID as direct actor evidence.
+1. Treat the attestation, platform JWT, JWT-SVID, or WIT-SVID as direct actor evidence.
    Select its validation rules from trusted configuration, not the generic JWT
-   token type. For ATTEST and WIT-SVID, require the exact authentication JWT as
+   token type. For ATTEST, JWT-SVID, and WIT-SVID, require the exact authentication JWT as
    the actor token and validate all corresponding proofs.
 2. Resolve that external evidence through the Federation Binding to the
    canonical Registered Agent. Construct `act.iss` from the IdP and `act.sub`
@@ -180,40 +170,3 @@ The proposal needs an explicit rule for each of these points before adoption:
 If adopted, JWT-based delegated access would need two token-endpoint calls
 (exchange and redemption), plus any user-credential renewal. An X.509-SVID
 flow would still need acquisition when no eligible adapter token is held.
-
-## WAG registration proposals
-
-Status: proposed upstream text; the current draft does not request these
-registrations. Agreement with WAG or selection of a distinct grant name is
-still required. The illustrative values in the draft are not assignments
-already made by IANA.
-
-### Token type URI
-
-* URN: `urn:ietf:params:oauth:token-type:wag`
-* Common Name: Token type URI for a Workload Authorization Grant
-* Change Controller: IETF
-* Specification Document: WAG, if adopted by that document
-
-### Media type
-
-* Type name: application
-* Subtype name: oauth-wag+jwt
-* Required parameters: none
-* Optional parameters: none
-* Encoding considerations: binary; base64url-encoded JWT components
-* Security considerations: JWT validation, grant audience restriction,
-  possession binding, and replay prevention in the defining specification
-* Interoperability considerations: agreement on WAG's required claims and
-  bound-grant processing
-* Published specification: WAG, if adopted by that document
-* Applications: authorization servers and clients processing WAG
-* Fragment identifier considerations: none
-* Additional information: no magic number, filename extension, or Macintosh
-  file type code
-* Contact: Karl McGuinness, public@karlmcguinness.com
-* Intended usage: COMMON
-* Restrictions on usage: none
-* Author: Karl McGuinness
-* Change controller: IETF
-* Provisional registration: no

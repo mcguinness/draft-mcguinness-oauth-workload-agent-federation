@@ -8,9 +8,9 @@ hosting environment, authentication evidence, and acting relationship:
 
 | Use case | Deployment | Evidence accepted by IdP | Identity model | Grant |
 |---|---|---|---|---|
-| Agent acting for itself | SPIFFE workload | JWT-SVID, X.509-SVID, or WIT-SVID with DPoP and the input-specific proofs | Agent is the client | WAG |
-| Agent acting for itself | Imported cloud or agent-platform agent | Platform-issued JWT and DPoP | Imported workload principal; no OAuth client required | WAG |
-| Agent acting for itself | Managed platform | Platform Client Attestation and DPoP | Agents share a client | WAG |
+| Agent acting for itself | SPIFFE workload | JWT-SVID, X.509-SVID, or WIT-SVID with DPoP and the input-specific proofs | Agent is the client | AFG |
+| Agent acting for itself | Imported cloud or agent-platform agent | Platform-issued JWT and DPoP | Imported workload principal; no OAuth client required | AFG |
+| Agent acting for itself | Managed platform | Platform Client Attestation and DPoP | Agents share a client | AFG |
 | Agent acting for a user | Managed device | Enterprise Client Attestation and DPoP | Agent is the client | ID-JAG |
 | Agent acting for a user | Managed platform | Platform Client Attestation and DPoP | Agents share a client | ID-JAG |
 | Agent acting for a user | Imported cloud or agent-platform agent | Platform JWT, separate client credential, user credential, and DPoP | Imported agent with an authorized OAuth client | ID-JAG |
@@ -25,7 +25,10 @@ identifier. Receiving a grant does not by itself provision a record
 or authorize every scope.
 
 The examples request `tickets.read` at `https://api.app.example`
-through the RAS `https://as.app.example`. Each harness controls its
+through the RAS `https://as.app.example`. IdP metadata advertises
+`token_endpoint=https://idp.example/token`; the examples use that URL
+as the default adapter-token audience and acquisition `resource`.
+The IdP issuer remains `https://idp.example/tenant/acme`. Each harness controls its
 own key, denoted `K`; `JKT(K)` denotes its thumbprint. JWKs sent to
 attesters contain only public keys. IdP requests use the evidence and
 any client authentication described in each example, with fresh proofs
@@ -33,13 +36,38 @@ for the respective endpoints. The illustrated RAS
 issues DPoP access tokens bound to that key, satisfying the
 sender-constraint requirement in [Grant Consumption](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#consumption).
 
+The following metadata excerpt advertises both grant outputs and the
+adapter-based delegated path. Unrelated metadata members are omitted:
+
+~~~ json
+{
+  "issuer": "https://idp.example/tenant/acme",
+  "token_endpoint": "https://idp.example/token",
+  "identity_chaining_requested_token_types_supported": [
+    "urn:ietf:params:oauth:token-type:afg",
+    "urn:ietf:params:oauth:token-type:id-jag"
+  ],
+  "actor_profile_token_exchange": {
+    "subject_token_types_supported": [
+      "urn:ietf:params:oauth:token-type:id_token"
+    ],
+    "actor_token_types_supported": [
+      "urn:ietf:params:oauth:token-type:access_token"
+    ],
+    "requested_token_types_supported": [
+      "urn:ietf:params:oauth:token-type:id-jag"
+    ]
+  }
+}
+~~~
+
 <a id="self-flow"></a>
 
 ## Agent Acting for Itself
 
-The agent is the WAG subject; the flow ends with a
+The agent is the AFG subject; the flow ends with a
 sender-constrained access token for the agent alone. JWT credentials
-use direct exchange under [Direct JWT Credential](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#direct-wag). The X.509-SVID example
+use direct exchange under [Direct JWT Credential](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#direct-afg). The X.509-SVID example
 first illustrates the adapter needed when no JWT credential is
 available; the subsequent variants omit that acquisition step.
 
@@ -49,8 +77,8 @@ Direct JWT path:
  Platform          Harness             IdP          RAS         API
      |-- JWT -------->|                 |            |           |
      |                |-- JWT + proof ->|            |           |
-     |                |<----- WAG ------|            |           |
-     |                |-------- WAG + DPoP --------->|           |
+     |                |<----- AFG ------|            |           |
+     |                |-------- AFG + DPoP --------->|           |
      |                |<--------- app AT ------------|           |
      |                |-------------- app AT + DPoP ------------>|
 ~~~
@@ -63,8 +91,8 @@ Use this model when the workload already has a SPIFFE identity
 representing the agent. This example uses X.509-SVID client
 authentication under [SPIFFE X.509-SVID](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#spiffe-input), without a Client Attestation
 or stable instance identifier. X.509-SVID uses [Obtaining an IdP Access Token When Needed](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#bootstrap) because
-the TLS credential is not a JWT subject token. The WAG is specified
-in [Workload Authorization Grant Issued by an IdP](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#wag-profile).
+the TLS credential is not a JWT subject token. The AFG is specified
+in [Agent Federation Grant](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#afg-profile).
 
 ~~~
  Workload           Harness            IdP          RAS         API
@@ -75,8 +103,8 @@ in [Workload Authorization Grant Issued by an IdP](https://mcguinness.github.io/
      |                 |- credentials ->|            |           |
      |                 |<--- IdP AT ----|            |           |
      |                 |--- exchange -->|            |           |
-     |                 |<---- WAG ------|            |           |
-     |                 |-------- WAG + DPoP -------->|           |
+     |                 |<---- AFG ------|            |           |
+     |                 |-------- AFG + DPoP -------->|           |
      |                 |<--------- app AT -----------|           |
      |                 |------------- app AT + DPoP ------------>|
      |                 |<--------------- tickets ----------------|
@@ -89,18 +117,18 @@ in [Workload Authorization Grant Issued by an IdP](https://mcguinness.github.io/
    admit every workload as that agent.
 2. The harness sends a client credentials request to the IdP over
    mutually authenticated TLS, with that SPIFFE ID as `client_id`
-   and the dedicated exchange audience as `resource`. A DPoP proof establishes a
+   and the selected exchange audience as `resource`. A DPoP proof establishes a
    separate application key `K`. The IdP validates the SVID using
    the configured SPIFFE trust bundle and resolves the agent binding.
-3. Under [IdP Access Token](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#idp-access-token), the IdP issues an access token with `sub=agent-42`, the SPIFFE ID as `client_id`, the dedicated
+3. Under [IdP Access Token](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#idp-access-token), the IdP issues an access token with `sub=agent-42`, the SPIFFE ID as `client_id`, the selected
    exchange audience as `aud`, and `cnf.jkt=JKT(K)`. The TLS credential
    authenticates the workload; `K` binds the issued token.
-4. The harness requests WAG using that access token as
+4. The harness requests AFG using that access token as
    `subject_token`, the target RAS as `audience`, and the API and
    scope above. It again authenticates with its SVID and proves
    possession of `K`. The IdP checks the current binding and policy
-   before issuing WAG with `sub=agent-42` and no `act`.
-5. The harness redeems WAG at the RAS with a fresh proof from `K`,
+   before issuing AFG with `sub=agent-42` and no `act`.
+5. The harness redeems AFG at the RAS with a fresh proof from `K`,
    receives the application access token, and calls the API. The
    downstream processing is described in [Downstream Application Processing](deployment-examples.md#app-consumption).
 
@@ -116,7 +144,7 @@ DPoP: eyJ...workload-key-proof...
 grant_type=client_credentials
 &client_id=spiffe%3A%2F%2Fworkloads.example%2Fagents%2Fsupport
 &resource=
-  https%3A%2F%2Fidp.example%2Ftenant%2Facme%2Fagent-federation
+  https%3A%2F%2Fidp.example%2Ftoken
 ~~~
 
 The harness then sends this exchange over mutually authenticated TLS,
@@ -132,7 +160,7 @@ grant_type=
   urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &client_id=spiffe%3A%2F%2Fworkloads.example%2Fagents%2Fsupport
 &requested_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Awag
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aafg
 &subject_token=eyJ...agent-access-token...
 &subject_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aaccess_token
@@ -141,7 +169,7 @@ grant_type=
 &scope=tickets.read
 ~~~
 
-The resulting WAG payload appears in [Grant Construction](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#grant). The harness redeems
+The resulting AFG payload appears in [Grant Construction](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#grant). The harness redeems
 it at the RAS:
 
 ~~~ http
@@ -151,7 +179,7 @@ Content-Type: application/x-www-form-urlencoded
 DPoP: eyJ...grant-key-proof...
 
 grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
-&assertion=eyJ...idp-wag...
+&assertion=eyJ...idp-afg...
 &resource=https%3A%2F%2Fapi.app.example
 ~~~
 
@@ -201,7 +229,7 @@ This decoded payload deliberately omits optional `iss` and `iat`:
 ~~~
 
 The harness authenticates the client with this JWT-SVID and sends the
-identical JWT as subject evidence for direct WAG. The separate DPoP proof
+identical JWT as subject evidence for direct AFG. The separate DPoP proof
 is signed with `K` and targets `POST https://idp.example/token`:
 
 ~~~ http
@@ -217,7 +245,7 @@ grant_type=
   urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-spiffe
 &client_assertion=eyJ...jwt-svid...
 &requested_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Awag
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aafg
 &subject_token=eyJ...jwt-svid...
 &subject_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
@@ -228,7 +256,7 @@ grant_type=
 
 The IdP validates client authentication, identical subject evidence, and
 DPoP, resolves `agent-42`, and checks its assignments. It enforces the
-credential's association with that binding and `K` before issuing WAG
+credential's association with that binding and `K` before issuing AFG
 with `sub=agent-42` and `cnf.jkt=JKT(K)`. Redemption follows the X.509-SVID
 example above. The JWT-SVID does not certify `K`; theft before first use
 can allow an attacker to establish a different initial association.
@@ -247,11 +275,11 @@ grant_type=client_credentials
   urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-spiffe
 &client_assertion=eyJ...jwt-svid...
 &resource=
-  https%3A%2F%2Fidp.example%2Ftenant%2Facme%2Fagent-federation
+  https%3A%2F%2Fidp.example%2Ftoken
 ~~~
 
 The JWT-SVID's audience remains the IdP issuer. The returned token's
-`aud` instead equals the dedicated exchange resource above; its
+`aud` instead equals the selected exchange resource above; its
 `client_id` is the SPIFFE ID, `sub` is `agent-42`, and `cnf.jkt` is
 `JKT(K)`. The harness then sends this delegated exchange with an accepted
 user credential issued to that client and approval for the requested
@@ -332,7 +360,7 @@ grant_type=
   urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &client_id=spiffe%3A%2F%2Fworkloads.example%2Fagents%2Fsupport
 &requested_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Awag
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aafg
 &subject_token=eyJ...wit-svid...
 &subject_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
@@ -343,9 +371,9 @@ grant_type=
 
 The same WIT-SVID appears in the header and `subject_token`. The IdP
 validates it and both proofs, resolves `agent-42`, checks assignments,
-and returns WAG with `sub=agent-42` and `cnf.jkt=JKT(K)`. No IdP access
+and returns AFG with `sub=agent-42` and `cnf.jkt=JKT(K)`. No IdP access
 token is acquired. The extra JWK `alg` member does not change the
-RFC 7638 thumbprint. The harness redeems WAG and calls the API as
+RFC 7638 thumbprint. The harness redeems AFG and calls the API as
 shown above. For user-delegated access, it instead obtains or reuses
 an IdP actor token under [Obtaining an IdP Access Token When Needed](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#bootstrap) and [Agent Acting for a User](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#delegated-exchange).
 
@@ -391,7 +419,7 @@ DPoP: eyJ...proof-K...
 grant_type=
   urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &requested_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Awag
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aafg
 &subject_token=eyJ...platform-jwt...
 &subject_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
@@ -402,8 +430,8 @@ grant_type=
 
 The IdP validates the signature with the configured issuer's keys,
 matches every selector, and checks `agent-42`'s assignments. It issues
-WAG directly with `sub=agent-42` and `cnf.jkt=JKT(K)`. The harness
-redeems WAG at the RAS and calls the API as above. Subsequent WAG
+AFG directly with `sub=agent-42` and `cnf.jkt=JKT(K)`. The harness
+redeems AFG at the RAS and calls the API as above. Subsequent AFG
 requests can reuse the platform JWT within its permitted age and
 lifetime with fresh proofs from `K` under [Platform-Issued JWT](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#platform-jwt-input).
 The platform never sees `K`; DPoP binds the grant but does not prove
@@ -425,7 +453,7 @@ attester `https://attester.example/tenant/acme` for shared client
 `agent_id=support-agent-7` to Registered Agent `agent-42`.
 
 The platform attester supplies the Client Attestation. The harness
-exchanges it directly for WAG, without an intermediate IdP access token.
+exchanges it directly for AFG, without an intermediate IdP access token.
 
 1. The control plane launches `support-agent-7`. Its harness generates
    `K`. The attester verifies the launch assignment, runtime
@@ -433,11 +461,11 @@ exchanges it directly for WAG, without an intermediate IdP access token.
    `sub` equal to the shared client, `agent_id=support-agent-7`,
    and `cnf.jwk` containing the public key.
    The harness cannot select another agent merely by naming it.
-2. The harness follows [Direct JWT Credential](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#direct-wag), sending the shared `client_id`
+2. The harness follows [Direct JWT Credential](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#direct-afg), sending the shared `client_id`
    and the same attestation in `OAuth-Client-Attestation` and
    `subject_token`, with a DPoP proof from `K`. The IdP resolves
    `(iss, sub, agent_id)` to `agent-42` and authorizes the requested access using the agent's assignments.
-3. The IdP returns WAG with `sub=agent-42`, no `act`, and
+3. The IdP returns AFG with `sub=agent-42`, no `act`, and
    `cnf.jkt=JKT(K)`. The harness redeems it
    and calls the API as described in [Downstream Application Processing](deployment-examples.md#app-consumption).
 
@@ -557,7 +585,7 @@ self-acting path but cannot use this delegated path by itself.
    token under [Acquisition from Platform JWT Evidence](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#platform-acquisition). The IdP verifies both the
    agent binding and that this client is permitted to use it.
 2. The returned token has `sub=agent-42`, `client_id=agent-harness-23`,
-   the dedicated exchange audience as `aud`, and `cnf.jkt=JKT(K)`.
+   the selected exchange audience as `aud`, and `cnf.jkt=JKT(K)`.
    Its lifetime is 300 seconds in this example.
 3. The harness obtains a user credential for `user-17`, issued to
    `agent-harness-23`, and an applicable user or administrator approval
@@ -592,7 +620,7 @@ grant_type=
 &subject_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
 &resource=
-  https%3A%2F%2Fidp.example%2Ftenant%2Facme%2Fagent-federation
+  https%3A%2F%2Fidp.example%2Ftoken
 ~~~
 
 The client assertion has `iss` and `sub` equal to `agent-harness-23`,
@@ -666,9 +694,9 @@ expiration and unique `jti`, validated under [RFC7523](https://www.rfc-editor.or
 DPoP proof from `K` proves possession of the grant's binding key.
 Neither credential substitutes for the other.
 
-The self-acting WAG
+The self-acting AFG
 example redeems the bound grant with a DPoP proof and no client
-authentication, as [Grant Consumption](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#consumption) permits for WAG.
+authentication, as [Grant Consumption](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#consumption) permits for AFG.
 
 Illustrative desktop redemption; the client assertion and ID-JAG
 are different JWTs with different purposes and signing authorities:
@@ -714,7 +742,7 @@ Both use cases finish at the same application trust boundary:
    including the access-token hash under [RFC9449](https://www.rfc-editor.org/info/rfc9449). It validates
    the token and proof, then evaluates resource policy for the agent
    or the user and agent actor. It does not consume the upstream
-   SVID, device evidence, Client Attestation, WAG, or ID-JAG.
+   SVID, device evidence, Client Attestation, AFG, or ID-JAG.
 
 | Example | Application access-token identity | Key binding |
 |---|---|---|
@@ -760,7 +788,7 @@ same record under [Agent Record Correlation](https://mcguinness.github.io/draft-
 
 | Validated grant | Agent lookup | Record and policy input |
 |---|---|---|
-| WAG: `iss=https://idp.example/tenant/acme`, `sub=agent-42` | `(iss, sub)` | `ra-42`, member of `support-eng` |
+| AFG: `iss=https://idp.example/tenant/acme`, `sub=agent-42` | `(iss, sub)` | `ra-42`, member of `support-eng` |
 | ID-JAG: `sub=user-17`, `act.iss=https://idp.example/tenant/acme`, `act.sub=agent-42` | `(act.iss, act.sub)` | The same `ra-42` and membership |
 
 For delegated access, the application also evaluates `user-17`'s

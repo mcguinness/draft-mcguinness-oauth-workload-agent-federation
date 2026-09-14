@@ -12,10 +12,10 @@ exercise:
 | Missing, ambiguous, or disabled binding | Reject issuance |
 | Unexpired eligible token with the same client, agent, input method, and key | Reuse subject to current policy; fresh acquisition can be required |
 | Direct JWT input contains `act` | `invalid_grant`; no conversion from delegation to self-acting access |
-| Same registered agent through direct WAG and the access-token adapter | Same WAG `sub` and issuer namespace |
-| Direct WAG with shared-client ATTEST; approved `(iss, sub, agent_id)` and key proof | WAG subject is the Registered Agent, not the shared client |
+| Same registered agent through direct AFG and the access-token adapter | Same AFG `sub` and issuer namespace |
+| Direct AFG with shared-client ATTEST; approved `(iss, sub, agent_id)` and key proof | AFG subject is the Registered Agent, not the shared client |
 | Agent with its own client identity supplies `agent_id` | Resolve `(iss, sub)`; the additional claim cannot switch to the shared-client model |
-| Access token from any other issuance, even with a matching audience | Not eligible as an IdP access-token input; use direct WAG or acquire an eligible token |
+| Access token from any other issuance, even with a matching audience | Not eligible as an IdP access-token input; use direct AFG or acquire an eligible token |
 
 ## Platform JWT Evidence
 
@@ -23,7 +23,7 @@ exercise:
 |---|---|
 | Any input lacks a nonce required by the IdP | `use_dpop_nonce`; no grant issued |
 | Platform JWT outside the configured credential class or older than the bounded age | Reject input |
-| Direct WAG with platform JWT; approved issuer and exact selectors, nonce and DPoP proof; no client authentication required by the binding | WAG for the bound agent without acquisition or `client_id` |
+| Direct AFG with platform JWT; approved issuer and exact selectors, nonce and DPoP proof; no client authentication required by the binding | AFG for the bound agent without acquisition or `client_id` |
 | Platform-issued JWT with an unapproved issuer, wrong audience, or expired | Reject subject evidence with `invalid_grant` |
 | Platform JWT with an unbound subject, missing additional selector, or wrong exact claim value | `invalid_grant`; no prefix, wildcard, or partial match |
 | Shared platform subject plus exact agent and tenant claims matches one approved binding | Resolve that Registered Agent independently of OAuth `client_id` |
@@ -40,7 +40,7 @@ exercise:
 
 | Case | Expected result |
 |---|---|
-| Direct WAG with JWT-SVID; approved exact SPIFFE ID, IdP issuer audience, identical assertion/subject, fresh DPoP; no `iss` or `iat` | WAG for the Registered Agent, bound to the DPoP key |
+| Direct AFG with JWT-SVID; approved exact SPIFFE ID, IdP issuer audience, identical assertion/subject, fresh DPoP; no `iss` or `iat` | AFG for the Registered Agent, bound to the DPoP key |
 | JWT-SVID with invalid signature, expired `exp`, missing required claim, or malformed SPIFFE ID | `invalid_client` |
 | JWT-SVID with RAS, token endpoint, or adapter audience, or multiple audiences | `invalid_client`; only the IdP issuer audience is accepted |
 | JWT-SVID with an unapproved trust domain, including a colliding `kid` from another domain | `invalid_client`; no cross-domain key lookup |
@@ -52,19 +52,19 @@ exercise:
 | Previously used JWT-SVID with a fresh proof from the same key and same binding | Eligible, subject to current validation and authorization |
 | Previously used JWT-SVID with another DPoP key, including a different signature over the same signing input | `invalid_client`; retain the original association |
 | Concurrent first use of one JWT-SVID with distinct keys across acquisition/exchange replicas | At most one key association succeeds |
-| JWT-SVID client credentials acquisition with dedicated exchange `resource` | IdP access token with canonical agent `sub`, exact SPIFFE `client_id`, dedicated `aud`, and DPoP `cnf.jkt` |
+| JWT-SVID client credentials acquisition with selected exchange `resource` | IdP access token with canonical agent `sub`, exact SPIFFE `client_id`, selected `aud`, and DPoP `cnf.jkt` |
 | JWT-SVID acquired actor token, same current client/binding/key, valid user credential and delegation approval | Issue ID-JAG; JWT-SVID is authentication, not `actor_token` |
 | Renewed JWT-SVID, same binding and DPoP key | Existing eligible token remains usable; current checks still apply |
 | Renewed JWT-SVID and a new DPoP key with an old adapter token | `invalid_grant`; renewal does not rebind the adapter token |
 | Cached JWT-SVID supplied to replicas with different DPoP keys | Reject the second key; each key needs a distinct credential signing input |
 | X.509-SVID client with approved exact ID and DPoP proof | IdP access token without stable instance context |
-| Direct WAG with WIT-SVID; approved exact ID, attestation PoP, matching DPoP key; no `iss` | WAG for the configured agent without acquisition |
+| Direct AFG with WIT-SVID; approved exact ID, attestation PoP, matching DPoP key; no `iss` | AFG for the configured agent without acquisition |
 | WIT-SVID with missing attestation PoP, mismatched key or proof algorithm, or expired credential | Reject authentication or proof |
 | WIT-SVID with unapproved trust domain or mismatched `client_id` | Reject; `iss` cannot select another trust anchor |
 | Renewed X.509-SVID, same binding and DPoP key | Existing eligible token remains usable |
 | Renewed WIT-SVID, same binding and unchanged `cnf.jwk` | Existing eligible token remains usable |
 | Renewed WIT-SVID with a new `cnf.jwk` | Reject exchange with the old token; new IdP access token required |
-| Direct WAG using a renewed WIT-SVID and proofs from its new key | WAG bound to the new key; no IdP access token required |
+| Direct AFG using a renewed WIT-SVID and proofs from its new key | AFG bound to the new key; no IdP access token required |
 | Direct ATTEST, JWT-SVID, or WIT-SVID subject differs from the authentication JWT, even for the same identity | `invalid_grant` |
 | X.509-SVID request omits `subject_token` | `invalid_request`; use the access-token adapter |
 
@@ -72,13 +72,13 @@ exercise:
 
 | Case | Expected result |
 |---|---|
-| Direct WAG with ATTEST agent as client; approved binding and proof | WAG for the Registered Agent, without acquisition |
+| Direct AFG with ATTEST agent as client; approved binding and proof | AFG for the Registered Agent, without acquisition |
 | Valid client and user credentials, with absent, revoked, or expired approval | Same non-enumerating `actor_unauthorized` response |
 | Valid user and agent credentials without delegation | `actor_unauthorized` |
 | Direct external credential supplied as ID-JAG `actor_token` | Reject; this delegated path requires the IdP-issued actor token |
 | Same agent in a second execution | Same agent subject; no stable instance context defined here |
 | Unrelated client, agent, or key at exchange | Reject inconsistent evidence |
-| Agent acting for itself | WAG subject is the agent; no `act` |
+| Agent acting for itself | AFG subject is the agent; no `act` |
 | Agent acting for a user | User subject; Registered Agent `act` |
 
 ## Grant Validation and Redemption
@@ -103,11 +103,11 @@ exercise:
 
 | Case | Expected result |
 |---|---|
-| WAG subject and ID-JAG actor name the same IdP agent | Resolve the same provisioned record |
+| AFG subject and ID-JAG actor name the same IdP agent | Resolve the same provisioned record |
 | Platform-origin actor token used after its recorded binding is disabled | Reject even though the token is unexpired |
-| WAG with a previously unseen `sub` under an allowlisted `iss` | Accept subject; issue only if RAS policy authorizes access; record-dependent authorization requires correlation |
+| AFG with a previously unseen `sub` under an allowlisted `iss` | Accept subject; issue only if RAS policy authorizes access; record-dependent authorization requires correlation |
 | Authenticated disabled-agent status reaches the RAS | Block subsequent issuance and refresh; revoke or deactivate affected tokens as supported |
-| Canonical agent identifier in the IdP access token | Same value in WAG `sub` and ID-JAG `act.sub`; no recipient-specific substitution |
+| Canonical agent identifier in the IdP access token | Same value in AFG `sub` and ID-JAG `act.sub`; no recipient-specific substitution |
 | Same bare agent identifier from another issuer | No match to the original issuer's record |
 
 Only cases for the implemented input and output are applicable.
@@ -120,7 +120,7 @@ conformance path for this specification.
 |---|---|
 | Unknown `agent_id` request parameter | Ignored; does not change the authenticated binding |
 | Unconfigured extra JWT claim named `agent_id` | Ignored unless the selected credential profile uses it |
-| Management-API token with matching issuer and agent-shaped subject | Reject as an adapter token; dedicated exchange audience is required |
+| Management-API token with matching issuer and agent-shaped subject | Reject as an adapter token; selected exchange audience and issuance eligibility are required |
 | Federation adapter token presented as API authorization | Reject; the token is usable only as federation exchange input |
 | Unexpired adapter token after policy requires fresh acquisition | Require reacquisition; expiration is not a promise of continued eligibility |
 | Adapter token older than 300 seconds within an explicitly configured longer lifetime | Reusable only if all current binding and authorization checks pass |
@@ -130,3 +130,24 @@ conformance path for this specification.
 | Tenant issuers share a key expressly authorized for both | Key sharing alone does not cause rejection; exact issuer authorization remains required |
 | Required `iat` missing from a Client Attestation | Reject under this profile's explicit ATTEST narrowing |
 | Nonce required for a non-platform input | Challenge under the same nonce policy used for platform evidence |
+
+## AFG, discovery, and refresh regression cases
+
+| Case | Expected result |
+|---|---|
+| Self-acting exchange requests urn:ietf:params:oauth:token-type:afg | Issue AFG with typ=oauth-afg+jwt if authorized |
+| AFG-only implementation receives the old WAG token type or JWT type | No implicit alias or fallback to AFG |
+| No adapter audience override is configured | Acquisition resource and adapter aud equal the trusted IdP token_endpoint URL |
+| Explicit approved audience override is configured | Use the override exactly in acquisition resource and adapter aud |
+| Default endpoint or override equals an issuer/API audience | Configuration is invalid; require a distinct override |
+| Caller supplies a different adapter acquisition resource | Reject; a request parameter cannot change audience configuration |
+| Client assertion has the adapter audience but not eligible adapter issuance/type | Reject as adapter input |
+| ID-JAG supported under this profile | Both identity-chaining output metadata and actor_profile_token_exchange.requested_token_types_supported advertise ID-JAG |
+| The two output advertisements disagree about ID-JAG | Client does not attempt this profile's delegated exchange |
+| AFG-only output | Advertised through identity chaining; no delegated Actor Profile output advertisement is required |
+| AFG or ID-JAG with default RAS policy | No refresh token |
+| Refresh enabled without an authorized client or current authorization checks | No refresh token issued |
+| Valid refresh with wrong sender key, revoked agent, or withdrawn user delegation | Reject refresh |
+| Refresh enabled and the original AFG or ID-JAG is replayed | Reject; the grant remains single use |
+| act.sub_profile omitted | Follow Actor Profile's unclassified-actor rules; no implied entity classification |
+| Token-exchange request includes authorization_details | invalid_request under this profile's explicit narrowing |

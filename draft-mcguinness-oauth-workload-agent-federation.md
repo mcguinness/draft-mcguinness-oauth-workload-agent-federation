@@ -32,7 +32,6 @@ normative:
   ACTOR-PROFILE: I-D.mcguinness-oauth-actor-profile
   ID-JAG: I-D.ietf-oauth-identity-assertion-authz-grant
   IDENTITY-CHAINING: I-D.ietf-oauth-identity-chaining
-  WAG: I-D.carleton-workload-authz-grant
   OIDC:
     title: "OpenID Connect Core 1.0 incorporating errata set 2"
     target: https://openid.net/specs/openid-connect-core-1_0.html
@@ -58,6 +57,9 @@ normative:
   RFC9449:
   RFC9700:
 informative:
+  WAG: I-D.carleton-workload-authz-grant
+  RFC6755:
+  RFC6838:
   ENTITY-PROFILES: I-D.mora-oauth-entity-profiles
   CIMD: I-D.ietf-oauth-client-id-metadata-document
   RFC7662:
@@ -76,7 +78,7 @@ This specification profiles OAuth 2.0 Token Exchange to bind
 platform-authenticated agents to registered principals at an identity
 provider. It supports platform-issued JWTs, Attestation-Based Client
 Authentication, and SPIFFE client authentication. An agent acting for
-itself receives a Workload Authorization Grant; an agent acting for a
+itself receives a Agent Federation Grant; an agent acting for a
 user receives an Identity Assertion JWT Authorization Grant with an
 explicit actor. Both grants are key-bound and redeemed at a resource
 authorization server for sender-constrained access tokens.
@@ -101,8 +103,9 @@ provides execution context without establishing authority.
 
 The IdP issues one of two grants:
 
-* **Self-acting access:** a Workload Authorization Grant (WAG)
-  {{WAG}}, with the Registered Agent (the principal governed by the IdP) as subject.
+* **Self-acting access:** a Agent Federation Grant (AFG)
+  defined here, with the Registered Agent (the principal governed by
+  the IdP) as subject.
 * **User-delegated access:** an Identity Assertion JWT Authorization
   Grant (ID-JAG) {{ID-JAG}}, with the user as subject and the
   Registered Agent as actor under {{ACTOR-PROFILE}}.
@@ -135,9 +138,15 @@ for the Registered Agent to act for that user.
 This profile defines agent evidence, identity resolution, IdP access
 token acquisition, grant issuance, and shared redemption requirements.
 ID-JAG's format and downstream processing follow {{ID-JAG}} and
-{{ACTOR-PROFILE}}. WAG's IdP issuance profile is defined in
-{{wag-profile}}; open coordination items are recorded in
-[Coordination with Related Work](https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/coordination.md#coordination).
+{{ACTOR-PROFILE}}. This document defines AFG in {{afg-profile}},
+including its identifiers, sender constraint, and redemption rules.
+AFG is distinct from the platform-issued Workload Authorization Grant
+{{WAG}}; implementing either grant does not imply support for the other.
+
+RFC Editor: Before publication as an RFC, remove repository links and
+the Supporting Material appendix, or replace them with stable informative
+references. All conformance requirements are contained in this document
+and its normative references.
 
 Actor Profile applies to user delegation. The Registered Agent is the
 actor. Actor representation and chain processing belong to Actor
@@ -182,7 +191,7 @@ that binding. These choices also apply to MCP clients.
 
 The other identity dimensions remain independent:
 
-* **Acting relationship:** each federation model can produce WAG with
+* **Acting relationship:** each federation model can produce AFG with
   the agent as `sub`, or ID-JAG with the user as `sub` and agent as
   `act`. An agent can be both an OAuth client and a delegated actor.
 * **Instance:** one agent can run in several installations or
@@ -191,7 +200,7 @@ The other identity dimensions remain independent:
 
 # Conventions and Scope
 
-{::boilerplate bcp14-tagged}
+{::boilerplate bcp14-tagged-bcp14}
 
 OAuth terms follow {{RFC6749}} and {{RFC8693}}. Client Attestation,
 Client Attester, and Client Instance follow {{ATTEST}}. A harness is
@@ -238,9 +247,9 @@ A client or IdP claiming this profile MUST implement at least one
 input in {{inputs}} and the exchange requirements for its supported
 outputs. Each implementation MUST meet the applicable requirements below:
 
-* WAG with a JWT input requires direct exchange under {{direct-wag}}.
+* AFG with a JWT input requires direct exchange under {{direct-afg}}.
 * X.509-SVID and delegated ID-JAG require IdP access-token acquisition
-  under {{bootstrap}}. Acquisition is optional for direct-WAG-only
+  under {{bootstrap}}. Acquisition is optional for direct-AFG-only
   implementations.
 * When acquisition is supported, the corresponding IdP access-token
   input MUST be supported for each implemented output.
@@ -252,10 +261,10 @@ establish common inputs and outputs through trusted configuration
 and the metadata in {{metadata}}.
 
 The requirements of the referenced protocols apply unless this
-profile explicitly narrows an option. WAG issuance details in
-{{wag-profile}} are specific to this document pending coordination
-with {{WAG}}. Task authority, delegation chains, and unlisted inputs
-are outside this profile.
+profile explicitly narrows an option. An implementation supporting
+self-acting access MUST implement AFG issuance or redemption, as
+applicable, under {{afg-profile}} and {{consumption}}. Task authority,
+delegation chains, and unlisted inputs are outside this profile.
 
 ## Additional Requirements of This Profile {#profile-requirements}
 
@@ -270,12 +279,14 @@ conformance here. This profile adds the following requirements:
 | Exchange request | Explicit nonempty `scope`, one `resource`, and one RAS `audience` | {{exchange}} |
 | Grant | Required `scope`, `resource`, and `cnf.jkt`; bounded lifetime | {{grant}} |
 | Exchange response | Required `expires_in` and response `scope` even when unchanged | {{exchange-response}} |
+| Exchange errors | `invalid_grant` for credential and binding failures instead of RFC 8693's default `invalid_request` | {{exchange-errors}} |
+| Authorization details | Reject `authorization_details` with `invalid_request` | {{exchange}} |
 | Redemption | Explicit matching `resource`, DPoP binding, single use, and sender-constrained output | {{consumption}} |
 
-WAG additions and identifier ownership are separately identified in
-{{wag-profile}}. The IdP and RAS agree support through trusted
-configuration; base-protocol metadata alone does not signal acceptance
-of every additional check.
+AFG is defined in {{afg-profile}}, with registrations in {{iana}}.
+The IdP and RAS agree support through trusted configuration;
+base-protocol metadata alone does not signal acceptance of every
+additional check.
 
 # Profile Selection and Identity Binding {#identity}
 
@@ -292,12 +303,6 @@ can be imported from a platform registry. The IdP MUST authorize
 binding changes, including imports. Operators SHOULD authenticate and
 audit the administrative source of each change. Binding configuration
 identifies the credential authority and exact identity selectors.
-
-A deployment can use a client's endorsement of an attester to narrow
-the authorities permitted for that client. Such an endorsement does
-not establish IdP trust in the attester; the IdP's configured trust
-policy remains the authority. This profile defines no endorsement
-discovery protocol.
 
 | Input and identity model | Federation Binding lookup |
 |---|---|
@@ -349,9 +354,8 @@ authenticate the client. Subsequent use of an IdP access token follows
   unrecognized JWT claims are ignored under {{RFC7519, Section 4}}.
   An extra claim does not select an identity model or establish a
   binding unless that model uses it.
-
-* A JWT input credential MAY be the `subject_token` for direct WAG
-  exchange under {{direct-wag}}. Input credentials MUST NOT be used
+* A JWT input credential MAY be the `subject_token` for direct AFG
+  exchange under {{direct-afg}}. Input credentials MUST NOT be used
   as `actor_token`; delegated exchange uses an IdP-issued access token.
 * Renewal or reissuance of an input credential does not rebind an
   existing access token to a different DPoP key. A changed key
@@ -375,7 +379,7 @@ MUST atomically establish or enforce the following association:
    its `jti` was previously seen.
 
 The IdP MUST enforce one association across acquisition and exchange,
-including direct WAG and delegated ID-JAG requests and all endpoint
+including direct AFG and delegated ID-JAG requests and all endpoint
 replicas. Excluding the signature from the digest prevents another
 valid signature over the same signing input from bypassing this check.
 Failures use the error defined for the input in {{inputs}}.
@@ -394,7 +398,7 @@ The client MUST present a JWT issued by an approved platform as
 `subject_token_type=urn:ietf:params:oauth:token-type:jwt`, in a token
 exchange request. This input is workload evidence, not client
 authentication under {{RFC7523}}. It MUST NOT be presented as
-`client_assertion`. The requested output is WAG under {{direct-wag}}
+`client_assertion`. The requested output is AFG under {{direct-afg}}
 or an IdP access token under {{platform-acquisition}}.
 
 The Federation Binding MUST specify an exact `sub` value. It MAY also
@@ -466,7 +470,7 @@ attester instead.
 
 ### Client Authentication for Platform Evidence {#platform-client}
 
-For direct platform-JWT-to-WAG exchange, the IdP MAY permit requests
+For direct platform-JWT-to-AFG exchange, the IdP MAY permit requests
 without OAuth client authentication or identification, as allowed by
 {{RFC8693, Section 2.1}}. This does not waive validation of the platform
 JWT, DPoP nonce and key association, or agent authorization. A binding
@@ -513,7 +517,7 @@ The Client Attestation MUST satisfy ATTEST and these additional rules:
 
 The shared-client binding assumes that the attester verifies the
 named agent's authorized execution and possession of the `cnf.jwk`
-key. The IdP should approve an attester for this binding only when
+key. The IdP SHOULD approve an attester for this binding only when
 its issuance policy provides that assurance.
 
 The IdP MUST validate the attestation and combined-mode proof under
@@ -545,7 +549,7 @@ its required `sub`, `aud`, and `exp`, signature, and time checks under
 {{time-validation}}. In particular:
 
 * The sole audience MUST be the IdP issuer identifier, not the RAS
-  issuer, token endpoint URL, or dedicated exchange audience of the
+  issuer, token endpoint URL, or selected exchange audience of the
   IdP access token.
 * Verification keys MUST come from the configured trust domain in
   the SPIFFE ID, using {{SPIFFE-OAUTH, Section 6}}. The IdP MUST resolve
@@ -559,7 +563,7 @@ also validate the separate DPoP proof under {{inputs}} and enforce
 {{bearer-reuse}}. DPoP does not prove possession of a key certified by
 that JWT-SVID. Nonce policy follows {{exchange}}.
 
-For self-acting access, the client uses {{direct-wag}}. For acquisition,
+For self-acting access, the client uses {{direct-afg}}. For acquisition,
 it uses the client credentials grant under {{bootstrap}}. At exchange
 of an IdP access token, a renewed JWT-SVID MAY authenticate the same
 client and Federation Binding; DPoP MUST still prove the token's key.
@@ -568,7 +572,7 @@ Delegated exchange retains the IdP access token as `actor_token`.
 JWT-SVID authentication and credential-reuse failures produce
 `invalid_client` under {{RFC7523, Section 3.2}}. DPoP failures use the
 errors in {{exchange-errors}}. A valid authentication assertion that
-differs from the direct WAG `subject_token` produces `invalid_grant`.
+differs from the direct AFG `subject_token` produces `invalid_grant`.
 
 ### SPIFFE X.509-SVID {#spiffe-input}
 
@@ -621,7 +625,7 @@ eligible IdP access token only if its identity binding and proof key
 remain the same. If the WIT key changes:
 
 * The IdP access-token path requires new acquisition.
-* A direct WAG request proves the new key under {{direct-wag}}.
+* A direct AFG request proves the new key under {{direct-afg}}.
 
 {{WIT}} recommends a fresh key for each WIT, so reuse across renewal
 is expected only where the deployment retains the key. The lifetime
@@ -630,35 +634,12 @@ limit in {{idp-access-token}} applies to the access token, not the WIT.
 ## Instance Identification {#instance-identification}
 
 Stable instance identifiers, instance claims, and their lifecycle
-semantics are outside this version's scope. This profile does not
-interpret `client_instance_id` or `client_instance`. Unrecognized
-claims do not establish identity, key binding, or authorization.
-
-An identifier labels claimed continuity; trusted evidence establishes
-whether that continuity is accepted. Key possession alone does not
-identify an installation or execution. Native workload credentials
-also need not distinguish replicas. This profile defines no instance
-enrollment, clone-detection, or key-replacement protocol.
-
-The authorization representation remains:
-
-* For self-acting access, `sub` identifies the Registered Agent and
-  WAG contains no `act`.
-* For user-delegated access, `sub` identifies the user and `act`
-  identifies the Registered Agent.
-* Restarting an execution or replacing a replica does not by itself
-  change either principal.
-
-The `act` claim expresses delegation and identifies the acting party
-({{RFC8693, Section 4.1}}); authenticating a runtime does not by itself
-make that runtime an actor. Granting independent authority to a
-particular execution requires a specialized authorization profile.
-
-A future instance-context extension needs to define whose instance is
-described and how exchange and redemption propagate or replace that
-context. The intended association is the agent subject for WAG and the
-agent actor for ID-JAG. These are design boundaries, not instance-claim
-processing requirements in this revision.
+semantics are outside this profile. It does not interpret
+`client_instance_id` or `client_instance`, define enrollment or
+key replacement, or infer installation or execution continuity from
+key possession. Unrecognized instance claims do not establish identity
+or authorization. The repository coordination notes record design
+boundaries for future consuming profiles.
 
 ## IdP Access Token {#idp-access-token}
 
@@ -670,10 +651,11 @@ is specified in {{bootstrap}}.
 This revision selects a canonical IdP-issued actor token for delegation.
 Actor Profile also defines direct credential inputs; the adapter is
 this profile's choice to normalize agent identity before actor
-construction, not a universal Actor Profile requirement. A direct
-mapped-actor alternative is discussed in the repository coordination
-notes.
-
+construction, not a universal Actor Profile requirement. Actor Profile's
+direct credential processing uses the credential's `sub` as `act.sub`;
+this profile instead exposes the governed Registered Agent identifier.
+A direct mapped-actor input requires a companion rule for that mapping,
+including shared-client attestations, before it can replace the adapter.
 
 An unexpired access token that this IdP issued under {{bootstrap}} to
 the same client, Registered Agent, input method, and DPoP key MAY be
@@ -690,24 +672,30 @@ JWT typing and required claims, with these profile-specific values:
 | `iss` | IdP issuer identifier |
 | `sub` | Resolved Registered Agent identifier |
 | `client_id` | Authenticated OAuth client identifier |
-| `aud` | Dedicated federation exchange audience configured for this IdP |
+| `aud` | Federation exchange audience; defaults to the IdP token endpoint URL |
 | `cnf.jkt` | SHA-256 JWK thumbprint of the proven DPoP key under {{RFC7638}} |
 | `iat`, `exp` | Issuance and expiration times within the configured token lifetime |
 | `jti` | Token identifier under {{RFC9068}} |
 
-The IdP MUST configure a dedicated absolute audience URI for this
-exchange service, distinct from its issuer identifier and API
-audiences; for example,
-`https://idp.example/tenant/acme/agent-federation`. The acquisition
-request's `resource` and the token's `aud` MUST equal that URI.
-It is an identifier and need not resolve to an HTTP endpoint.
+The federation exchange audience MUST default to the IdP's
+`token_endpoint` URL obtained from trusted {{RFC8414}} metadata.
+A deployment MAY configure an alternative absolute URI, communicated
+to the client through trusted configuration. In either case:
 
-The IdP MUST accept this token only as `subject_token` or `actor_token`
-at its federation token endpoint. Other IdP endpoints and resource
-servers MUST NOT accept it as API authorization. An `at+jwt` with an
-issuer or management-API audience is ineligible even if its other
-claims match. Audience configuration is shared with the client through
-trusted deployment configuration; no new metadata field is defined.
+* The acquisition request's `resource` and the token's `aud` MUST
+  equal the selected URI exactly.
+* That URI MUST be distinct from the IdP issuer identifier and all
+  API audiences. If the token endpoint URL cannot meet this condition,
+  the deployment MUST configure an override.
+* The IdP MUST accept this token only as `subject_token` or
+  `actor_token` at its federation token endpoint. Other endpoints
+  and resource servers MUST NOT accept it as API authorization.
+
+The default needs no new metadata field. An override need not resolve
+to an HTTP endpoint; for example,
+`https://idp.example/tenant/acme/agent-federation`. The `at+jwt` type,
+issuance eligibility, and input-specific validation prevent a matching
+audience from making this token a client assertion or an API token.
 
 The token MUST NOT contain `act`; it supplies the agent subject from
 which exchange constructs an actor when needed. The IdP MUST associate
@@ -734,7 +722,7 @@ is presented, the OAuth client MUST match the one that obtained it.
 The DPoP proof establishes the issued grant's binding key:
 
 * Direct JWT input uses the credential and proof checks in {{inputs}}
-  and {{direct-wag}}.
+  and {{direct-afg}}.
 * For an IdP access token presented as `subject_token` or `actor_token`,
   the proof key MUST match its `cnf.jkt`.
 
@@ -752,7 +740,7 @@ The client MUST include each of the following parameters exactly once:
 | Parameter | Value |
 |---|---|
 | `grant_type` | `urn:ietf:params:oauth:grant-type:token-exchange` |
-| `requested_token_type` | WAG under {{self-exchange}} or ID-JAG under {{delegated-exchange}} |
+| `requested_token_type` | AFG under {{self-exchange}} or ID-JAG under {{delegated-exchange}} |
 | `subject_token` | Credential selected under {{paths}} |
 | `subject_token_type` | Token type corresponding to that credential |
 | `audience` | One target RAS issuer identifier |
@@ -767,9 +755,9 @@ The IdP MUST reject `authorization_details` {{RFC9396}} with
 
 | Output and evidence input | Exchange input | Acquisition |
 |---|---|---|
-| WAG; platform JWT, ATTEST, JWT-SVID, or WIT-SVID | The JWT credential as `subject_token`, type `jwt` | Not required; preferred path |
-| WAG; X.509-SVID | IdP access token as `subject_token`, type `access_token` | Required unless an eligible token is held |
-| WAG; another supported input with an eligible IdP access token | IdP access token as `subject_token`, type `access_token` | Reuse the existing token |
+| AFG; platform JWT, ATTEST, JWT-SVID, or WIT-SVID | The JWT credential as `subject_token`, type `jwt` | Not required; preferred path |
+| AFG; X.509-SVID | IdP access token as `subject_token`, type `access_token` | Required unless an eligible token is held |
+| AFG; another supported input with an eligible IdP access token | IdP access token as `subject_token`, type `access_token` | Reuse the existing token |
 | ID-JAG; any supported input | User credential as `subject_token`; IdP access token as `actor_token` | Required unless an eligible actor token is held; platform evidence requires separate client authentication |
 
 The abbreviated token types in this table use the
@@ -777,12 +765,12 @@ The abbreviated token types in this table use the
 
 ## Self-Acting Agent {#self-exchange}
 
-`requested_token_type` MUST be `urn:ietf:params:oauth:token-type:wag`.
+`requested_token_type` MUST be `urn:ietf:params:oauth:token-type:afg`.
 The client MUST omit `actor_token` and `actor_token_type` and use one of the
-subject inputs below. The issued WAG is specified in {{wag-profile}}
-and the status of its proposed identifiers is stated in {{iana}}.
+subject inputs below. The issued AFG is specified in {{afg-profile}}
+and its identifier registrations are specified in {{iana}}.
 
-### Direct JWT Credential {#direct-wag}
+### Direct JWT Credential {#direct-afg}
 
 `subject_token_type` MUST be `urn:ietf:params:oauth:token-type:jwt`.
 The IdP MUST validate the `subject_token` under its configured input:
@@ -805,8 +793,8 @@ MUST be rejected with `invalid_grant`; this path represents a
 self-acting agent.
 
 These checks establish subject evidence, not permission to obtain
-WAG. The IdP MUST resolve the Registered Agent under {{identity}} and
-apply {{idp-processing}} before issuance. The resulting WAG `sub` is
+AFG. The IdP MUST resolve the Registered Agent under {{identity}} and
+apply {{idp-processing}} before issuance. The resulting AFG `sub` is
 that Registered Agent's identifier. It MUST NOT be copied from an
 external `sub`, `client_id`, or instance identifier merely because
 that value was authenticated.
@@ -835,7 +823,7 @@ grant_type=
 &client_id=
   https%3A%2F%2Fplatform.example%2Fagents%2Fsupport-agent-7
 &requested_token_type=
-  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Awag
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aafg
 &subject_token=eyJ...attestation...
 &subject_token_type=
   urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
@@ -844,7 +832,7 @@ grant_type=
 &scope=tickets.read
 ~~~
 
-### IdP Access Token {#wag-access-token}
+### IdP Access Token {#afg-access-token}
 
 Where supported under {{bootstrap}}, `subject_token` MAY instead be
 an eligible IdP-issued access token, with
@@ -863,8 +851,8 @@ The IdP MUST apply Actor Profile's JWT access-token actor-input
 processing. The token's `sub` identifies the Registered Agent;
 the client identity does not supply `act.sub`. Acquisition under
 {{bootstrap}} is required when no eligible actor token is available.
-The direct JWT input in {{direct-wag}} applies only to self-acting
-WAG; it does not change Actor Profile's actor-input rules.
+The direct JWT input in {{direct-afg}} applies only to self-acting
+AFG; it does not change Actor Profile's actor-input rules.
 
 `subject_token` MUST be a user credential accepted under {{ID-JAG}}.
 Implementations MUST support an OpenID Connect ID Token with
@@ -908,8 +896,8 @@ grant_type=
 Before issuing a grant, the IdP MUST complete these checks:
 
 1. **Validate request evidence.** Validate the DPoP proof and required
-   client authentication under {{inputs}}. For direct WAG, validate
-   the subject credential and resolve its binding under {{direct-wag}}.
+   client authentication under {{inputs}}. For direct AFG, validate
+   the subject credential and resolve its binding under {{direct-afg}}.
 2. **Validate any IdP access token.** Apply {{idp-access-token}},
    including signature, JWT type, issuer, audience, lifetime, and
    issuance eligibility. Then:
@@ -971,31 +959,26 @@ credential or applicable delegation, where either has a fixed
 expiration. The agent credential or IdP access token is valid at
 exchange; its remaining validity does not bound the grant.
 
-### Workload Authorization Grant Issued by an IdP {#wag-profile}
+### Agent Federation Grant {#afg-profile}
 
-{{WAG}} defines a platform-issued grant, per-tenancy issuer model,
-Agent Identifier, Agent Properties, and RFC 7523 redemption. This
-section proposes an IdP-issued extension, adding JWT and token types,
-key binding, and authorization claims. These additions are not defined
-by WAG-00 and need upstream agreement or a distinct grant name before
-interoperability can be claimed with base WAG implementations.
+An Agent Federation Grant (AFG) is an IdP-issued JWT authorizing a
+Registered Agent to request self-acting access at one RAS. An AFG MUST
+use JWS Compact Serialization {{RFC7515}}. This section
+and {{consumption}} define its issuance and redemption requirements.
+The registrations in {{iana}} belong to this specification.
 
-The requirements below apply only when both parties explicitly
-configure this proposed extension. Identifier registration status is
-stated in {{iana}}.
-
-In addition to the common claims above, the WAG MUST have:
+In addition to the common claims above, the AFG MUST have:
 
 | Header or claim | Value |
 |---|---|
-| Protected-header `typ` | `oauth-wag+jwt` |
+| Protected-header `typ` | `oauth-afg+jwt` |
 | `iss` | IdP issuer identifier for the Source Tenant |
 | `sub` | Registered Agent identifier resolved under {{idp-processing}} |
 
-The WAG MUST NOT contain `act`. Its token type is
-`urn:ietf:params:oauth:token-type:wag` ({{iana}}). The `scope` and
-`resource` claims use the definitions in {{ID-JAG}}. The single RAS
-issuer audience selects one of WAG's accepted audience forms.
+The AFG MUST NOT contain `act`. Its token type is
+`urn:ietf:params:oauth:token-type:afg` ({{iana}}). The `scope` and
+`resource` claims use the definitions in {{ID-JAG}}. Its sole audience
+is the target RAS issuer identifier under {{grant}}.
 
 #### Tenant Issuers and Agent Identifiers
 
@@ -1014,24 +997,23 @@ The RAS MUST:
   nor a union of tenant key sets can select a verification key.
 * Interpret `sub` and `jti` within that issuer's namespace.
 * Treat `sub` as an exact-match opaque string, including when the IdP
-  uses WAG's recommended URI form under the tenant issuer.
+  uses a URI under the tenant issuer.
 
-The Agent Identifier is immutable and never reassigned. It is the
+The Registered Agent identifier is immutable and never reassigned. It is the
 same Registered Agent identifier for direct JWT and IdP access-token
 inputs.
 
 #### Agent Properties and Provisioning
 
-A WAG MAY carry Agent Properties from the Registered Agent record and
-its memberships:
+Agent Properties are optional attributes of the Registered Agent and
+its memberships. An AFG MAY carry these claims:
 
 * `groups` and `roles` use {{RFC9068}} definitions and describe the
   agent's memberships.
 * `name` uses the OpenID Connect definition {{OIDC}}. It MUST NOT
   serve as an authorization or attribution key.
-* `namespace` and `ctx` are WAG placeholders pending registration.
 
-The RAS MUST NOT require prior provisioning merely to accept a WAG
+The RAS MUST NOT require prior provisioning merely to accept an AFG
 subject under an allowlisted issuer. It MUST apply issuer-specific
 policy before authorizing access. Authorization dependent on a
 provisioned record can be withheld until correlation succeeds under
@@ -1051,19 +1033,23 @@ with the following values:
 | `act.sub` | IdP-issued actor token's `sub` |
 | `client_id` | Downstream client identifier |
 
-Exactly one actor is introduced. Deployments implementing
-{{ENTITY-PROFILES}} can add `sub_profile` annotations under that
-separate specification; they are not required for this profile.
-Other required ID-JAG claims,
-including applicable tenant context, follow ID-JAG. Translating the
+Exactly one actor is introduced. {{ACTOR-PROFILE, Section 3.4}}
+recommends `act.sub_profile`; this profile retains that recommendation
+without making the claim mandatory. Deployments omitting the annotation
+follow Actor Profile's unclassified-actor processing. Entity Profiles
+{{ENTITY-PROFILES}} remains a transitive normative dependency through
+Actor Profile despite its informative classification here.
+
+Other required ID-JAG claims, including applicable tenant context,
+follow ID-JAG. Translating the
 client identifier MUST NOT rewrite the actor's namespace or substitute
 a recipient-specific agent identifier. ID-JAG's issuer-identifier
-audience rule applies instead of Actor Profile's generic
-token-endpoint audience guidance.
+audience rule applies instead of the token-endpoint audience shown
+in Actor Profile's examples.
 
 ### Example Grant Payloads
 
-Example WAG payload:
+Example AFG payload:
 
 ~~~ json
 {
@@ -1111,7 +1097,7 @@ The response follows {{RFC8693, Section 2.2.1}}. The IdP MUST return:
 | Parameter | Value |
 |---|---|
 | `access_token` | Issued grant |
-| `issued_token_type` | Requested WAG or ID-JAG token type |
+| `issued_token_type` | Requested AFG or ID-JAG token type |
 | `token_type` | `N_A`; the returned grant is not an API access token |
 | `expires_in` | Remaining grant lifetime in seconds |
 | `scope` | Approved scopes, matching the grant's `scope` |
@@ -1159,11 +1145,11 @@ A failed delegated request MUST NOT fall back to a self-acting grant.
 This path obtains the canonical agent token defined in
 {{idp-access-token}} when no eligible token is held:
 
-* X.509-SVID uses it as the WAG exchange subject.
+* X.509-SVID uses it as the AFG exchange subject.
 * All delegated inputs use it as the ID-JAG actor credential.
-* Other WAG inputs can use it when the deployment supports that path.
+* Other AFG inputs can use it when the deployment supports that path.
 
-The IdP MUST NOT require acquisition before direct JWT-to-WAG exchange.
+The IdP MUST NOT require acquisition before direct JWT-to-AFG exchange.
 Acquisition establishes an exchange credential; subsequent requests
 still require authentication and current authorization checks.
 
@@ -1197,12 +1183,11 @@ binding can resolve to the same `agent-42` in either model.
 ## Request
 
 ATTEST and SPIFFE clients MUST use the client credentials grant with
-`resource` equal to the dedicated exchange audience in
+`resource` equal to the selected exchange audience in
 {{idp-access-token}} and authentication under
 {{inputs}}. Platform JWT input instead uses {{platform-acquisition}}.
 The client credentials grant retains its confidential-client
-requirement under {{RFC6749, Section 4.4}}. The example uses ATTEST
-without optional instance identification.
+requirement under {{RFC6749, Section 4.4}}. The example uses ATTEST.
 
 ~~~ http
 POST /token HTTP/1.1
@@ -1215,7 +1200,7 @@ grant_type=client_credentials
 &client_id=
   https%3A%2F%2Fplatform.example%2Fagents%2Fsupport-agent-7
 &resource=
-  https%3A%2F%2Fidp.example%2Ftenant%2Facme%2Fagent-federation
+  https%3A%2F%2Fidp.example%2Ftoken
 ~~~
 
 ### Acquisition from Platform JWT Evidence {#platform-acquisition}
@@ -1229,7 +1214,7 @@ under {{platform-client}} and the following parameters:
 | `subject_token` | Platform JWT validated under {{platform-jwt-input}} |
 | `subject_token_type` | `urn:ietf:params:oauth:token-type:jwt` |
 | `requested_token_type` | `urn:ietf:params:oauth:token-type:access_token` |
-| `resource` | Dedicated exchange audience under {{idp-access-token}} |
+| `resource` | Selected exchange audience under {{idp-access-token}} |
 
 The client MUST omit `audience`, `scope`, `actor_token`, and
 `actor_token_type`; their presence produces `invalid_request`. The
@@ -1271,7 +1256,7 @@ Example client credentials response:
 
 Redemption uses the RFC 7523 JWT bearer grant, with DPoP proof of
 possession as required by this profile. The grant format and processing
-follow {{ID-JAG}} for delegated access and {{wag-profile}} for
+follow {{ID-JAG}} for delegated access and {{afg-profile}} for
 self-acting access. Delegated processing also follows Actor Profile,
 including preservation of `act`.
 
@@ -1283,7 +1268,7 @@ parameter exactly once:
 | Parameter | Value |
 |---|---|
 | `grant_type` | `urn:ietf:params:oauth:grant-type:jwt-bearer` |
-| `assertion` | WAG or ID-JAG |
+| `assertion` | AFG or ID-JAG |
 | `resource` | Exact value of the grant's `resource` claim |
 | `scope` | Optional subset of the grant's scopes; omission requests the grant's scopes |
 
@@ -1293,7 +1278,7 @@ Client authentication depends on the grant:
   or otherwise trusted for the grant's downstream `client_id`. The
   RAS MUST match that identifier to the authenticated client. An IdP
   client-ID mapping does not provision the downstream credential.
-* **WAG:** the RAS MAY require client authentication by configuration,
+* **AFG:** the RAS MAY require client authentication by configuration,
   in addition to the DPoP proof.
 
 DPoP possession alone MUST NOT satisfy a client authentication
@@ -1332,9 +1317,9 @@ DPoP-bound access token uses the proof key under {{RFC9449}}; another
 sender-constraint mechanism requires its own binding and proof rules.
 The client uses this access token at the resource server.
 
-For WAG, the RAS MUST make any Agent Properties available to the
-resource server's authorization decision and MUST NOT issue a refresh
-token. ID-JAG refresh behavior follows {{delegated-lifecycle}}.
+For AFG, the RAS MUST make any Agent Properties available to the
+resource server's authorization decision. Refresh-token behavior for
+both grants follows {{refresh-policy}}.
 Access-token format, lifetime, and introspection follow the selected
 grant and resource policy.
 
@@ -1355,7 +1340,7 @@ The RAS MUST return an OAuth token error response under
 | Missing, invalid, or mismatched resource | `invalid_target` |
 | Requested scope exceeds the grant or no requested scope is authorized | `invalid_scope` |
 
-The same bound-grant error distinctions apply to WAG and ID-JAG.
+The same bound-grant error distinctions apply to AFG and ID-JAG.
 A nonce challenge follows RFC 9449 and does not consume the grant.
 
 ## Continuing Delegated Access {#delegated-lifecycle}
@@ -1379,31 +1364,46 @@ When accepting a refresh token, the IdP MUST enforce:
 If no eligible user credential can be obtained, the agent MUST stop
 delegated issuance and obtain renewed user authorization.
 
-Under {{ID-JAG}}, the RAS SHOULD NOT issue a refresh token by default.
-A deployment enabling them applies the client and sender bindings,
-refresh-token protection in {{RFC9700, Section 4.14}}, and current
-RAS authorization policy. This is a separately configured lifecycle.
-An ID-JAG itself remains single use under {{redemption-validation}}.
+## Refresh Tokens at the RAS {#refresh-policy}
 
-### Request Cost and Refresh Policy
+For both AFG and ID-JAG, the RAS SHOULD NOT issue a refresh token by
+default. A deployment MAY enable refresh when continuing authorization
+can be checked independently of a new IdP grant. The RAS MUST:
 
-Direct WAG requires an IdP exchange and RAS redemption. With no
+* Establish an authorized OAuth client at redemption before issuing
+  a refresh token, including when AFG redemption would otherwise
+  omit client authentication.
+* Bind each refresh token to that client, agent, resource, scope
+  ceiling, and sender key; for ID-JAG, also retain the user and
+  delegation association.
+* Apply refresh-token protection under {{RFC9700, Section 4.14}} and
+  verify the client and sender bindings on refresh.
+* Recheck current authorization under its configured freshness and
+  revocation policy, including agent status and, for ID-JAG, continuing
+  delegation. A RAS unable to perform those checks MUST NOT issue a
+  refresh token.
+
+Neither grant becomes reusable when refresh is enabled; both remain
+single use under {{redemption-validation}}. Deployments that do not
+establish continuing authorization obtain a new grant instead.
+
+## Request Cost
+
+Direct AFG requires an IdP exchange and RAS redemption. With no
 eligible IdP token, the adapter path requires acquisition, exchange,
 and redemption. User-credential renewal can add another request for
 delegation. Reusing an eligible adapter token avoids acquisition;
 its configurable lifetime does not remove current-policy checks.
 
 The grant's short lifetime and single-use rule bound the redemption
-window, not the downstream access-token lifetime. WAG refresh tokens
-remain prohibited to retain WAG-00's redemption rule. ID-JAG permits
-an independently configured refresh lifecycle. This asymmetry comes
-from the referenced grants; enabling WAG refresh needs upstream
-coordination or a distinct self-acting grant specification.
+window, not the downstream access-token lifetime. The same refresh
+policy in {{refresh-policy}} applies to self-acting and delegated
+access; no AFG behavior is inherited from WAG.
 
 ## Agent Record Correlation {#agent-correlation}
 
 The canonical Registered Agent identity is the exact pair of IdP
-issuer and agent identifier. For a WAG issued here, the pair is
+issuer and agent identifier. For an AFG issued here, the pair is
 `(iss, sub)`; for delegated ID-JAG it is `(act.iss, act.sub)`.
 
 A RAS using provisioned agent records MUST resolve both forms through
@@ -1431,8 +1431,31 @@ for the JWT-SVID configuration described below:
 | Client credentials acquisition, when supported | `grant_types_supported` includes `client_credentials` |
 | Client authentication | `token_endpoint_auth_methods_supported` includes implemented methods, such as `attest_jwt_client_auth_dpop`, `spiffe_x509`, or `spiffe_wit` |
 | DPoP | `dpop_signing_alg_values_supported` includes `ES256` under {{RFC9449}} |
-| Grant outputs | `identity_chaining_requested_token_types_supported` lists supported WAG and/or ID-JAG token types under {{IDENTITY-CHAINING}} |
-| Delegation, when supported | Actor Profile metadata for ID Token subject input and JWT access-token actor input |
+| Grant outputs | `identity_chaining_requested_token_types_supported` lists supported AFG and/or ID-JAG token types under {{IDENTITY-CHAINING}} |
+| Delegation, when supported | `actor_profile_token_exchange` with the role-specific arrays below |
+
+An IdP supporting delegated ID-JAG MUST include the following in
+`actor_profile_token_exchange` under {{ACTOR-PROFILE}}:
+
+* `subject_token_types_supported` includes
+  `urn:ietf:params:oauth:token-type:id_token`, and includes
+  `urn:ietf:params:oauth:token-type:refresh_token` when that input is
+  supported under {{delegated-lifecycle}}.
+* `actor_token_types_supported` includes
+  `urn:ietf:params:oauth:token-type:access_token`.
+* `requested_token_types_supported` includes
+  `urn:ietf:params:oauth:token-type:id-jag`.
+
+An IdP claiming delegated ID-JAG support under this profile MUST
+advertise ID-JAG in both
+`actor_profile_token_exchange.requested_token_types_supported` and
+`identity_chaining_requested_token_types_supported`. Clients MUST NOT
+attempt this profile's delegated exchange if the two advertisements
+disagree about ID-JAG support. A single advertisement can describe a
+path outside this profile; it does not establish support for this one. The arrays need not otherwise be equal:
+AFG is self-acting and is advertised only through identity chaining
+for this profile; an AS can also support unrelated Actor Profile
+outputs. These coarse signals do not replace the binding configuration.
 
 JWT-SVID support MUST be agreed through trusted configuration using
 the assertion type in {{jwt-svid-input}}. SPIFFE OAuth defines that
@@ -1478,10 +1501,10 @@ secret in every distributed agent does not establish confidentiality.
 
 Validators MUST apply mutually exclusive validation rules to the
 credential classes they accept, under {{RFC8725, Section 3.12}}.
-In particular, an IdP access token, WAG, ID-JAG, client assertion, or
+In particular, an IdP access token, AFG, ID-JAG, client assertion, or
 platform JWT does not become another credential class merely because
 it has a trusted signature. The intentional dual use of a Client
-Attestation, JWT-SVID, or WIT-SVID in {{direct-wag}} requires both sets
+Attestation, JWT-SVID, or WIT-SVID in {{direct-afg}} requires both sets
 of checks.
 
 For JWTs accepted under this profile, validators MUST:
@@ -1521,7 +1544,7 @@ A compromised tenant issuer can forge subjects and properties within
 its namespace, including previously unseen agents. The RAS MUST NOT
 let an issuer assert another issuer's agents, memberships, or Target
 Tenant. Its issuer-specific policy governs authorization for new
-subjects under {{wag-profile}}.
+subjects under {{afg-profile}}.
 
 Distinct tenant keys and issuer-bound validation limit cross-tenant
 forgery, but do not protect against compromise of the IdP's shared
@@ -1598,7 +1621,7 @@ only necessary identity and authorization context. Raw attestation
 material and private keys MUST NOT appear in grants or audit logs.
 
 A canonical agent identifier is stable across RASes. For a per-user
-agent, WAG `sub` or ID-JAG `act.sub` can therefore correlate the user
+agent, AFG `sub` or ID-JAG `act.sub` can therefore correlate the user
 across services even when ID-JAG uses a pairwise user subject. The
 IdP SHOULD NOT expose such a cross-context user pseudonym without a
 correlation requirement at the receiving RASes.
@@ -1623,21 +1646,57 @@ The value is a nonempty StringOrURI distinguishing agents represented
 by a shared ATTEST client. Platform JWT identity selectors are
 configured separately under {{platform-jwt-input}}.
 
-## WAG Identifiers Pending Coordination
+## OAuth URI Registration
 
-This revision requests no WAG media-type or token-type registration.
-The `oauth-wag+jwt` type and
-`urn:ietf:params:oauth:token-type:wag` URI in {{wag-profile}} are
-proposals pending agreement with WAG. The registration templates are
-tracked in the repository coordination notes. They are not identifiers
-defined by WAG-00, and base WAG support does not imply support for them.
+This specification requests registration in the "OAuth URI" registry
+established by {{RFC6755}}:
+
+* URN: `urn:ietf:params:oauth:token-type:afg`
+* Common Name: Token type URI for an Agent Federation Grant
+* Change Controller: IETF
+* Specification Document: {{afg-profile}} of this document
+
+The URI identifies AFG in Token Exchange requests and responses. It
+does not define a new `grant_type`; redemption uses the JWT bearer
+grant under {{consumption}}.
+
+## Media Type Registration
+
+This specification requests registration of `application/oauth-afg+jwt`
+in the "Media Types" registry under {{RFC6838}}:
+
+* Type name: application
+* Subtype name: oauth-afg+jwt
+* Required parameters: none
+* Optional parameters: none
+* Encoding considerations: binary; AFG uses JWS Compact Serialization
+* Security considerations: {{security}} and {{privacy}} of this document
+* Interoperability considerations: implementations apply the JWT type,
+  issuer, audience, authorization, proof, and replay checks in
+  {{afg-profile}} and {{consumption}}
+* Published specification: this document
+* Applications that use this media type: OAuth clients and authorization
+  servers exchanging and redeeming Agent Federation Grants
+* Fragment identifier considerations: none
+* Additional information:
+  * Deprecated alias names for this type: none
+  * Magic number(s): none
+  * File extension(s): none
+  * Macintosh file type code(s): none
+* Person and email address to contact for further information:
+  Karl McGuinness, public@karlmcguinness.com
+* Intended usage: COMMON
+* Restrictions on usage: none
+* Author: Karl McGuinness
+* Change controller: IETF
+* Provisional registration: no
 
 ## Other Identifiers
 
-`act` follows {{ACTOR-PROFILE}}. Entity Profiles annotations are outside
-this profile's conformance requirements.
-No new actor format, access-token type, or grant-profile URI is
-registered.
+`act` follows {{ACTOR-PROFILE}}, including its recommendation for
+`act.sub_profile` as described in {{id-jag-profile}}. This document
+registers no new actor format, API access-token type, or grant-profile
+URI.
 
 --- back
 
@@ -1647,10 +1706,10 @@ This appendix is informative.
 
 A deployment can adopt user-delegated ID-JAG first, adding Actor
 Profile and this document's sender-binding and replay requirements
-to its existing user federation. Self-acting WAG is a separate
+to its existing user federation. Self-acting AFG is a separate
 capability: it requires issuer-based workload trust, new-subject
-handling, bound grants, and the WAG definitions coordinated in
-[Coordination with Related Work](https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/coordination.md#coordination). Supporting ID-JAG does not imply WAG support, and a
+handling, and the bound-grant rules in {{afg-profile}}. Supporting
+ID-JAG does not imply AFG support, and a
 RAS need not implement both outputs. Implementations should negotiate
 only the capabilities actually deployed.
 
