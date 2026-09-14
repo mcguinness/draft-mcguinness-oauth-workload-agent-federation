@@ -8,7 +8,7 @@ hosting environment, authentication evidence, and acting relationship:
 
 | Use case | Deployment | Evidence accepted by IdP | Identity model | Grant |
 |---|---|---|---|---|
-| Agent acting for itself | SPIFFE workload | X.509-SVID or WIT-SVID with their required proofs | Agent is the client | WAG |
+| Agent acting for itself | SPIFFE workload | JWT-SVID, X.509-SVID, or WIT-SVID with DPoP and the input-specific proofs | Agent is the client | WAG |
 | Agent acting for itself | Imported cloud or agent-platform agent | Platform-issued JWT and DPoP | Imported workload principal; no OAuth client required | WAG |
 | Agent acting for itself | Managed platform | Platform Client Attestation and DPoP | Agents share a client | WAG |
 | Agent acting for a user | Managed device | Enterprise Client Attestation and DPoP | Agent is the client | ID-JAG |
@@ -181,6 +181,113 @@ claim a stable runtime identity. A renewed SVID can be used with an
 existing eligible token when the approved SPIFFE binding and DPoP
 key remain the same. An unrelated identity or replacement DPoP key
 cannot use that token.
+
+<a id="jwt-svid-flow"></a>
+
+### JWT-SVID Variant
+
+With [SPIFFE JWT-SVID](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#jwt-svid-input)
+configured, the harness obtains a JWT-SVID for the IdP issuer audience.
+Its protected header uses `typ=JWT`, `alg=ES256`, and a `kid` selecting a
+JWT-SVID signing key in the approved `workloads.example` trust bundle.
+This decoded payload deliberately omits optional `iss` and `iat`:
+
+~~~ json
+{
+  "sub": "spiffe://workloads.example/agents/support",
+  "aud": ["https://idp.example/tenant/acme"],
+  "exp": 1789128300
+}
+~~~
+
+The harness authenticates the client with this JWT-SVID and sends the
+identical JWT as subject evidence for direct WAG. The separate DPoP proof
+is signed with `K` and targets `POST https://idp.example/token`:
+
+~~~ http
+POST /token HTTP/1.1
+Host: idp.example
+Content-Type: application/x-www-form-urlencoded
+DPoP: eyJ...proof-K...
+
+grant_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
+&client_id=spiffe%3A%2F%2Fworkloads.example%2Fagents%2Fsupport
+&client_assertion_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-spiffe
+&client_assertion=eyJ...jwt-svid...
+&requested_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Awag
+&subject_token=eyJ...jwt-svid...
+&subject_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
+&audience=https%3A%2F%2Fas.app.example
+&resource=https%3A%2F%2Fapi.app.example
+&scope=tickets.read
+~~~
+
+The IdP validates client authentication, identical subject evidence, and
+DPoP, resolves `agent-42`, and checks its assignments. It enforces the
+credential's association with that binding and `K` before issuing WAG
+with `sub=agent-42` and `cnf.jkt=JKT(K)`. Redemption follows the X.509-SVID
+example above. The JWT-SVID does not certify `K`; theft before first use
+can allow an attacker to establish a different initial association.
+
+For user-delegated access, the harness first acquires an IdP actor token:
+
+~~~ http
+POST /token HTTP/1.1
+Host: idp.example
+Content-Type: application/x-www-form-urlencoded
+DPoP: eyJ...fresh-proof-K...
+
+grant_type=client_credentials
+&client_id=spiffe%3A%2F%2Fworkloads.example%2Fagents%2Fsupport
+&client_assertion_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-spiffe
+&client_assertion=eyJ...jwt-svid...
+&resource=
+  https%3A%2F%2Fidp.example%2Ftenant%2Facme%2Fagent-federation
+~~~
+
+The JWT-SVID's audience remains the IdP issuer. The returned token's
+`aud` instead equals the dedicated exchange resource above; its
+`client_id` is the SPIFFE ID, `sub` is `agent-42`, and `cnf.jkt` is
+`JKT(K)`. The harness then sends this delegated exchange with an accepted
+user credential issued to that client and approval for the requested
+agent, user, client, tenant, resource, and scopes:
+
+~~~ http
+POST /token HTTP/1.1
+Host: idp.example
+Content-Type: application/x-www-form-urlencoded
+DPoP: eyJ...next-proof-K...
+
+grant_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
+&client_id=spiffe%3A%2F%2Fworkloads.example%2Fagents%2Fsupport
+&client_assertion_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-spiffe
+&client_assertion=eyJ...jwt-svid...
+&requested_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aid-jag
+&subject_token=eyJ...user-id-token...
+&subject_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aid_token
+&actor_token=eyJ...agent-access-token...
+&actor_token_type=
+  urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aaccess_token
+&audience=https%3A%2F%2Fas.app.example
+&resource=https%3A%2F%2Fapi.app.example
+&scope=tickets.read
+~~~
+
+The JWT-SVID authenticates the client; the IdP access token supplies the
+canonical actor identity. ID-JAG contains the user as `sub`, the IdP's
+`agent-42` as `act.sub`, and `cnf.jkt=JKT(K)`. Reusing the JWT-SVID across
+these requests requires fresh DPoP proofs from the same key. A renewed
+JWT-SVID can authenticate an existing actor token only with the same
+binding and key. None of these steps creates an instance identifier.
 
 ### WIT-SVID Variant
 

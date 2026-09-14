@@ -115,6 +115,11 @@ The following items remain open:
   `jwt-bearer`, while ID-JAG's bound-grant example and [JWT-DPOP](https://datatracker.ietf.org/doc/html/draft-parecki-oauth-jwt-dpop-grant-01)
   use `jwt-dpop`. This document follows the normative `jwt-bearer`
   text with DPoP and will follow ID-JAG if it adopts `jwt-dpop`.
+* **JWT-SVID discovery:** JWT-SVID authentication follows SPIFFE OAuth's
+  `urn:ietf:params:oauth:client-assertion-type:jwt-spiffe` assertion type.
+  That draft does not define a corresponding discovery method name.
+  Federation therefore agrees support through trusted configuration;
+  an interoperable advertisement should be coordinated upstream.
 * **SPIFFE and ATTEST:** `spiffe_wit` currently uses a separate Client
   Attestation PoP JWT plus DPoP with the same key. Its metadata needs
   alignment with ATTEST's evolving proof modes. General WIT actor

@@ -40,6 +40,23 @@ exercise:
 
 | Case | Expected result |
 |---|---|
+| Direct WAG with JWT-SVID; approved exact SPIFFE ID, IdP issuer audience, identical assertion/subject, fresh DPoP; no `iss` or `iat` | WAG for the Registered Agent, bound to the DPoP key |
+| JWT-SVID with invalid signature, expired `exp`, missing required claim, or malformed SPIFFE ID | `invalid_client` |
+| JWT-SVID with RAS, token endpoint, or adapter audience, or multiple audiences | `invalid_client`; only the IdP issuer audience is accepted |
+| JWT-SVID with an unapproved trust domain, including a colliding `kid` from another domain | `invalid_client`; no cross-domain key lookup |
+| JWT-SVID includes an `iss` naming a different key source | Never use `iss` to select keys; accept only if configured trust-domain validation succeeds |
+| JWT-SVID presented with the generic JWT bearer client assertion type | Does not select JWT-SVID authentication |
+| JWT-SVID `client_id` differs from exact `sub`, including a wildcard or CIMD URL | `invalid_client` under this profile's explicit narrowing |
+| JWT-SVID with a future or non-NumericDate `iat` | `invalid_client`; optional claims are validated when present |
+| JWT-SVID alone, without DPoP | `invalid_dpop_proof`; bearer client authentication does not establish the output key |
+| Previously used JWT-SVID with a fresh proof from the same key and same binding | Eligible, subject to current validation and authorization |
+| Previously used JWT-SVID with another DPoP key, including a different signature over the same signing input | `invalid_client`; retain the original association |
+| Concurrent first use of one JWT-SVID with distinct keys across acquisition/exchange replicas | At most one key association succeeds |
+| JWT-SVID client credentials acquisition with dedicated exchange `resource` | IdP access token with canonical agent `sub`, exact SPIFFE `client_id`, dedicated `aud`, and DPoP `cnf.jkt` |
+| JWT-SVID acquired actor token, same current client/binding/key, valid user credential and delegation approval | Issue ID-JAG; JWT-SVID is authentication, not `actor_token` |
+| Renewed JWT-SVID, same binding and DPoP key | Existing eligible token remains usable; current checks still apply |
+| Renewed JWT-SVID and a new DPoP key with an old adapter token | `invalid_grant`; renewal does not rebind the adapter token |
+| Cached JWT-SVID supplied to replicas with different DPoP keys | Reject the second key; each key needs a distinct credential signing input |
 | X.509-SVID client with approved exact ID and DPoP proof | IdP access token without stable instance context |
 | Direct WAG with WIT-SVID; approved exact ID, attestation PoP, matching DPoP key; no `iss` | WAG for the configured agent without acquisition |
 | WIT-SVID with missing attestation PoP, mismatched key or proof algorithm, or expired credential | Reject authentication or proof |
@@ -48,7 +65,7 @@ exercise:
 | Renewed WIT-SVID, same binding and unchanged `cnf.jwk` | Existing eligible token remains usable |
 | Renewed WIT-SVID with a new `cnf.jwk` | Reject exchange with the old token; new IdP access token required |
 | Direct WAG using a renewed WIT-SVID and proofs from its new key | WAG bound to the new key; no IdP access token required |
-| Direct ATTEST or WIT-SVID subject differs from the authentication JWT, even for the same identity | `invalid_grant` |
+| Direct ATTEST, JWT-SVID, or WIT-SVID subject differs from the authentication JWT, even for the same identity | `invalid_grant` |
 | X.509-SVID request omits `subject_token` | `invalid_request`; use the access-token adapter |
 
 ## Delegation and Instance Context
