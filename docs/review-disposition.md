@@ -1,30 +1,20 @@
 # Review disposition
 
-This revision addresses the review of a74cb5a. It keeps the main document on Standards Track by defining a complete delegated flow and extracts the independent attested-agent feature into its own short Standards Track draft.
+This revision resolves the fresh-eye review of `4deadff`. It retains the delegated ID-JAG architecture and the separate attested-agent draft.
 
-| Review issue | Disposition |
+| Review issue | Resolution |
 |---|---|
-| No complete protocol path | Main draft now defines ID Token + direct platform JWT exchange, governed actor construction, DPoP-bound ID-JAG, authenticated redemption, JWT access token, and API processing |
-| Split attested-agent identity | New `draft-mcguinness-oauth-attested-agent-identity.md` owns the claim, modes, trust, verification and IANA request; no dependency on the federation flow |
-| ID-JAG extension deferred upstream | Processing is defined here under ID-JAG §9.7; no base ID-JAG change required |
-| Actor Profile copying rule differs | Main draft explicitly imports actor-object/resource rules, defines its own mapped-input processing, and does not advertise generic Actor Profile algorithm conformance |
-| Self-acting WAG overstated | Abstract and introduction explicitly defer it; remaining asks stay with WAG |
-| Attester identification | Own-client mode identifies the authority through the trusted verification key and configuration; a present `iss` must agree; shared mode requires `iss` |
-| Metadata-name inference unexplained | SPIFFE assertion type versus authentication-method metadata distinction is explained; input capabilities are defined in an `agent_federation` object |
-| Phantom owners | Identification and lifecycle work are described as future specifications |
-| Actor Profile normative without use | Normative use is now explicit for actor structure and API authorization |
-| WIT baseline absent | WIT-02 is listed |
-| Own-client output unclear | Direct attestation maps to a governed actor even when identifiers differ; no normalization token |
-| Product-like use of “Federation” | Prose uses “this profile” or “this document”; the defined term Federation Binding remains |
-| Project-management agenda in the body | Remaining gaps contain concise problems and asks; criteria live only in repository interoperability notes |
-| Stale gap anchors | Companion uses `shared-agent` and `attester-trust`; main normative processing has role-specific anchors |
-| Silent narrowing risk | Table lists additional required fields, actor mapping, proof/key rules, algorithms, lifetime bounds, chain scope, and error behavior |
-| New companion dependency | Explicit editor's-copy reference, built alongside the main draft; optional shared-client path only. It is not claimed to be a Datatracker publication |
+| Client authentication forces agent resolution | Only selected actor evidence resolves to a Registered Agent. X.509-SVID and WIT-SVID used for client authentication identify the OAuth client; that client must be permitted to use the separate actor binding. |
+| API applicability and rejection rules incomplete | Trusted resource configuration selects profile-required paths independently of token claims. Those paths require a valid single actor, approved actor namespace, scope and DPoP binding. Resource errors distinguish malformed tokens, denied actor authorization, insufficient scope and proof failures. |
+| Client-assertion audience ambiguous | The token-endpoint audience requirement is explicitly limited to `private_key_jwt`. Native JWT-SVID retains the sole IdP-issuer audience; ATTEST retains its own proof audience. |
+| Requested and granted authority conflated | Ceilings apply to issued authority. Policy may approve a non-empty subset; no authorized scope or unavailable mandatory full approval produces `invalid_scope`. Delegation approval applies to the authority actually issued. |
+| WIT deferral presented as an upstream proof gap | Reframed as a local scope choice. SPIFFE OAuth already supplies the attestation proof. Direct actor composition still needs an explicit output-key choice: WIT-02 §9.4 prohibits key use after credential expiry, so sharing that key with downstream DPoP requires corresponding lifetime limits. No change to ATTEST is requested. |
+| Refresh has no explicit continuation bound | The optional RAS refresh exception requires a finite deadline anchored to the authorizing ID-JAG's `iat`, termination events and status-freshness policy. Rotation and reuse cannot advance the deadline; extending it requires a new ID-JAG and full profile checks. Tokens issued under the exception cannot outlive the deadline. |
 
-The signed delegated example includes synthetic public keys and complete tokens for both exchanges and the API. Its checker verifies signatures and cross-hop consistency, not independent implementation interoperability. No upstream acceptance or IANA allocation is claimed.
+The examples and conformance inventory cover these outcomes, including a hosting client with no agent record, native audience selection, partial scope approval, missing API actor context and refresh deadline behavior. The signed fixture now includes explicit API path and actor-namespace trust configuration, checked against its tokens. These are example-integrity checks and conformance scenarios, not an implemented IdP/RAS pair or independent interoperability results.
 
 ## Validation
 
-Both drafts build to HTML and text through the repository Makefile with refreshed bibliography data. All references are cited. All 120 main-draft and 14 companion cross-references resolve; the generated HTML has 532 and 174 unique anchors respectively. The ten documentation links to generated drafts and all three JSON blocks validate. The signed example checker passes all nine JWT signatures, tamper rejection, public-key consistency, and cross-hop identity, scope, client and DPoP checks. `git diff --check` passes.
+The main draft builds to HTML and text through the repository Makefile; the unchanged companion outputs remain current. Both also render as paginated submission copies. All 130 main-draft and 14 companion cross-references resolve, and all 25 main-draft and 6 companion bibliography entries are cited. Generated HTML fragment links, documentation links and JSON blocks validate. The signed example checker passes all nine JWT signatures, tamper rejection, identity/client/scope/DPoP checks and API configuration checks. `git diff --check` passes.
 
-The companion's submission-named text passes idnits with no findings. The main draft reports six `POSSIBLE_DOWNREF` flags for normative drafts, two `UNDEFINED_STATE` warnings for the new companion (not yet submitted), and two generated table-of-contents appendix indentation warnings. Its baseline remains implementable without the optional companion dependency; the main draft is not described as idnits-clean.
+The companion passes idnits with no findings. The main draft retains the prior six `POSSIBLE_DOWNREF` flags, two `UNDEFINED_STATE` warnings for the unsubmitted companion, and two generated appendix table-of-contents indentation warnings. No new idnits findings were introduced; the main draft is not described as idnits-clean.

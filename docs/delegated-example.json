@@ -7,6 +7,12 @@
     "resource": "https://api.app.example/tickets",
     "idp_client": "idp-agent-client",
     "ras_client": "ras-agent-client",
+    "api_policy": {
+      "required_profile_paths": ["https://api.app.example/tickets"],
+      "actor_namespaces_by_token_issuer": {
+        "https://as.app.example": ["https://idp.example/tenant/acme"]
+      }
+    },
     "external_actor": {
       "iss": "https://platform.example",
       "sub": "support-bot-7"

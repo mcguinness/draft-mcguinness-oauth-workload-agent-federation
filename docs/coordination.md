@@ -25,10 +25,12 @@ The [attested-agent companion](https://mcguinness.github.io/draft-mcguinness-oau
 | Self-acting WAG composition | WAG defines IdP issuance inputs, governed subject namespace, its identifiers, sender constraint, audience/replay policy, authority limits, and continuing access | Deferred; [summary](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#wag-gaps) |
 | Reusable governed-actor mapping | Actor Profile considers a general principal-resolution extension point | Consolidation; the delegated flow already defines its mapping and is not blocked |
 | X.509-SVID alone supplies actor evidence | A consuming profile defines how connection evidence binds the actor request and output key, coordinated with SPIFFE OAuth | Not defined here; X.509 client authentication with a separate actor JWT is usable |
-| Direct WIT-SVID actor presentation | A consuming profile defines the credential/proof/request/key relationship using existing extension facilities | Native client authentication remains usable |
+| Direct WIT-SVID actor presentation | A future revision of this profile can compose the existing SPIFFE/ATTEST proof with actor presentation; it must choose the DPoP key relationship and respect WIT's prohibition on key use after credential expiry | Local scope deferral, not a missing upstream proof primitive; native client authentication remains usable |
 | Instance context | A future identification specification defines evidence-based continuity; consumers define whose instance and exchange behavior | Future work; no existing owner is implied |
 | Cross-system disablement | Future provisioning/lifecycle specifications define correlation, freshness, ordering, recovery, and outstanding-token effects | Future work |
 
 WAG §5 already anticipates IdP issuance through exchange. Its gap is the detailed contract, not permission for the IdP to issue. The draft retains WAG's current refresh prohibition for that deferred path and defines no replacement grant.
 
 These remaining requests do not imply upstream acceptance. Changes to another specification's base semantics need agreement there; requirements permitted by existing extension points are defined in the consuming profile.
+
+The main draft bounds its optional RAS refresh exception locally: rotation and grant reuse cannot extend the configured continuation deadline without renewed IdP authorization. That bound does not replace the still-needed cross-system status and revocation mechanisms.

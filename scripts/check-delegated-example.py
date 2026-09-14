@@ -112,11 +112,15 @@ def check():
     assert fixture['issuance_response']['access_token'] == tokens['id_jag'] and fixture['issuance_response']['token_type'] == 'N_A'
     assert fixture['redemption_response']['access_token'] == tokens['access_token'] and fixture['redemption_response']['token_type'] == 'DPoP'
     api = fixture['api_request']
+    assert api['url'] in cfg['api_policy']['required_profile_paths']
+    assert access['act']['iss'] in cfg['api_policy']['actor_namespaces_by_token_issuer'][access['iss']]
+    assert all(isinstance(access['act'][name], str) and access['act'][name] for name in ['iss', 'sub'])
+    assert 'act' not in access['act'] and isinstance(access['scope'], str) and access['scope'].split()
     assert api['headers']['Authorization'] == 'DPoP ' + tokens['access_token']
     assert api['url'] == payloads['api_proof']['htu'] == cfg['resource']
     assert payloads['api_proof']['ath'] == B64(hashlib.sha256(tokens['access_token'].encode()).digest())
     assert len({payloads[k]['jti'] for k in ['issuance_proof', 'redemption_proof', 'api_proof']}) == 3
-    print('PASS: 9 JWT signatures, tamper rejection, public-key consistency, identity mapping, audiences, client bindings, scope ceilings, DPoP continuity and access-token hash.')
+    print('PASS: 9 JWT signatures, tamper rejection, public-key consistency, identity mapping, audiences, client bindings, scope ceilings, API profile configuration and actor namespace, DPoP continuity and access-token hash.')
 
 
 if __name__ == '__main__':

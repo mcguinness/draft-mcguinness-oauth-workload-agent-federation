@@ -16,7 +16,7 @@ The [main draft](https://mcguinness.github.io/draft-mcguinness-oauth-workload-ag
 | Governed actor | (`https://idp.example/tenant/acme`, `agent-42`) |
 | User at IdP / RAS | `user-17` / `app-user-17`, associated by a trusted mapping |
 
-The IdP has approved the external-to-governed binding and the delegation to `agent-42`. The two client registrations use different authentication keys. One DPoP key binds the grant, access token, and API request.
+The IdP has approved the external-to-governed binding and the delegation to `agent-42`. The two client registrations use different authentication keys. One DPoP key binds the grant, access token, and API request. The API's trusted configuration requires this profile on the tickets path and permits this RAS to assert actors in the IdP namespace.
 
 ## Issuance
 
@@ -36,7 +36,7 @@ client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
 client_assertion=<idp_client_assertion>
 ```
 
-The request's `DPoP` header carries `issuance_proof`. The IdP validates the user, actor, client assertion, and proof independently, resolves `support-bot-7` to `agent-42`, and authorizes only `tickets.read`.
+The request's `DPoP` header carries `issuance_proof`. The IdP validates the user, actor, client assertion, and proof independently, resolves `support-bot-7` to `agent-42`, and authorizes only `tickets.read`. Here policy permits partial scope approval; policy requiring full approval would reject this request with `invalid_scope` instead.
 
 The ID-JAG retains `sub=user-17`, has `client_id=ras-agent-client`, and carries this actor:
 
@@ -64,7 +64,7 @@ The RAS checks the grant and its bound key, resolves the user and agent separate
 * The unchanged IdP-qualified `act` object for `agent-42`.
 * The same `cnf.jkt` and the narrowed `tickets.read` scope.
 
-The client then sends `Authorization: DPoP <access_token>` and `DPoP: <api_proof>` to the API. The proof covers that resource request and the access-token hash. The API validates both user and actor authority.
+The client then sends `Authorization: DPoP <access_token>` and `DPoP: <api_proof>` to the API. The proof covers that resource request and the access-token hash. The API validates both user and actor authority. Missing or malformed `act` produces HTTP 401 `invalid_token`; a valid token whose required actor authorization fails produces HTTP 403 `actor_unauthorized`. The API does not switch to non-delegated processing when `act` is absent.
 
 ## Discovery
 
@@ -86,7 +86,9 @@ These are fragments. The full metadata also includes the issuer, endpoints, base
 
 ## Optional native JWT-SVID actor
 
-The client presents the exact JWT-SVID as both `actor_token` and `client_assertion`, with the SPIFFE OAuth `jwt-spiffe` assertion-type URI. The IdP validates native authentication and maps the exact SPIFFE ID to `agent-42`; the remaining issuance and redemption steps are unchanged. The user ID Token's audience identifies the authenticated client according to SPIFFE OAuth's client association. Optional JWT-SVID `iss` and `iat` remain optional.
+The client presents the exact JWT-SVID as both `actor_token` and `client_assertion`, with the SPIFFE OAuth `jwt-spiffe` assertion-type URI. Its sole audience is `https://idp.example/tenant/acme`, the IdP issuer; the `private_key_jwt` assertion in the required path instead uses the token endpoint URL. The authentication-method metadata value is `spiffe_jwt` under SPIFFE OAuth.
+
+The IdP validates native authentication and maps the exact SPIFFE ID to `agent-42`; the remaining issuance and redemption steps are unchanged. The user ID Token's audience identifies the authenticated client according to SPIFFE OAuth's client association. Optional JWT-SVID `iss` and `iat` remain optional.
 
 <a id="device-flow"></a>
 <a id="shared-client-flow"></a>
@@ -99,7 +101,13 @@ Own-client mode resolves the attester identified by the trusted verification key
 
 ## Other credentials and deferred self-acting access
 
-X.509-SVID and WIT-SVID can authenticate the OAuth client when a supported actor JWT is also supplied. Neither is claimed as a sole actor input in this revision. Self-acting WAG access remains deferred; there is no WAG wire example or alternate grant here.
+X.509-SVID and WIT-SVID can authenticate the OAuth client when a supported actor JWT is also supplied. For example, a hosting platform's X.509-SVID identifies the OAuth client while `platform_actor` resolves to `agent-42`. The platform client needs permission to use that actor binding, but needs no Registered Agent record of its own.
+
+Neither credential is claimed as a sole actor input in this revision. Direct WIT-SVID actor processing is a local scope deferral: its attestation proof already exists, but composing its output key must account for WIT's prohibition on using the key after credential expiry. Self-acting WAG access remains deferred; there is no WAG wire example or alternate grant here.
+
+## Optional continuing access
+
+The required example issues no RAS refresh token. If a deployment permits that exception with a one-hour continuation period, a grant with `iat=T` establishes a deadline of `T+3600`. Rotation or repeated redemption of that grant cannot advance the deadline, and access tokens issued under the exception cannot outlive it. Continued access beyond that deadline requires a new ID-JAG and the normal profile checks. Withdrawal of RAS authorization or an authenticated upstream disablement notification terminates further issuance earlier. Without a status signal, upstream changes can remain unknown during the configured period.
 
 ## Checking the example
 
