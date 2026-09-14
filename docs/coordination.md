@@ -1,41 +1,34 @@
 <a id="coordination"></a>
 
-# Specification ownership and coordination
+# Specification ownership and remaining coordination
 
-The draft's [Upstream Gaps and Proposed Changes](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#upstream-gaps) is the authoritative proposal set for discussion. Each item contains the problem, owning specification, proposed change, and observable closure criteria. This index adds no protocol requirements.
+The main draft defines a complete [delegated flow](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#delegated-flow) using ID-JAG's actor extension point. It specifies credential validation, governed-actor mapping, sender binding, token requests and responses, errors, metadata, RAS redemption, and API processing.
 
-Federation owns the additional requirements it can define through existing extension points. ATTEST is consumed as written, including its profiling provisions; changing a specification in Last Call is not a prerequisite for implementing Federation. Only the upstream proposal table below awaits agreement. Inclusion here does not mean an issue, pull request, or specification change has been accepted.
+The [attested-agent companion](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html) separately owns the additional Client Attestation claim, mode selection, verifier processing, and claim registration. Its own-client mode identifies the attester through the trusted verification key even when `iss` is absent. Its shared-client mode requires `iss`. The required platform-JWT path in the main draft has no dependency on this new companion.
 
-## Requirements defined in Federation
+## Ownership
 
-| Requirement | Local definition | Base contract |
+| Topic | Home |
+|---|---|
+| Direct credential to governed actor in ID-JAG | Main draft's [actor construction](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#actor-construction), defined under ID-JAG §9.7 |
+| Token exchange, redemption, errors, and metadata | Main draft's [delegated flow](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#delegated-flow) |
+| Actor-object structure and resource policy | Normatively selected sections of Actor Profile; the main draft does not claim its different Section 6.3 copying algorithm |
+| Shared-client `attested_agent_id` | [Attested Agent Identity](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html#shared-agent), including its IANA request |
+| Attester identification and restrictions | [Companion profile](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html#attester-trust); base ATTEST remains unchanged |
+| Protocol requirements and problem/ask summaries | The drafts |
+| Conformance scenarios and closure criteria | [Interoperability cases](interoperability.md), maintained only in this repository |
+
+## Remaining requests
+
+| Problem | Specific ask and proposed home | Status |
 |---|---|---|
-| Mode selection and shared-client agent evidence | [Client Attestation profile](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#agent-evidence) | ATTEST additional claims and profile selection; original client `sub`, `typ`, and proofs |
-| `attested_agent_id` semantics and registration | [Shared-client processing](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#attest-gap) | Claim carried in the validated Client Attestation; registration requested by Federation |
-| Proof selection, current-policy checks, and renewal | [Proof requirements](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#attest-proof) | Existing ATTEST authentication methods and error handling |
-| Client restrictions on approved attesters | [Attester trust](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#trust-gap) | Authenticated configuration; no new ATTEST discovery requirement |
-| Bearer assurance, key roles, reuse, and configured capability selection | [Credential use](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#credential-requirements) | Existing SPIFFE, WIMSE, ATTEST, and DPoP mechanisms |
+| Self-acting WAG composition | WAG defines IdP issuance inputs, governed subject namespace, its identifiers, sender constraint, audience/replay policy, authority limits, and continuing access | Deferred; [summary](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#wag-gaps) |
+| Reusable governed-actor mapping | Actor Profile considers a general principal-resolution extension point | Consolidation; the delegated flow already defines its mapping and is not blocked |
+| X.509-SVID alone supplies actor evidence | A consuming profile defines how connection evidence binds the actor request and output key, coordinated with SPIFFE OAuth | Not defined here; X.509 client authentication with a separate actor JWT is usable |
+| Direct WIT-SVID actor presentation | A consuming profile defines the credential/proof/request/key relationship using existing extension facilities | Native client authentication remains usable |
+| Instance context | A future identification specification defines evidence-based continuity; consumers define whose instance and exchange behavior | Future work; no existing owner is implied |
+| Cross-system disablement | Future provisioning/lifecycle specifications define correlation, freshness, ordering, recovery, and outstanding-token effects | Future work |
 
-## Upstream proposals
+WAG §5 already anticipates IdP issuance through exchange. Its gap is the detailed contract, not permission for the IdP to issue. The draft retains WAG's current refresh prohibition for that deferred path and defines no replacement grant.
 
-| Item | Owner | Draft proposal |
-|---|---|---|
-| WAG issuance by an IdP with a governed subject | WAG; Federation supplies the mapping | [Issuance and identity ownership](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#wag-issuance-gap) |
-| WAG token type, JWT typing, and discovery | WAG and identity chaining | [Identifiers](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#wag-identifiers-gap) |
-| Bound WAG, audience, errors, and replay | WAG with ID-JAG and DPoP | [Sender constraint](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#wag-binding-gap) |
-| Scope/resource ceilings and continuing access | WAG and ID-JAG | [Authority and refresh](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#wag-lifecycle-gap) |
-| Direct external evidence to governed actor | Actor Profile | [Mapped actor construction](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#actor-gap) |
-| User subject with mapped actor evidence | ID-JAG and Actor Profile | [ID-JAG composition](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#id-jag-gap) |
-| X.509-SVID connection evidence in issuance | SPIFFE OAuth and consuming profiles | [X.509-SVID](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#x509-gap) |
-| Additional proof mechanisms and generic discovery | Separate extensions and consuming profiles | [Additional capabilities](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#credential-gap) |
-| Continuity and context propagation | Identification and consuming profiles | [Instance context](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#instance-identification) |
-| Properties, provisioning, and disablement | Provisioning/lifecycle work | [Lifecycle](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#lifecycle-gap) |
-
-## Coordination order
-
-1. Agree the ownership and semantics of WAG issuance and direct actor mapping. These determine the grant paths Federation can actually compose.
-2. Settle the corresponding identifiers, proof relationships, and capability signals in those owning specifications.
-3. Use the draft's closure criteria and the [interoperability cases](interoperability.md) to check independent implementations.
-4. Replace each resolved upstream proposal with a reference to the adopted rule. Add complete grant-flow examples when that composition is defined. Federation-owned credential requirements and examples can be implemented independently.
-
-Federation defines its own narrowly scoped attested-agent claim and requests its registration. It does not introduce a replacement grant, mandatory adapter token, or first-use key-enrollment protocol to resolve the separate grant-composition proposals.
+These remaining requests do not imply upstream acceptance. Changes to another specification's base semantics need agreement there; requirements permitted by existing extension points are defined in the consuming profile.

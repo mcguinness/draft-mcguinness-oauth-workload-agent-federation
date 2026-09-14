@@ -1,97 +1,99 @@
-# Interoperability and upstream closure cases
+# Conformance scenarios and remaining closure criteria
 
-The first two tables test Federation's identity, authorization, and Client Attestation profile requirements. The remaining tables are acceptance criteria for proposed upstream changes. They are not claims that this draft defines those wire behaviors today.
+This repository is the sole home for the scenario inventory. The drafts contain normative requirements; these cases exercise them without adding requirements. The signed fixture check covers example integrity, not an implemented IdP/RAS pair.
 
-## Current Federation requirements
+## Required delegated path
 
-| Case | Required outcome |
+| Case | Expected outcome |
 |---|---|
-| Valid credential with one active, enabled exact binding | Resolve the configured Registered Agent |
-| Missing, ambiguous, inactive, or disabled binding | Do not issue authorization for that agent |
-| Unverified issuer URL, request hint, or client metadata proposes another authority | Does not establish credential-authority trust |
-| Same `kid` under unrelated issuers or SPIFFE trust domains | Verify only with keys authorized for the selected authority |
-| Client registration permits several workload identities | Resolve the exact authenticated workload; do not map the whole prefix to one agent implicitly |
-| Valid client authentication without a governed-agent binding | Does not establish agent identity |
-| Shared-client ATTEST without the required signed `iss` or `attested_agent_id` | Reject under the Federation profile; no fallback to own-client mapping |
-| Unknown `agent_id` claim or request parameter | Follow base ignore rules; do not switch models or select an agent |
-| Valid JWT-SVID without `iss` or `iat` | No rejection solely for their absence; validate under SPIFFE OAuth |
-| SPIFFE credential renewal with unchanged workload identity | Revalidate credential and proofs; do not infer a new authorization principal |
-| Bearer workload JWT with a valid DPoP proof | Do not treat the DPoP key as platform-endorsed |
-| Valid user and agent credentials without delegation approval | Do not issue delegated authorization |
-| Approval applies to another agent behind the same client | Does not authorize this agent |
-| Requested authority exceeds assignments, user authority, or delegation | Do not authorize excess authority |
-| Grant mechanism cannot represent the required governed actor | Do not drop or relabel the actor to obtain a token |
-| Same bare subject from a different issuer | Do not correlate records solely on the bare identifier |
-| User and agent properties coexist | Preserve their principal associations |
-| Agent disabled or binding withdrawn after cached authorization | Apply current status and configured freshness limits before new issuance |
+| Valid ID Token, platform JWT, registered clients, DPoP, binding and delegation | ID-JAG identifies user and governed actor; RAS issues a DPoP-bound JWT access token |
+| External workload subject differs from governed agent | `act.sub` is the approved governed identifier, not the external subject |
+| Client IDs differ across IdP and RAS | Trusted mapping supplies the RAS `client_id`; each hop authenticates its own client |
+| User IDs differ across namespaces | Trusted subject mapping preserves the same user; actor namespace remains the IdP's |
+| Required subject/actor parameter, resource, or scope missing | `invalid_request`; no fallback to a client-only path |
+| Subject token issued by another IdP or for another client | `invalid_grant`; client authentication alone does not fix audience mismatch |
+| Actor signature, issuer, audience, expiration, or configured selector invalid | `invalid_grant` |
+| Several configured input classes match | `invalid_request`; no weaker validation path |
+| Platform credential has an unsupported confirmation binding | Reject; no bearer downgrade |
+| Actor token or subject context contains an existing actor chain | `invalid_grant`; no chain dropping or rewriting |
+| Binding absent, ambiguous, disabled, or agent inactive | No grant; applicable `actor_unauthorized` outcome |
+| Valid identities without user-to-agent delegation | `actor_unauthorized` |
+| Scope/resource request exceeds policy | Narrow where allowed or return the defined target/scope error; never expand authority |
+| Optional authorization details supplied | Process under ID-JAG while retaining explicit resource/scope requirements |
+| Grant expiry would exceed known actor or subject expiry | Bound the grant lifetime; do not extend input validity |
+| DPoP absent, malformed, replayed, or stale at issuance | Applicable DPoP error; no unbound ID-JAG |
+| Server issues a nonce challenge | Return required header; accept an authorized retry with fresh valid proof |
+| Grant lacks actor, confirmation key, resource, or scope | Reject under the configured profile |
+| Grant audience differs from RAS issuer or authenticated client differs from grant client | `invalid_grant` |
+| Grant's actor namespace differs from its trusted IdP issuer | Reject; no actor trust based solely on `act.iss` |
+| Redemption proof absent or its key differs | `invalid_grant` under ID-JAG |
+| RAS cannot authorize user/actor relationship | No access token; no actor-free or bearer fallback |
+| Successful access-token issuance | Preserve actor object and DPoP key; retain enforceable authority ceilings |
+| Same unexpired grant presented with fresh proof | Apply ID-JAG reuse rules and current RAS policy; no implicit single-use rule |
+| Refresh token issued as the permitted exception | Preserve user, actor, client, authority and key binding; recheck RAS policy |
+| API proof has wrong method, URL, key, hash, nonce, or replayed identifier | Reject under DPoP |
+| API token valid for user but agent lacks required authority | Reject under user/actor authorization policy |
+| Unknown `agent_id` parameter or claim | Base ignore rules; no identity-model switch |
+| Same bare actor identifier under another issuer | Distinct principal |
 
-## Client Attestation profile requirements
+## Optional credential paths
 
-These checks apply to the profile defined here; they do not await ATTEST changes.
-
-| Case | Required outcome |
+| Case | Expected outcome |
 |---|---|
-| Two signed agent identifiers under one attester/client | Resolve each exact tuple to its own approved agent |
-| `attested_agent_id` absent, empty, non-string, or present only in the proof/request | `invalid_client_attestation` for missing or invalid attested agent evidence |
-| `iss` absent, empty, incorrectly typed, or not authorized for the signing key | Reject; no new attester trust from the claim |
-| Same client and agent strings under another attester | Distinct namespace; no reuse of the first attester's binding |
-| Attester/client pair serves several platform tenants | Agent identifiers distinguish tenants, or distinct attester namespaces are used |
-| Configured shared-client request fails profile validation | No downgrade to own-client mapping or weaker proof mode |
-| Own-client attestation contains `attested_agent_id` | Does not switch mode or override its configured client-to-agent binding |
-| Base ATTEST validator ignores the claim | Client authentication alone does not establish shared-client Federation support |
-| Combined DPoP mode uses a different key from `cnf.jwk` | Reject under ATTEST's key-matching rules |
-| Normal ATTEST PoP plus a separately keyed DPoP proof | Validate each role; do not claim attester endorsement of the DPoP key |
-| Separate key used where grant policy requires an attested output key | Reject the unsupported key binding |
-| Profile claim missing while base timestamp claims are valid | Reject for the profile claim; missing optional attestation `iat` alone is not the cause |
-| Attestation becomes stale or a proof needs a challenge | ATTEST's freshness/challenge error and response behavior applies |
-| Well-formed agent attestation has no active authorized binding | Fail the Federation decision using the consuming profile's applicable error |
-| Renewed attestation authorizes a replacement key | Revalidate attestation, proof, and current policy; identifier continuity alone is insufficient |
-| Client restriction and IdP-approved attesters have no overlap | Reject; client configuration cannot expand IdP trust |
-| Unsupported discovery composition | Require trusted configuration before use; do not invent a metadata value |
+| Valid native JWT-SVID appears identically as client assertion and actor token | Authenticate using SPIFFE OAuth, resolve exact identity, and produce the same governed actor |
+| JWT-SVID missing optional `iss` or `iat` | No rejection solely for absence |
+| JWT-SVID actor and client assertion differ | Reject the unsupported combination |
+| SPIFFE client association covers several workload IDs | Resolve the exact authenticated SPIFFE ID, not an implicit prefix-to-agent mapping |
+| Own-client attestation omits `iss` | Identify attester through its trusted verification key and configured authority |
+| Own-client attestation has conflicting `iss` | Reject the attester mismatch |
+| Shared-client attestation validated under the companion profile | Resolve its tuple through the approved binding, then construct the governed actor |
+| Attestation header differs from `actor_token` | Reject; do not combine claims or keys from different attestations |
+| Normal ATTEST mode uses a separately keyed DPoP proof | Base ATTEST can authenticate, but this federation profile rejects the output-key mismatch |
+| Combined ATTEST mode uses a valid matching DPoP key | One combined proof suffices |
+| X.509-SVID or WIT-SVID used only for client authentication with a supported actor JWT | Apply both mechanisms in their defined roles |
+| X.509-SVID or WIT-SVID presented as an unsupported sole actor input | No advertised or inferred support |
 
-## WAG closure cases
+## Standalone attested-agent profile
 
-Pending [WAG proposals](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#wag-gaps):
-
-| Case | Evidence that the upstream gap is closed |
+| Case | Expected outcome |
 |---|---|
-| Platform and IdP issuance of the same grant family | WAG defines each issuer's role and the subject/property namespace |
-| External workload maps to a different governed identifier | WAG issuance accepts Federation's resolution without an extra normalization token |
-| Independent client selects a WAG output | Uses identifiers and discovery specified and registered by WAG |
-| Grant stolen without the binding key | Bound WAG cannot be redeemed |
-| Issuance credential key differs from output proof key | Agreed proof relationship determines acceptance; no implicit rebinding |
-| Wrong RAS audience or cross-issuer key substitution | Rejected under the WAG validation contract |
-| Concurrent redemption and nonce retry | Agreed single-use/retry behavior is enforced atomically where applicable |
-| Requested resource/scope exceeds the grant | RAS does not expand the authorized ceiling |
-| Required constraint is absent or unsupported | Defined error; no silent broadening |
-| Continuing workload access | WAG defines whether fresh issuance or refresh is allowed and what must be rechecked |
-| Current WAG refresh prohibition is unchanged | Federation supplies no local exception |
+| Own-client mode without `iss` | Return the configured attester/client pair |
+| Verification key associated with several authorities without disambiguating configuration | Reject ambiguity |
+| Two agent claims under the same attester and client | Return distinct attester/client/agent tuples |
+| Shared-client `iss` or `attested_agent_id` absent, empty, or incorrectly typed | `invalid_client_attestation` |
+| Agent ID exists only in a request parameter or proof | It is not attester-authenticated evidence |
+| Same client and agent strings under another attester | Distinct namespace |
+| Same attester/client spans platform tenants | Agent identifiers distinguish tenants or attester namespaces differ |
+| Own-client input contains agent claim | No mode switch or override of the pair |
+| Shared-client validation fails | No own-client fallback |
+| Base ATTEST validator ignores additional claim | It does not establish shared-agent profile support |
+| Proof key mismatches attestation key | Reject under ATTEST |
+| Client restriction excludes an IdP-approved attester | Reject; trust sets are intersected |
+| Client metadata names an unapproved attester | No expansion of verifier trust |
+| Attestation renewed with replacement key | Require new valid key authorization and current policy |
 
-## Actor Profile and ID-JAG closure cases
+## Metadata
 
-Pending [direct mapped-actor processing](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#actor-gap) and [ID-JAG composition](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-workload-agent-federation.html#id-jag-gap):
-
-| Case | Evidence that the upstream gap is closed |
+| Case | Expected outcome |
 |---|---|
-| Own-client agent, imported workload, and shared-client agent | All construct the intended canonical actor through defined evidence and mapping rules |
-| Credential subject differs from governed actor identifier | Actor Profile explicitly defines how the mapping composes with subject-copying rules |
-| One JWT is used for authentication and actor evidence | The consuming profile specifies allowed dual use, exact-token matching, and proof checks |
-| Existing canonical actor credential | Existing valid input remains usable without acquiring a new token class |
-| Missing or ambiguous mapping | Defined rejection, with no fallback to client identity |
-| Input carries an existing actor chain | No silent actor rewriting or chain replacement |
-| Coarse JWT actor support advertised | Does not imply every credential class, mapped identity, or proof mode |
-| Actor Profile and identity-chaining metadata overlap | Their relationship identifies the supported ID-JAG composition consistently |
-| Unsupported user/actor/output combination | Defined error instead of a hidden adapter-acquisition path |
+| IdP advertises issuance | Includes required platform-JWT input and base exchange/client/DPoP capabilities |
+| RAS advertises redemption | Includes required base ID-JAG/JWT bearer/client/DPoP capabilities |
+| Missing object, wrong role, or malformed member types | No usable capability advertisement |
+| Unknown object member or actor input identifier | Ignore it; do not reinterpret as a known capability |
+| Generic JWT actor support without this profile's object | Does not imply governed-actor composition |
+| SPIFFE assertion type present | Does not invent an authentication-method metadata value |
+| Actor or confirmation claim omitted after profile selection | Still enforce the configured profile; no downgrade |
 
-## Credential and lifecycle closure cases
+## Remaining gap closure criteria
 
-| Case | Proposed owner | Required upstream decision |
-|---|---|---|
-| X.509-SVID connection supplies agent evidence | SPIFFE OAuth and consuming profiles | Explicit subject/actor request binding without fabricated JWT evidence |
-| X.509-SVID TLS key differs from DPoP key | SPIFFE OAuth and grant profile | Proof relationship and permitted output binding |
-| Additional WIT/ATTEST proof integration is proposed | Credential extensions and consuming profiles | Define any new composition using existing extension facilities; no ATTEST revision prerequisite |
-| Cached bearer JWT reaches two replicas with independent keys | Credential and consuming profiles | Defined reuse/assurance rules, not a Federation-specific first-use cache |
-| Bearer credential is stolen before first use | Credential and consuming profiles | Explicit limitation or independently established holder binding |
-| Execution restarts or changes keys | Identification and platform evidence | Evidence-based continuity, enrollment, and replacement semantics |
-| Subject becomes an actor, or the actor changes | Consuming instance profile | Whose context is retained, replaced, or omitted |
-| Disablement signal is delayed, duplicated, or missed | Provisioning/lifecycle work | Freshness, ordering, recovery, and effect on issued tokens |
+| Gap | Evidence required to close it |
+|---|---|
+| Self-acting WAG issuance | Independent implementations agree on issuance inputs, IdP/governed subject namespace, client roles, and success/errors without a normalization token |
+| WAG identifiers and discovery | WAG owns complete registration templates and capability rules; clients can distinguish supported grant/proof combinations |
+| Bound WAG redemption | Wrong key/audience fails; nonce retries and concurrent redemption obey an explicit replay policy |
+| WAG authority and continuing access | Scope/resource ceilings, missing constraints, renewal, and disablement are testable under WAG's own rules |
+| General actor resolution extension point | Other consuming profiles can use the same mapping semantics; this is consolidation, not a blocker to the defined ID-JAG path |
+| X.509 connection as sole actor evidence | Independent implementations bind the connection identity to the requested actor and output key without fabricated JWTs |
+| Direct WIT-SVID actor input | Credential, native proof, actor request, and DPoP key are unambiguously bound and discoverable |
+| Instance context | Trusted evidence establishes continuity; consumers agree whose instance survives or changes at each exchange |
+| Lifecycle signals | Receivers handle delay, duplicates, missed events and outstanding tokens within stated freshness/recovery guarantees |

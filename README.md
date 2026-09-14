@@ -4,10 +4,15 @@
 
 This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Agent Federation".
 
-The draft defines external-identity resolution and agent authorization policy.
-It defines a Client Attestation profile for agent evidence and trust using
-existing ATTEST extension points. It also proposes the WAG, Actor Profile,
-and ID-JAG changes needed for complete grant flows. See the [upstream coordination index](docs/coordination.md).
+The main draft defines delegated ID-JAG issuance from direct workload evidence,
+governed-actor mapping, redemption, and DPoP-bound API access. Self-acting WAG
+access remains deferred.
+
+The companion [OAuth 2.0 Attested Agent Identity](draft-mcguinness-oauth-attested-agent-identity.md)
+is a separate Standards Track draft for the `attested_agent_id` claim and
+ATTEST profile. Its [editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html) builds from this repository; it
+has not yet been submitted to the Datatracker. The main draft's required
+platform-JWT path does not depend on it.
 
 * [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-workload-agent-federation)
@@ -25,7 +30,7 @@ don't already know how to do that.
 
 ## Command Line Usage
 
-Formatted text and HTML versions of the draft can be built using `make`.
+Formatted text and HTML versions of both drafts can be built using `make`.
 
 ```sh
 $ make
@@ -40,3 +45,14 @@ Command line usage requires that you have the necessary software installed.  See
 * [Federation checks and upstream closure cases](docs/interoperability.md)
 * [Coordination and design decisions](docs/coordination.md)
 * [Review disposition](docs/review-disposition.md)
+
+The [signed delegated example](docs/delegated-example.json) includes public
+keys, token requests, responses, and an API request. Check its signatures
+and cross-hop consistency with Python 3 and OpenSSL:
+
+```sh
+python3 scripts/check-delegated-example.py
+```
+
+This verifies example fixtures; it is not an interoperability test between
+independent server implementations.

@@ -1,32 +1,30 @@
-# Review disposition and ownership correction
+# Review disposition
 
-The current revision distinguishes requirements that Federation can define using existing extension points from changes to another specification's semantics. ATTEST is consumed as written, including its profiling support; its Last Call is not a prerequisite change request. Detailed upstream proposals remain for WAG and actor/grant composition.
+This revision addresses the review of a74cb5a. It keeps the main document on Standards Track by defining a complete delegated flow and extracts the independent attested-agent feature into its own short Standards Track draft.
 
-| Earlier issue or local choice | Current disposition |
+| Review issue | Disposition |
 |---|---|
-| AFG replacement for WAG | Removed. WAG is the intended self-acting grant; Federation neither forks its format nor assigns its identifiers. |
-| WAG issuance described as platform-only | Corrected: WAG §5 already anticipates IdP issuance through exchange. The request is to complete that composition, not to introduce the idea of an IdP issuer. |
-| Local WAG typing, sender constraint, authority, and replay rules | Replaced with concrete proposals to WAG and its collaborating specifications. No unresolved proposal is presented as existing WAG interoperability. |
-| Locally relaxed WAG refresh rule | Removed. Current WAG behavior remains unchanged; any refresh change belongs upstream. |
-| Mandatory IdP adapter access token | Removed, including acquisition, audience, eligibility, and reuse machinery. Direct mapped-actor construction is an Actor Profile/ID-JAG proposal; connection evidence is a separate SPIFFE OAuth composition gap. |
-| Shared-agent evidence | Defined here as an ATTEST profile with the narrowly named `attested_agent_id` claim, required attester `iss`, exact namespace binding, and a self-contained claim registration request. Base ATTEST is unchanged. |
-| First-use credential digest/key association | Remains removed. Federation now defines bearer-assurance, reuse, and key-role requirements directly; any additional proof mechanism uses the base specification's extension facilities. |
-| Profile selection, trust, and discovery | Trusted configuration selects the Federation mode and accepted existing methods. Client restrictions intersect IdP trust. New generic discovery is separate optional work, not an ATTEST modification prerequisite. |
-| SPIFFE JWT-SVID support | Retained for native authentication and Federation resolution, including issuer-less JWT-SVIDs. Missing grant composition is identified separately. |
-| Additional required ATTEST timestamps and SPIFFE client-ID equality rules | Removed. Credential processing follows the owning specifications; exact Federation mapping remains required. |
-| Local exchange/response errors and scope/resource/refresh narrowings | Removed. Federation applies policy; consuming profiles own the wire contract. |
-| Identity mapping and authorization | Retained as normative Federation requirements, including exact trust, active bindings, delegation approval, authority limits, and principal-qualified correlation. |
-| Instance identification | Remains outside current wire scope. Continuity and propagation requirements are detailed upstream without restoring an unpublished dependency. |
-| Provisioning and disablement | Local authorization honors applied changes and freshness limits. Cross-system guarantees require the proposed lifecycle contract. |
-| Supporting examples and test inventory | Rewritten to distinguish current identity/authentication behavior from acceptance criteria for unresolved upstream work. No placeholder full-protocol examples remain. |
-| IANA Considerations | Federation requests registration of its own `attested_agent_id` claim. It leaves grant and base authentication identifiers with their owners. |
+| No complete protocol path | Main draft now defines ID Token + direct platform JWT exchange, governed actor construction, DPoP-bound ID-JAG, authenticated redemption, JWT access token, and API processing |
+| Split attested-agent identity | New `draft-mcguinness-oauth-attested-agent-identity.md` owns the claim, modes, trust, verification and IANA request; no dependency on the federation flow |
+| ID-JAG extension deferred upstream | Processing is defined here under ID-JAG §9.7; no base ID-JAG change required |
+| Actor Profile copying rule differs | Main draft explicitly imports actor-object/resource rules, defines its own mapped-input processing, and does not advertise generic Actor Profile algorithm conformance |
+| Self-acting WAG overstated | Abstract and introduction explicitly defer it; remaining asks stay with WAG |
+| Attester identification | Own-client mode identifies the authority through the trusted verification key and configuration; a present `iss` must agree; shared mode requires `iss` |
+| Metadata-name inference unexplained | SPIFFE assertion type versus authentication-method metadata distinction is explained; input capabilities are defined in an `agent_federation` object |
+| Phantom owners | Identification and lifecycle work are described as future specifications |
+| Actor Profile normative without use | Normative use is now explicit for actor structure and API authorization |
+| WIT baseline absent | WIT-02 is listed |
+| Own-client output unclear | Direct attestation maps to a governed actor even when identifiers differ; no normalization token |
+| Product-like use of “Federation” | Prose uses “this profile” or “this document”; the defined term Federation Binding remains |
+| Project-management agenda in the body | Remaining gaps contain concise problems and asks; criteria live only in repository interoperability notes |
+| Stale gap anchors | Companion uses `shared-agent` and `attester-trust`; main normative processing has role-specific anchors |
+| Silent narrowing risk | Table lists additional required fields, actor mapping, proof/key rules, algorithms, lifetime bounds, chain scope, and error behavior |
+| New companion dependency | Explicit editor's-copy reference, built alongside the main draft; optional shared-client path only. It is not claimed to be a Datatracker publication |
 
-Federation-owned requirements are normative in this draft and have their own conformance cases. Upstream proposals remain open until the owning specification defines the necessary behavior and independent implementations pass the closure cases. The draft does not claim upstream acceptance.
-
-Earlier review improvements remain applicable: configurable clock skew, issuer-scoped key trust, distinct client/agent/instance roles, normal handling of unknown parameters and claims, explicit transitive dependencies, concise normative text, and generated-document checks.
+The signed delegated example includes synthetic public keys and complete tokens for both exchanges and the API. Its checker verifies signatures and cross-hop consistency, not independent implementation interoperability. No upstream acceptance or IANA allocation is claimed.
 
 ## Validation
 
-HTML and text build successfully with kramdown-rfc and xml2rfc. All 84 XML cross-references resolve, every reference is used, and the generated HTML has 565 unique anchors with no broken internal links. All 20 documentation links to draft sections and four JSON blocks validate; the example P-256 public key is on the curve. `git diff --check` passes.
+Both drafts build to HTML and text through the repository Makefile with refreshed bibliography data. All references are cited. All 120 main-draft and 14 companion cross-references resolve; the generated HTML has 532 and 174 unique anchors respectively. The ten documentation links to generated drafts and all three JSON blocks validate. The signed example checker passes all nine JWT signatures, tamper rejection, public-key consistency, and cross-hop identity, scope, client and DPoP checks. `git diff --check` passes.
 
-Submission-named text still receives five idnits `POSSIBLE_DOWNREF` flags for normative Internet-Drafts (SPIFFE OAuth, WIMSE credentials, ATTEST, Actor Profile, and ID-JAG), plus two indentation warnings on generated table-of-contents appendix entries. No new idnits findings were introduced by the profile.
+The companion's submission-named text passes idnits with no findings. The main draft reports six `POSSIBLE_DOWNREF` flags for normative drafts, two `UNDEFINED_STATE` warnings for the new companion (not yet submitted), and two generated table-of-contents appendix indentation warnings. Its baseline remains implementable without the optional companion dependency; the main draft is not described as idnits-clean.
