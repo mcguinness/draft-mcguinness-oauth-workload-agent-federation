@@ -101,6 +101,7 @@ Table of Contents
      6.4.  Actor Resolution and Construction
      6.5.  Grant Issuance and Response
      6.6.  Redemption and Access-Token Issuance
+       6.6.1.  Continuing Access
      6.7.  API Processing
      6.8.  Errors
      6.9.  Metadata
@@ -268,8 +269,9 @@ Table of Contents
 2.1.  Requirements Added by This Profile
 
    The following table identifies this profile's additions and
-   narrowings.  All other requirements of the referenced base protocols
-   still apply.
+   narrowings.  The requirements of each selected base protocol or
+   referenced section also apply, subject to the explicit narrowings
+   below.
 
     +===============+=======================================+=========+
     | Area          | Addition or narrowing                 | Defined |
@@ -332,6 +334,15 @@ Table of Contents
     |               | access token with actor and key       | 6.6     |
     |               | binding                               |         |
     +---------------+---------------------------------------+---------+
+    | Continuing    | A finite refresh deadline without     | Section |
+    | access        | renewed IdP authorization; configured | 6.6.1   |
+    |               | termination events                    |         |
+    +---------------+---------------------------------------+---------+
+    | API           | Configured applicability independent  | Section |
+    |               | of token contents; required actor and | 6.7     |
+    |               | proof validation, with resource       |         |
+    |               | errors                                |         |
+    +---------------+---------------------------------------+---------+
     | Errors        | Credential validation uses            | Section |
     |               | invalid_grant, rather than RFC 8693's | 6.8     |
     |               | invalid_request default; delegation   |         |
@@ -374,54 +385,60 @@ Table of Contents
 
 3.1.  Selecting the External Identity
 
-    +===============+===========================+====================+
-    | Evidence      | Identity used for         | Qualification      |
-    |               | resolution                |                    |
-    +===============+===========================+====================+
-    | Platform JWT  | Approved issuer and exact | Workload evidence; |
-    |               | subject, with configured  | not automatically  |
-    |               | additional selectors      | OAuth client       |
-    |               |                           | authentication     |
-    +---------------+---------------------------+--------------------+
-    | Client        | Attester identified by    | Client-to-agent    |
-    | Attestation,  | the trusted verification  | mapping is         |
-    | agent has its | key; client sub           | explicit           |
-    | own client    |                           |                    |
-    +---------------+---------------------------+--------------------+
-    | Shared-client | Approved attester, client | Optional input     |
-    | Client        | sub, and signed           | using              |
-    | Attestation   | attested_agent_id         | [AGENT-ATTEST]     |
-    +---------------+---------------------------+--------------------+
-    | SPIFFE JWT-   | Approved trust domain and | OAuth client       |
-    | SVID          | exact SPIFFE ID in sub    | association        |
-    |               |                           | follows SPIFFE     |
-    |               |                           | OAuth              |
-    +---------------+---------------------------+--------------------+
-    | SPIFFE        | Approved trust domain and | OAuth client       |
-    | X.509-SVID    | exact SPIFFE ID in the    | authentication     |
-    |               | URI SAN                   | follows SPIFFE     |
-    |               |                           | OAuth              |
-    +---------------+---------------------------+--------------------+
-    | SPIFFE WIT-   | Approved trust domain and | Credential and     |
-    | SVID          | exact SPIFFE ID in sub    | proof validation   |
-    |               |                           | follow SPIFFE      |
-    |               |                           | OAuth and WIMSE    |
-    +---------------+---------------------------+--------------------+
+     +===============+======================+========================+
+     | Evidence      | Identity used for    | Qualification          |
+     |               | resolution           |                        |
+     +===============+======================+========================+
+     | Platform JWT  | Approved issuer and  | Workload evidence; not |
+     |               | exact subject, with  | automatically OAuth    |
+     |               | configured           | client authentication  |
+     |               | additional selectors |                        |
+     +---------------+----------------------+------------------------+
+     | Client        | Attester identified  | Client-to-agent        |
+     | Attestation,  | by the trusted       | mapping is explicit    |
+     | agent has its | verification key;    |                        |
+     | own client    | client sub           |                        |
+     +---------------+----------------------+------------------------+
+     | Shared-client | Approved attester,   | Optional input using   |
+     | Client        | client sub, and      | [AGENT-ATTEST]         |
+     | Attestation   | signed               |                        |
+     |               | attested_agent_id    |                        |
+     +---------------+----------------------+------------------------+
+     | SPIFFE JWT-   | Approved trust       | OAuth client           |
+     | SVID          | domain and exact     | association follows    |
+     |               | SPIFFE ID in sub     | SPIFFE OAuth           |
+     +---------------+----------------------+------------------------+
+     | SPIFFE        | Approved trust       | Client authentication  |
+     | X.509-SVID    | domain and exact     | only in this revision; |
+     |               | SPIFFE ID in the URI | separate actor         |
+     |               | SAN                  | evidence required      |
+     +---------------+----------------------+------------------------+
+     | SPIFFE WIT-   | Approved trust       | Client authentication  |
+     | SVID          | domain and exact     | only in this revision; |
+     |               | SPIFFE ID in sub     | separate actor         |
+     |               |                      | evidence required      |
+     +---------------+----------------------+------------------------+
 
-                                 Table 3
+                                  Table 3
 
-   After validating the evidence, the IdP MUST resolve exactly one
-   active Registered Agent through an enabled binding.  Missing,
-   ambiguous, or disabled mappings MUST prevent issuance for that agent.
-   Similar names, matching unqualified strings, or a shared signing key
-   MUST NOT establish identity equivalence.
+   After validating the selected actor evidence, the IdP MUST resolve
+   exactly one active Registered Agent through an enabled binding.
+   Missing, ambiguous, or disabled mappings MUST prevent issuance for
+   that agent.  Similar names, matching unqualified strings, or a shared
+   signing key MUST NOT establish identity equivalence.
 
    A client registration or Client ID Metadata Document [CIMD] can
    identify an OAuth client.  It does not by itself distinguish the
    agents behind a shared client.  Even when the credential
    specification permits a client-identifier association or prefix
-   match, the Federation Binding MUST resolve the exact authenticated
-   workload identity to one Registered Agent.
+   match, the Federation Binding MUST resolve the exact workload
+   identity selected as actor evidence to one Registered Agent.
+
+   Evidence used only for client authentication identifies the OAuth
+   client; it does not require a Registered Agent mapping.  The IdP MUST
+   check that the authenticated client is permitted to use the selected
+   actor evidence and its Federation Binding under Section 6.1.  It MUST
+   NOT substitute that client's identity for the resolved actor.
 
 3.2.  Canonical Identity and Tenant Boundaries
 
@@ -569,8 +586,8 @@ Table of Contents
 
    X.509-SVID client authentication follows [SPIFFE-OAUTH], Section 3.2.
    The IdP MUST validate the certificate with the configured trust-
-   domain anchors and resolve the authenticated SPIFFE ID through
-   Section 3.  Client identity and TLS proof checks remain those of
+   domain anchors and associate the authenticated SPIFFE ID with the
+   OAuth client.  Client identity and TLS proof checks remain those of
    SPIFFE OAuth.
 
    X.509-SVID MAY authenticate the OAuth client in a delegated request
@@ -582,15 +599,16 @@ Table of Contents
 
    WIT-SVID client authentication follows [SPIFFE-OAUTH], Section 3.3
    and [WIT].  The IdP MUST validate the credential and required proof,
-   use trust anchors authorized for the trust domain in sub, and resolve
-   the exact identity through Section 3.
+   use trust anchors authorized for the trust domain in sub, and
+   associate the authenticated identity with the OAuth client.
 
    The WIT's confirmation key and the authentication proof retain their
    specified roles.  DPoP alone MUST NOT substitute for a required WIT
    or attestation proof.  WIT-SVID MAY authenticate the OAuth client
    when the request also supplies a supported actor credential.  Direct
-   WIT-SVID actor presentation is outside this revision; the required
-   proof/request binding is described in Section 7.4.
+   WIT-SVID actor presentation is outside this revision as a scope
+   choice described in Section 7.4, not because SPIFFE OAuth lacks a
+   proof mechanism.
 
 4.6.  Credential Use Requirements
 
@@ -636,13 +654,20 @@ Table of Contents
    3.  Resolve the RAS, resource, and Target Tenant through trusted
        configuration and check the requested acting relationship.
 
-   4.  Apply current assignments and scope policy.  Requested authority
+   4.  Apply current assignments and scope policy.  Issued authority
        MUST NOT exceed the agent's authorized authority and, for
        delegated access, the user's authority and applicable delegation.
 
    5.  Supply the resolved principal and approved authority to the
        selected grant mechanism without substituting the external
        identifier for the governed identity.
+
+   The IdP MAY grant an authorized, non-empty subset of the requested
+   scopes when policy permits partial approval.  It MUST return
+   invalid_scope if no requested scope can be granted or policy requires
+   full approval and the request exceeds that approval.  The grant and
+   response MUST reflect any scope reduction under Section 6.5.
+   Narrowing scope does not waive the target or delegation checks.
 
    If the selected mechanism cannot represent the required identity or
    binding, the IdP MUST NOT issue a misleading token by dropping the
@@ -658,11 +683,11 @@ Table of Contents
 5.1.  Delegation Approval
 
    For user-delegated access, the IdP MUST authorize the resolved agent
-   to act for that user in the requested client, tenant, RAS, resource,
-   and scope context.  Missing, revoked, expired, or insufficient
-   delegation MUST prevent issuance.  Possession of valid user and agent
-   credentials, user sign-in, or a shared OAuth client MUST NOT imply
-   that approval.
+   to act for that user in the client, tenant, RAS, resource, and scope
+   context approved for issuance.  Missing, revoked, expired, or
+   insufficient delegation for that authority MUST prevent issuance.
+   Possession of valid user and agent credentials, user sign-in, or a
+   shared OAuth client MUST NOT imply that approval.
 
    Approval records and policy engines are implementation choices.  The
    decision needs an authenticated approving party, authority to
@@ -725,11 +750,17 @@ Table of Contents
 
    The client MUST be registered at both authorization servers.  Both
    servers MUST support private_key_jwt client authentication using
-   [RFC7523], Section 2.2; each client assertion MUST use the receiving
-   token endpoint URL as its audience.  Authentication keys and client
-   identifiers MAY differ between the servers.  Other registered
-   methods, including the optional native credential methods below, MAY
-   be used when configured at that server.
+   [RFC7523], Section 2.2.  For private_key_jwt, each client assertion
+   MUST use the receiving token endpoint URL as its audience.
+   Authentication keys and client identifiers MAY differ between the
+   servers.  Other registered methods, including the optional native
+   credential methods below, MAY be used when configured at that server.
+
+   Native methods retain their own audience requirements.  In
+   particular, a JWT-SVID client assertion uses the IdP issuer
+   identifier as its sole audience under Section 4.3, not the token
+   endpoint URL.  A Client Attestation PoP JWT uses the audience
+   required by ATTEST.
 
    For a common algorithm set, each role MUST support RS256 for the
    signing or validation operations it performs on platform JWTs, client
@@ -873,7 +904,7 @@ Table of Contents
 
    After credential validation, the IdP MUST resolve exactly one active
    Registered Agent through Section 3 and authorize its relationship to
-   the user, authenticated client, target, and requested authority.  The
+   the user, authenticated client, target, and approved authority.  The
    issued ID-JAG MUST contain a single act object with:
 
    *  sub: the Registered Agent identifier resolved by the binding.
@@ -998,9 +1029,10 @@ Table of Contents
    5.  Issue a JWT access token under [RFC9068] with the RAS as issuer,
        the same user in its local subject namespace, and the resource as
        audience.  Copy the validated act object unchanged and set top-
-       level cnf.jkt to the same DPoP key.  Preserve all applicable
-       authorization constraints in the token or its enforceable
-       resource policy.
+       level cnf.jkt to the same DPoP key.  Include the non-empty
+       authorized scope string in scope; if no scope can be granted,
+       return invalid_scope.  Preserve all applicable authorization
+       constraints in the token or its enforceable resource policy.
 
    The RAS MUST NOT issue broader authority, substitute its
    authenticated client for the actor, or return a bearer token.  The
@@ -1008,28 +1040,110 @@ Table of Contents
    token response and RFC 6749.  The client MUST NOT use a response that
    reports a different token type as completion of this flow.
 
-   This profile retains ID-JAG's unexpired-grant reuse and refresh
-   rules; it does not impose single-use redemption.  Each use requires
-   fresh proof validation and current RAS policy.  A RAS SHOULD NOT
-   issue a refresh token.  If it does, it MUST retain the user, governed
-   actor, client, authority ceiling, and DPoP key binding, and recheck
-   applicable RAS policy on refresh.  Cross-system revocation remains
-   subject to Section 8.3; grant expiry alone does not revoke an issued
-   token.
+   This profile retains ID-JAG's unexpired-grant reuse; it does not
+   impose single-use redemption.  Each use requires fresh proof
+   validation and current RAS policy.  Continuing access follows
+   Section 6.6.1; grant expiry alone does not revoke an issued token.
+
+6.6.1.  Continuing Access
+
+   A RAS SHOULD NOT issue a refresh token, as in ID-JAG.  A deployment
+   permitting that exception MUST configure:
+
+   *  A finite maximum period of continuing access without renewed IdP
+      authorization, measured from the authorizing ID-JAG's iat.
+
+   *  The events that terminate that authority, including withdrawal of
+      applicable RAS authorization and any received, authenticated IdP
+      notification disabling the user, actor, binding, or delegation.
+
+   *  The treatment of delayed or unavailable status information,
+      including freshness limits when an online check or status feed is
+      required.
+
+   The RAS MUST retain the user, governed actor, client, resource and
+   authority ceiling, and DPoP key binding.  On every refresh, it MUST
+   validate client authentication and the bound-key proof, recheck
+   applicable RAS policy, and reject a terminated or expired
+   authorization with invalid_grant.  Authentication and proof errors
+   retain their base errors.
+
+   Refresh-token rotation, reuse of the same ID-JAG, and successful RAS
+   policy checks MUST NOT advance the continuation deadline.  Access and
+   refresh tokens issued under this exception MUST NOT remain valid
+   beyond that deadline.  Extending it requires a newly issued, valid
+   ID-JAG and the issuance and redemption checks of this profile; this
+   document defines no additional renewal grant or status protocol.
+
+   Without an applicable status signal or online check, upstream
+   disablement can remain unknown to the RAS until renewed IdP
+   authorization is required.  The configured period bounds that
+   exposure for further issuance.  Termination prevents further
+   issuance; revocation of outstanding access tokens remains subject to
+   Section 8.3.
 
 6.7.  API Processing
 
+   The API MUST determine which request paths require this profile from
+   trusted resource configuration, independently of the presented
+   token's claims.  An absent or malformed act MUST NOT select non-
+   delegated processing on those paths.  Other configured resource paths
+   can accept other token profiles.
+
    The client presents the access token using the DPoP authorization
    scheme and a fresh resource-request proof under [RFC9449], including
-   the access-token hash.  The API MUST validate the JWT under
-   [RFC9068], validate the DPoP proof and key binding, and enforce
-   resource and scope constraints before granting access.
+   the access-token hash.  On a path requiring this profile, the API
+   MUST:
 
-   The API MUST apply the user-and-actor authorization rules of
-   [ACTOR-PROFILE], Section 8.1.  It MUST interpret the governed actor
-   in its act.iss namespace and MUST NOT authorize the request solely on
-   the user's authority when policy also requires agent authorization.
-   The access-token issuer is the RAS; it does not replace act.iss.
+   1.  Validate the JWT under [RFC9068] and require non-empty scope and
+       cnf.jkt claims with their defined types.
+
+   2.  Require a single act object with non-empty iss and sub, no nested
+       act, and the structure in [ACTOR-PROFILE], Section 3.4.  Trusted
+       configuration MUST authorize the RAS to assert that actor
+       namespace.  The RAS is the access-token issuer; act.iss remains
+       the IdP namespace and need not equal the access token's iss.
+
+   3.  Validate the DPoP proof and key binding, and enforce resource,
+       scope, and any additional authorization constraints.
+
+   4.  Apply [ACTOR-PROFILE], Section 8.1 to the user and issuer-
+       qualified actor.  The API MUST NOT treat the request as non-
+       delegated.  It MUST reject the request if required actor
+       authorization cannot be established, including when policy
+       information is unavailable.
+
+   Resource errors use the DPoP WWW-Authenticate challenge under
+   [RFC9449], Section 7.1, with the following outcomes:
+
+   +========================================+==========================+
+   | Failure                                | HTTP status and error    |
+   +========================================+==========================+
+   | Invalid token, missing required        | 401, invalid_token       |
+   | claim, malformed actor, nested         |                          |
+   | actor, or unauthorized actor           |                          |
+   | namespace assertion                    |                          |
+   +----------------------------------------+--------------------------+
+   | Valid token but required user/         | 403, actor_unauthorized, |
+   | actor relationship is not              | following                |
+   | authorized or cannot be                | [ACTOR-PROFILE],         |
+   | established                            | Section 8.2              |
+   +----------------------------------------+--------------------------+
+   | Insufficient token scope for           | 403, insufficient_scope  |
+   | the operation                          |                          |
+   +----------------------------------------+--------------------------+
+   | Missing or invalid proof, key          | RFC 9449 resource error  |
+   | mismatch, or required nonce            | processing, including    |
+   |                                        | its nonce header and     |
+   |                                        | challenge rules          |
+   +----------------------------------------+--------------------------+
+
+                                  Table 7
+
+   Actor authorization failures MUST NOT use insufficient_scope.  The
+   API MUST NOT expose actor-specific rejection details outside the
+   trust domain.  Token endpoint errors in Section 6.8 do not replace
+   these resource error responses.
 
 6.8.  Errors
 
@@ -1073,7 +1187,7 @@ Table of Contents
       | mismatch with grant cnf.jkt     | JAG                       |
       +---------------------------------+---------------------------+
 
-                                  Table 7
+                                  Table 8
 
    Actor-credential failures use invalid_grant instead of the default
    invalid_request described by RFC 8693; this narrowing is intentional.
@@ -1105,7 +1219,7 @@ Table of Contents
    |                        | true, including platform_jwt             |
    +------------------------+------------------------------------------+
 
-                                  Table 8
+                                  Table 9
 
    At least one role MUST be true.  A server supporting both roles MUST
    implement both.  A client MUST treat incorrectly typed defined
@@ -1203,17 +1317,28 @@ Table of Contents
 
 7.4.  Additional Credential Compositions
 
-   *Problem.* Direct WIT-SVID actor evidence needs a defined
-   relationship between its native proof, the request carrying
-   actor_token, and the DPoP key.  A bearer JWT-SVID or platform JWT
-   also cannot supply an issuer-endorsed holder key merely by
-   accompanying a DPoP proof.
+   *Scope choice.* This revision defers direct WIT-SVID actor input.
+   SPIFFE OAuth already supplies WIT-SVID presentation and a Client
+   Attestation PoP JWT; no new upstream proof primitive is needed.  A
+   future revision can define the actor composition locally using those
+   mechanisms, including exact actor/header matching and capability
+   signaling.
 
-   *Request to consuming credential extensions.* Define any additional
-   proof/request binding using the existing SPIFFE OAuth, WIMSE, or
-   ATTEST extension facilities, including capability signaling.  ATTEST
-   need not be reopened.  The optional native authentication modes and
-   the direct JWT actor inputs already defined here remain usable.
+   That composition must choose the output-key relationship explicitly.
+   [WIT], Section 9.4 prohibits using the workload key after credential
+   expiration.  Reusing it for DPoP therefore requires downstream
+   lifetime limits; a separate DPoP key requires an explicit
+   authorization rule and must not be described as issuer-endorsed
+   merely by co-presentation.  This revision defines neither alternative
+   for direct WIT-SVID actors.  WIT-SVID remains usable for client
+   authentication with separate actor evidence, subject to its own key-
+   use restrictions.
+
+   *Remaining assurance limitation.* Bearer JWT-SVID and platform JWT
+   inputs cannot establish an issuer-endorsed holder key by accompanying
+   a DPoP proof.  Deployments needing that assurance must select
+   suitable bound evidence and its consuming profile.  This is not a
+   request to reopen ATTEST or to add a new proof protocol here.
 
 7.5.  Instance Context
 
@@ -1302,9 +1427,9 @@ Table of Contents
 
    Cross-system disablement and token revocation require the mechanisms
    in Section 7.6.  Without an applicable signal or online check, an
-   already issued token can remain usable until expiration.  Refresh
-   semantics remain those of WAG, ID-JAG, and the RAS's applicable
-   profile; this document does not grant new refresh authority.
+   already issued token can remain usable until expiration.  The refresh
+   exception is bounded by Section 6.6.1; it does not make upstream
+   status immediately visible or grant new refresh authority.
 
 9.  Privacy Considerations
 
