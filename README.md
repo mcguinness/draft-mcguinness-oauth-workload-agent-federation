@@ -4,6 +4,11 @@
 
 This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Agent Federation".
 
+The draft defines external-identity resolution and agent authorization policy.
+It proposes the upstream WAG, Actor Profile, ID-JAG, and credential changes
+needed for complete grant flows; it does not define replacement grants or
+adapter tokens. See the [upstream coordination index](docs/coordination.md).
+
 * [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-workload-agent-federation)
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-workload-agent-federation)
@@ -31,7 +36,7 @@ Command line usage requires that you have the necessary software installed.  See
 
 ## Supporting material
 
-* [Deployment examples](docs/deployment-examples.md)
-* [Interoperability cases](docs/interoperability.md)
+* [Deployment scenarios](docs/deployment-examples.md)
+* [Federation checks and upstream closure cases](docs/interoperability.md)
 * [Coordination and design decisions](docs/coordination.md)
 * [Review disposition](docs/review-disposition.md)
