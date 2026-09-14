@@ -84,11 +84,13 @@ Table of Contents
      2.2.  Additional Requirements of This Profile
    3.  Profile Selection and Identity Binding
      3.1.  Evidence and Client Authentication
-       3.1.1.  Platform-Issued JWT
-       3.1.2.  Client Authentication for Platform Evidence
-       3.1.3.  Client Attestation and Shared-Agent Binding
-       3.1.4.  SPIFFE X.509-SVID
-       3.1.5.  SPIFFE WIT-SVID
+       3.1.1.  Bearer JWT Credential Reuse
+       3.1.2.  Platform-Issued JWT
+       3.1.3.  Client Authentication for Platform Evidence
+       3.1.4.  Client Attestation and Shared-Agent Binding
+       3.1.5.  SPIFFE JWT-SVID
+       3.1.6.  SPIFFE X.509-SVID
+       3.1.7.  SPIFFE WIT-SVID
      3.2.  Instance Identification
      3.3.  IdP Access Token
    4.  Requesting an Authorization Grant
@@ -124,7 +126,7 @@ Table of Contents
      8.3.  Audience Restriction and Replay
      8.4.  Tenant and Authority Isolation
      8.5.  Evidence Substitution and Downgrade
-     8.6.  Platform Credential Theft
+     8.6.  Bearer Workload Credential Theft
      8.7.  Status Changes and Revocation
    9.  Privacy Considerations
    10. IANA Considerations
@@ -354,30 +356,36 @@ Table of Contents
    Implementing ID-JAG, ATTEST, or SPIFFE OAuth alone does not imply
    conformance here.  This profile adds the following requirements:
 
-   +============+===========================================+=========+
-   | Area       | Additional requirement                    | Defined |
-   |            |                                           | in      |
-   +============+===========================================+=========+
-   | ATTEST     | iat required for configured age/lifetime  | Section |
-   |            | checks; shared-agent binding              | 3.1.3   |
-   +------------+-------------------------------------------+---------+
-   | WIT-SVID   | client_id equals the authenticated SPIFFE | Section |
-   |            | ID                                        | 3.1.5   |
-   +------------+-------------------------------------------+---------+
-   | Exchange   | Explicit nonempty scope, one resource,    | Section |
-   | request    | and one RAS audience                      | 4       |
-   +------------+-------------------------------------------+---------+
-   | Grant      | Required scope, resource, and cnf.jkt;    | Section |
-   |            | bounded lifetime                          | 4.5     |
-   +------------+-------------------------------------------+---------+
-   | Exchange   | Required expires_in and response scope    | Section |
-   | response   | even when unchanged                       | 4.6     |
-   +------------+-------------------------------------------+---------+
-   | Redemption | Explicit matching resource, DPoP binding, | Section |
-   |            | single use, and sender-constrained output | 6       |
-   +------------+-------------------------------------------+---------+
+    +============+====================================+===============+
+    | Area       | Additional requirement             | Defined in    |
+    +============+====================================+===============+
+    | ATTEST     | iat required for configured age/   | Section 3.1.4 |
+    |            | lifetime checks; shared-agent      |               |
+    |            | binding                            |               |
+    +------------+------------------------------------+---------------+
+    | JWT-SVID   | client_id equals the authenticated | Section       |
+    | and WIT-   | SPIFFE ID; trust anchors come from | 3.1.5,        |
+    | SVID       | the configured trust domain        | Section 3.1.7 |
+    +------------+------------------------------------+---------------+
+    | Bearer JWT | DPoP association enforced across   | Section 3.1.1 |
+    | inputs     | acquisition and exchange,          |               |
+    |            | including credential reuse         |               |
+    +------------+------------------------------------+---------------+
+    | Exchange   | Explicit nonempty scope, one       | Section 4     |
+    | request    | resource, and one RAS audience     |               |
+    +------------+------------------------------------+---------------+
+    | Grant      | Required scope, resource, and      | Section 4.5   |
+    |            | cnf.jkt; bounded lifetime          |               |
+    +------------+------------------------------------+---------------+
+    | Exchange   | Required expires_in and response   | Section 4.6   |
+    | response   | scope even when unchanged          |               |
+    +------------+------------------------------------+---------------+
+    | Redemption | Explicit matching resource, DPoP   | Section 6     |
+    |            | binding, single use, and sender-   |               |
+    |            | constrained output                 |               |
+    +------------+------------------------------------+---------------+
 
-                                 Table 2
+                                  Table 2
 
    WAG additions and identifier ownership are separately identified in
    Section 4.5.1.  The IdP and RAS agree support through trusted
@@ -414,7 +422,7 @@ Table of Contents
       | model                |                                      |
       +======================+======================================+
       | Platform-issued JWT, | Approved issuer and configured exact |
-      | imported workload    | identity claims under Section 3.1.1; |
+      | imported workload    | identity claims under Section 3.1.2; |
       |                      | OAuth client identity is separate    |
       +----------------------+--------------------------------------+
       | ATTEST, agent is the | Exact attestation (iss, sub);        |
@@ -422,6 +430,9 @@ Table of Contents
       +----------------------+--------------------------------------+
       | ATTEST, shared       | Exact attestation (iss, sub,         |
       | client               | agent_id)                            |
+      +----------------------+--------------------------------------+
+      | SPIFFE JWT-SVID,     | Approved trust domain and exact JWT  |
+      | agent is the client  | sub; client_id equals that SPIFFE ID |
       +----------------------+--------------------------------------+
       | SPIFFE X.509-SVID,   | Approved trust domain and exact      |
       | agent is the client  | SPIFFE ID; client_id equals that ID  |
@@ -434,7 +445,7 @@ Table of Contents
 
    The IdP MUST resolve the lookup to exactly one active Registered
    Agent through an enabled binding.  Missing or ambiguous matches cause
-   rejection.  ATTEST's agent_id rules follow Section 3.1.3; claim
+   rejection.  ATTEST's agent_id rules follow Section 3.1.4; claim
    presence MUST NOT select the identity model.
 
    The Registered Agent identifier MUST be unique and non-reassignable
@@ -488,7 +499,40 @@ Table of Contents
       existing access token to a different DPoP key.  A changed key
       requires new issuance.
 
-3.1.1.  Platform-Issued JWT
+3.1.1.  Bearer JWT Credential Reuse
+
+   This section applies to platform JWT evidence and JWT-SVID client
+   authentication.  The same credential MAY be reused with fresh DPoP
+   proofs.  After validating the request and before issuance, the IdP
+   MUST atomically establish or enforce the following association:
+
+   1.  Compute the SHA-256 digest of the JWS Signing Input [RFC7515].
+
+   2.  On first use, associate that digest with the Federation Binding
+       and proven DPoP key.
+
+   3.  Retain the association until exp plus allowable clock skew, even
+       if a configured maximum age makes the JWT unusable sooner.
+
+   4.  Reject reuse with another binding or key.  Reuse with the same
+       association remains subject to current validation and status
+       checks, but MUST NOT be rejected solely because the JWT or its
+       jti was previously seen.
+
+   The IdP MUST enforce one association across acquisition and exchange,
+   including direct WAG and delegated ID-JAG requests and all endpoint
+   replicas.  Excluding the signature from the digest prevents another
+   valid signature over the same signing input from bypassing this
+   check.  Failures use the error defined for the input in Section 3.1.
+
+   Clients using cached JWTs MUST retain the associated DPoP key.  A key
+   change requires a newly issued JWT with a different signing input,
+   such as a new iat or jti, or another independently authenticated,
+   approved binding.  The IdP MUST NOT reset the association merely
+   because the caller supplies a new key.  A renewed credential does not
+   change the key binding of an existing grant or access token.
+
+3.1.2.  Platform-Issued JWT
 
    The client MUST present a JWT issued by an approved platform as
    subject_token, with subject_token_type=urn:ietf:params:oauth:token-
@@ -512,13 +556,13 @@ Table of Contents
    shared platform sub.  Selectors come from trusted configuration; no
    external claim need equal an OAuth client_id.
 
-   Client authentication, when required, follows Section 3.1.2.  A
+   Client authentication, when required, follows Section 3.1.3.  A
    Federation Binding MAY designate an IdP-assigned OAuth client or an
    explicit set of permitted clients, independently of the platform's
    identity namespace.  That association authorizes use of the binding
    by those clients; it MUST NOT substitute for client authentication.
 
-3.1.1.1.  Issuer Configuration and Validation
+3.1.2.1.  Issuer Configuration and Validation
 
    For each approved platform issuer, the IdP MUST configure:
 
@@ -556,7 +600,7 @@ Table of Contents
 
    *  It contains act or fails a configured identity selector.
 
-3.1.1.2.  DPoP Binding and Credential Reuse
+3.1.2.2.  DPoP Binding and Credential Reuse
 
    A platform-issued JWT is a bearer credential with no key of its own.
    A separate DPoP proof establishes the token-binding key, which the
@@ -566,38 +610,15 @@ Table of Contents
    proof pre-generation; it does not prevent theft of the bearer JWT
    before its first use or bind that JWT to a platform-proven key.
 
-   The same platform JWT MAY be reused with fresh DPoP proofs.  For each
-   successful use, the IdP MUST enforce the following association:
-
-   1.  Compute the SHA-256 digest of the JWS Signing Input [RFC7515].
-
-   2.  On first use, atomically associate that digest with the
-       Federation Binding and proven DPoP key.
-
-   3.  Retain the association until exp plus allowable clock skew, even
-       if the configured maximum age makes the JWT unusable sooner.
-
-   4.  Reject reuse with another binding or key.  Reuse with the same
-       binding and key remains subject to current validation and status
-       checks, but MUST NOT be rejected solely because the JWT or its
-       jti was previously seen.
-
-   Excluding the signature from the digest prevents another valid
-   signature over the same signing input from bypassing this check.
-   Validation failures use invalid_grant; separate client authentication
-   errors retain their base processing.
-
-   Clients using cached JWTs MUST retain the associated DPoP key.  A key
-   change requires a newly issued JWT with a different signing input,
-   such as a new iat or jti, or another independently authenticated,
-   approved binding.  The IdP MUST NOT reset the association merely
-   because the caller supplies a new key.
+   Platform JWTs MUST follow the association and key-change rules in
+   Section 3.1.1.  Validation failures use invalid_grant; separate
+   client authentication errors retain their base processing.
 
    Platforms unable to issue a fresh credential or target the IdP
    audience can provide a token-exchange service or act as an ATTEST
    attester instead.
 
-3.1.2.  Client Authentication for Platform Evidence
+3.1.3.  Client Authentication for Platform Evidence
 
    For direct platform-JWT-to-WAG exchange, the IdP MAY permit requests
    without OAuth client authentication or identification, as allowed by
@@ -630,7 +651,7 @@ Table of Contents
    Registered Agent for the platform evidence path.  No new client
    authentication method or assertion type is defined here.
 
-3.1.3.  Client Attestation and Shared-Agent Binding
+3.1.4.  Client Attestation and Shared-Agent Binding
 
    The client MUST use attest_jwt_client_auth_dpop under [ATTEST].  This
    section defines an ATTEST extension for agent identity binding; base
@@ -670,7 +691,54 @@ Table of Contents
    Request freshness comes from the proof and current status checks;
    this profile does not impose a fixed attestation lifetime.
 
-3.1.4.  SPIFFE X.509-SVID
+3.1.5.  SPIFFE JWT-SVID
+
+   The client MUST authenticate under [SPIFFE-OAUTH], Section 3.1 with:
+
+   *  client_assertion_type set to urn:ietf:params:oauth:client-
+      assertion-type:jwt-spiffe.
+
+   *  client_assertion containing a single JWT-SVID.
+
+   *  client_id equal to the exact SPIFFE ID in the JWT-SVID's sub.
+      This is a narrowing of SPIFFE OAuth's client-identifier
+      association options; this input represents the agent as its own
+      client.
+
+   The IdP MUST validate the JWT-SVID under that specification,
+   including its required sub, aud, and exp, signature, and time checks
+   under Section 8.2.  In particular:
+
+   *  The sole audience MUST be the IdP issuer identifier, not the RAS
+      issuer, token endpoint URL, or dedicated exchange audience of the
+      IdP access token.
+
+   *  Verification keys MUST come from the configured trust domain in
+      the SPIFFE ID, using [SPIFFE-OAUTH], Section 6.  The IdP MUST
+      resolve the exact Federation Binding under Section 3.
+
+   *  An optional iss MUST NOT select trust anchors or replace that
+      lookup.  Absence of iss or iat alone MUST NOT cause rejection;
+      SPIFFE OAuth defines this adaptation of [RFC7523].
+
+   JWT-SVID authenticates the client as a bearer credential.  The IdP
+   MUST also validate the separate DPoP proof under Section 3.1 and
+   enforce Section 3.1.1.  DPoP does not prove possession of a key
+   certified by that JWT-SVID.  Nonce policy follows Section 4.
+
+   For self-acting access, the client uses Section 4.2.1.  For
+   acquisition, it uses the client credentials grant under Section 5.
+   At exchange of an IdP access token, a renewed JWT-SVID MAY
+   authenticate the same client and Federation Binding; DPoP MUST still
+   prove the token's key.  Delegated exchange retains the IdP access
+   token as actor_token.
+
+   JWT-SVID authentication and credential-reuse failures produce
+   invalid_client under [RFC7523], Section 3.2.  DPoP failures use the
+   errors in Section 4.7.  A valid authentication assertion that differs
+   from the direct WAG subject_token produces invalid_grant.
+
+3.1.6.  SPIFFE X.509-SVID
 
    The client MUST authenticate using spiffe_x509 under [SPIFFE-OAUTH],
    Section 3.2, with client_id equal to the exact SPIFFE ID in the
@@ -685,18 +753,14 @@ Table of Contents
    MAY authenticate the same SPIFFE ID under the same approved binding;
    the DPoP key MUST still match the access token.
 
-   WIT-SVID uses the separate binding in Section 3.1.5.  A JWT-SVID
-   lacks the iss claim [RFC7523] requires and remains outside this
-   profile.
-
-3.1.5.  SPIFFE WIT-SVID
+3.1.7.  SPIFFE WIT-SVID
 
    The client MUST authenticate using spiffe_wit under [SPIFFE-OAUTH],
    Section 3.3.  It MUST send the WIT-SVID directly in OAuth-Client-
    Attestation and a fresh Client Attestation PoP JWT in OAuth-Client-
    Attestation-PoP, with client_id equal to the exact SPIFFE ID in the
    WIT's sub.  This input represents the agent as client.  The
-   requirements specific to Section 3.1.3 do not apply to this input.
+   requirements specific to Section 3.1.4 do not apply to this input.
 
    The IdP MUST validate the WIT under [WIT], including typ=wit+jwt,
    expiration, signature, and the public key and proof algorithm in
@@ -910,9 +974,9 @@ Table of Contents
     | evidence input   |                   |                         |
     +==================+===================+=========================+
     | WAG; platform    | The JWT           | Not required; preferred |
-    | JWT, ATTEST, or  | credential as     | path                    |
-    | WIT-SVID         | subject_token,    |                         |
-    |                  | type jwt          |                         |
+    | JWT, ATTEST,     | credential as     | path                    |
+    | JWT-SVID, or     | subject_token,    |                         |
+    | WIT-SVID         | type jwt          |                         |
     +------------------+-------------------+-------------------------+
     | WAG; X.509-SVID  | IdP access token  | Required unless an      |
     |                  | as subject_token, | eligible token is held  |
@@ -961,6 +1025,11 @@ Table of Contents
    |             |                              | (iss, sub,          |
    |             |                              | agent_id) binding   |
    +-------------+------------------------------+---------------------+
+   | JWT-SVID    | Same JWT in subject_token    | Approved trust      |
+   |             | and client_assertion, with   | domain and exact    |
+   |             | the jwt-spiffe assertion     | SPIFFE ID in sub    |
+   |             | type                         |                     |
+   +-------------+------------------------------+---------------------+
    | WIT-SVID    | Same JWT in subject_token    | Approved trust      |
    |             | and OAuth-Client-Attestation | domain and exact    |
    |             |                              | SPIFFE ID in sub    |
@@ -968,8 +1037,9 @@ Table of Contents
 
                                  Table 7
 
-   For ATTEST and WIT-SVID, the IdP MUST reject a different JWT in
-   subject_token with invalid_grant, even if both JWTs identify the same
+   For ATTEST, JWT-SVID, and WIT-SVID, subject_token MUST contain the
+   identical JWT used for client authentication.  The IdP MUST reject a
+   mismatch with invalid_grant, even if both JWTs identify the same
    agent.  The generic JWT token type MUST NOT select an input or relax
    its validation requirements.  Trusted configuration determines
    credential type, issuer or trust-domain validation, identity mapping,
@@ -988,10 +1058,11 @@ Table of Contents
    granting authority.
 
    For ATTEST and WIT-SVID, the DPoP key MUST match the credential's
-   cnf.jwk under the selected input.  Platform JWTs retain the bearer
-   credential and DPoP association rules in Section 3.1.1.  For ATTEST
-   and WIT-SVID the same JWT also authenticates the client.  No
-   additional credential issuance is required for any direct JWT input.
+   cnf.jwk under the selected input.  Platform JWTs and JWT-SVIDs retain
+   the bearer credential and DPoP association rules in Section 3.1.1.
+   For ATTEST, JWT-SVID, and WIT-SVID the same JWT also authenticates
+   the client.  No additional credential issuance is required for any
+   direct JWT input.
 
    Example direct exchange using Client Attestation:
 
@@ -1094,7 +1165,7 @@ Table of Contents
        *  For ATTEST and SPIFFE, match current authentication to that
           binding.
 
-       *  For platform origin, apply Section 3.1.2 to the recorded
+       *  For platform origin, apply Section 3.1.3 to the recorded
           binding.  No new platform JWT is needed; the IdP access token
           does not authenticate the client.
 
@@ -1473,7 +1544,7 @@ Table of Contents
 5.1.1.  Acquisition from Platform JWT Evidence
 
    The client MUST use token exchange with separate client
-   authentication under Section 3.1.2 and the following parameters:
+   authentication under Section 3.1.3 and the following parameters:
 
           +======================+==============================+
           | Parameter            | Required value               |
@@ -1482,7 +1553,7 @@ Table of Contents
           |                      | type:token-exchange          |
           +----------------------+------------------------------+
           | subject_token        | Platform JWT validated under |
-          |                      | Section 3.1.1                |
+          |                      | Section 3.1.2                |
           +----------------------+------------------------------+
           | subject_token_type   | urn:ietf:params:oauth:token- |
           |                      | type:jwt                     |
@@ -1740,7 +1811,8 @@ Table of Contents
 7.  Metadata and Configuration
 
    The IdP MUST advertise its implemented capabilities through existing
-   metadata under [RFC8414] and the referenced specifications:
+   metadata under [RFC8414] and the referenced specifications, except
+   for the JWT-SVID configuration described below:
 
    +==============+===================================================+
    |Capability    | Metadata                                          |
@@ -1770,6 +1842,13 @@ Table of Contents
    +--------------+---------------------------------------------------+
 
                                  Table 16
+
+   JWT-SVID support MUST be agreed through trusted configuration using
+   the assertion type in Section 3.1.5.  SPIFFE OAuth defines that
+   assertion type but no corresponding
+   token_endpoint_auth_methods_supported value.  This profile does not
+   invent one or treat private_key_jwt as an advertisement of JWT-SVID
+   support.
 
    Platform JWT evidence defines no client authentication method.  Its
    issuer and claim mappings use trusted configuration.  An IdP
@@ -1812,8 +1891,8 @@ Table of Contents
    particular, an IdP access token, WAG, ID-JAG, client assertion, or
    platform JWT does not become another credential class merely because
    it has a trusted signature.  The intentional dual use of a Client
-   Attestation or WIT-SVID in Section 4.2.1 requires both sets of
-   checks.
+   Attestation, JWT-SVID, or WIT-SVID in Section 4.2.1 requires both
+   sets of checks.
 
    For JWTs accepted under this profile, validators MUST:
 
@@ -1822,7 +1901,8 @@ Table of Contents
 
    *  Enforce exp and, when present, nbf under [RFC7519].
 
-   *  Reject iat later than the current time plus configured clock skew.
+   *  When iat is present, reject a non-NumericDate value or a value
+      later than the current time plus configured clock skew.
 
    *  Use a configured clock-skew allowance, without increasing a
       permitted exp - iat lifetime or a configured maximum age.
@@ -1887,17 +1967,26 @@ Table of Contents
    flow.  A shared client alone does not authenticate the agent behind
    it.  Instance context does not authorize key rebinding or delegation.
 
-8.6.  Platform Credential Theft
+8.6.  Bearer Workload Credential Theft
 
-   A platform JWT is a bearer credential.  Theft before first use can
-   let an attacker establish the initial DPoP key association.
-   Subsequent key matching cannot prevent that race; audience
-   restriction, bounded age, and transport protection limit exposure.
+   Platform JWTs and JWT-SVIDs are bearer credentials.  Theft before
+   first use can let an attacker establish the initial DPoP key
+   association.  Subsequent key matching cannot prevent that race;
+   audience restriction, short credential lifetimes, and transport
+   protection limit exposure.  A DPoP nonce does not bind the bearer
+   credential to its intended holder.
 
    The reuse association in Section 3.1.1 prevents an already used JWT
    from enrolling another key.  Platforms MUST NOT share one cached JWT
-   among clients using independent DPoP keys.  Platforms unable to meet
-   those prerequisites need another approved evidence path.
+   among clients using independent DPoP keys.  This also applies to
+   SPIFFE replicas that share a workload identity: independent keys
+   require credentials with distinct signing inputs.  A request for
+   another JWT-SVID does not guarantee that its signing input differs.
+
+   Deployments unable to obtain distinct credentials need another
+   approved evidence path, such as X.509-SVID or WIT-SVID.  None of
+   these inputs establishes distinct replica identity without additional
+   evidence.
 
 8.7.  Status Changes and Revocation
 
@@ -1955,11 +2044,11 @@ Table of Contents
 
    *  Change Controller: IETF
 
-   *  Specification Document(s): Section 3.1.3 of this document
+   *  Specification Document(s): Section 3.1.4 of this document
 
    The value is a nonempty StringOrURI distinguishing agents represented
    by a shared ATTEST client.  Platform JWT identity selectors are
-   configured separately under Section 3.1.1.
+   configured separately under Section 3.1.2.
 
 10.2.  WAG Identifiers Pending Coordination
 
@@ -2198,14 +2287,14 @@ Appendix A.  Deployment and Compatibility
    formats, and introspection [RFC7662] are deployment choices outside
    this profile.
 
-   Platform-issued JWTs follow Section 3.1.1; native SPIFFE X.509-SVID
-   and WIT-SVID authentication follow Section 3.1.4 and Section 3.1.5.
-   Other credential types need explicit binding and proof rules; support
-   for one platform's tokens does not imply that every token format is
-   accepted.  Direct WIT actor evidence under Actor Profile is a
-   different input path.  It would need explicit external-subject
-   mapping and proof rules; it does not implicitly substitute for the
-   IdP access token here.
+   Platform-issued JWTs follow Section 3.1.2; native SPIFFE JWT-SVID,
+   X.509-SVID, and WIT-SVID authentication follow Section 3.1.5,
+   Section 3.1.6, and Section 3.1.7.  Other credential types need
+   explicit binding and proof rules; support for one platform's tokens
+   does not imply that every token format is accepted.  Direct WIT actor
+   evidence under Actor Profile is a different input path.  It would
+   need explicit external-subject mapping and proof rules; it does not
+   implicitly substitute for the IdP access token here.
 
 Appendix B.  Supporting Material
 

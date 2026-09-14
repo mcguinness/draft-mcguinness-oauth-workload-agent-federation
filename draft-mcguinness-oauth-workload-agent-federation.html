@@ -1192,19 +1192,25 @@ authorization server for sender-constrained access tokens.<a href="#section-abst
                 <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-evidence-and-client-authent" class="internal xref">Evidence and Client Authentication</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.1">
-                    <p id="section-toc.1-1.3.2.1.2.1.1"><a href="#section-3.1.1" class="auto internal xref">3.1.1</a>.  <a href="#name-platform-issued-jwt" class="internal xref">Platform-Issued JWT</a></p>
+                    <p id="section-toc.1-1.3.2.1.2.1.1"><a href="#section-3.1.1" class="auto internal xref">3.1.1</a>.  <a href="#name-bearer-jwt-credential-reuse" class="internal xref">Bearer JWT Credential Reuse</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.2">
-                    <p id="section-toc.1-1.3.2.1.2.2.1"><a href="#section-3.1.2" class="auto internal xref">3.1.2</a>.  <a href="#name-client-authentication-for-p" class="internal xref">Client Authentication for Platform Evidence</a></p>
+                    <p id="section-toc.1-1.3.2.1.2.2.1"><a href="#section-3.1.2" class="auto internal xref">3.1.2</a>.  <a href="#name-platform-issued-jwt" class="internal xref">Platform-Issued JWT</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.3">
-                    <p id="section-toc.1-1.3.2.1.2.3.1"><a href="#section-3.1.3" class="auto internal xref">3.1.3</a>.  <a href="#name-client-attestation-and-shar" class="internal xref">Client Attestation and Shared-Agent Binding</a></p>
+                    <p id="section-toc.1-1.3.2.1.2.3.1"><a href="#section-3.1.3" class="auto internal xref">3.1.3</a>.  <a href="#name-client-authentication-for-p" class="internal xref">Client Authentication for Platform Evidence</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.4">
-                    <p id="section-toc.1-1.3.2.1.2.4.1"><a href="#section-3.1.4" class="auto internal xref">3.1.4</a>.  <a href="#name-spiffe-x509-svid" class="internal xref">SPIFFE X.509-SVID</a></p>
+                    <p id="section-toc.1-1.3.2.1.2.4.1"><a href="#section-3.1.4" class="auto internal xref">3.1.4</a>.  <a href="#name-client-attestation-and-shar" class="internal xref">Client Attestation and Shared-Agent Binding</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.5">
-                    <p id="section-toc.1-1.3.2.1.2.5.1"><a href="#section-3.1.5" class="auto internal xref">3.1.5</a>.  <a href="#name-spiffe-wit-svid" class="internal xref">SPIFFE WIT-SVID</a></p>
+                    <p id="section-toc.1-1.3.2.1.2.5.1"><a href="#section-3.1.5" class="auto internal xref">3.1.5</a>.  <a href="#name-spiffe-jwt-svid" class="internal xref">SPIFFE JWT-SVID</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.6">
+                    <p id="section-toc.1-1.3.2.1.2.6.1"><a href="#section-3.1.6" class="auto internal xref">3.1.6</a>.  <a href="#name-spiffe-x509-svid" class="internal xref">SPIFFE X.509-SVID</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.7">
+                    <p id="section-toc.1-1.3.2.1.2.7.1"><a href="#section-3.1.7" class="auto internal xref">3.1.7</a>.  <a href="#name-spiffe-wit-svid" class="internal xref">SPIFFE WIT-SVID</a></p>
 </li>
                 </ul>
 </li>
@@ -1332,7 +1338,7 @@ authorization server for sender-constrained access tokens.<a href="#section-abst
                 <p id="section-toc.1-1.8.2.5.1"><a href="#section-8.5" class="auto internal xref">8.5</a>.  <a href="#name-evidence-substitution-and-d" class="internal xref">Evidence Substitution and Downgrade</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.6">
-                <p id="section-toc.1-1.8.2.6.1"><a href="#section-8.6" class="auto internal xref">8.6</a>.  <a href="#name-platform-credential-theft" class="internal xref">Platform Credential Theft</a></p>
+                <p id="section-toc.1-1.8.2.6.1"><a href="#section-8.6" class="auto internal xref">8.6</a>.  <a href="#name-bearer-workload-credential-" class="internal xref">Bearer Workload Credential Theft</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.7">
                 <p id="section-toc.1-1.8.2.7.1"><a href="#section-8.7" class="auto internal xref">8.7</a>.  <a href="#name-status-changes-and-revocati" class="internal xref">Status Changes and Revocation</a></p>
@@ -1655,15 +1661,22 @@ conformance here. This profile adds the following requirements:<a href="#section
               <td class="text-left" rowspan="1" colspan="1">
                 <code>iat</code> required for configured age/lifetime checks; shared-agent binding</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#agent-evidence" class="auto internal xref">Section 3.1.3</a>
+                <a href="#agent-evidence" class="auto internal xref">Section 3.1.4</a>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">WIT-SVID</td>
+              <td class="text-left" rowspan="1" colspan="1">JWT-SVID and WIT-SVID</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>client_id</code> equals the authenticated SPIFFE ID</td>
+                <code>client_id</code> equals the authenticated SPIFFE ID; trust anchors come from the configured trust domain</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#wit-input" class="auto internal xref">Section 3.1.5</a>
+                <a href="#jwt-svid-input" class="auto internal xref">Section 3.1.5</a>, <a href="#wit-input" class="auto internal xref">Section 3.1.7</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Bearer JWT inputs</td>
+              <td class="text-left" rowspan="1" colspan="1">DPoP association enforced across acquisition and exchange, including credential reuse</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#bearer-reuse" class="auto internal xref">Section 3.1.1</a>
 </td>
             </tr>
             <tr>
@@ -1745,7 +1758,7 @@ discovery protocol.<a href="#section-3-4" class="pilcrow">¶</a></p>
         <tbody>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Platform-issued JWT, imported workload</td>
-            <td class="text-left" rowspan="1" colspan="1">Approved issuer and configured exact identity claims under <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.1</a>; OAuth client identity is separate</td>
+            <td class="text-left" rowspan="1" colspan="1">Approved issuer and configured exact identity claims under <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.2</a>; OAuth client identity is separate</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">ATTEST, agent is the client</td>
@@ -1755,6 +1768,10 @@ discovery protocol.<a href="#section-3-4" class="pilcrow">¶</a></p>
             <td class="text-left" rowspan="1" colspan="1">ATTEST, shared client</td>
             <td class="text-left" rowspan="1" colspan="1">Exact attestation <code>(iss, sub, agent_id)</code>
 </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">SPIFFE JWT-SVID, agent is the client</td>
+            <td class="text-left" rowspan="1" colspan="1">Approved trust domain and exact JWT <code>sub</code>; <code>client_id</code> equals that SPIFFE ID</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">SPIFFE X.509-SVID, agent is the client</td>
@@ -1768,7 +1785,7 @@ discovery protocol.<a href="#section-3-4" class="pilcrow">¶</a></p>
       </table>
 <p id="section-3-6">The IdP <span class="bcp14">MUST</span> resolve the lookup to exactly one active Registered Agent
 through an enabled binding. Missing or ambiguous matches cause
-rejection. ATTEST's <code>agent_id</code> rules follow <a href="#agent-evidence" class="auto internal xref">Section 3.1.3</a>; claim
+rejection. ATTEST's <code>agent_id</code> rules follow <a href="#agent-evidence" class="auto internal xref">Section 3.1.4</a>; claim
 presence <span class="bcp14">MUST NOT</span> select the identity model.<a href="#section-3-6" class="pilcrow">¶</a></p>
 <p id="section-3-7">The Registered Agent identifier <span class="bcp14">MUST</span> be unique and non-reassignable
 within the IdP issuer's namespace. It need not equal the external
@@ -1828,301 +1845,368 @@ existing access token to a different DPoP key. A changed key
 requires new issuance.<a href="#section-3.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<div id="platform-jwt-input">
+<div id="bearer-reuse">
 <section id="section-3.1.1">
-          <h4 id="name-platform-issued-jwt">
-<a href="#section-3.1.1" class="section-number selfRef">3.1.1. </a><a href="#name-platform-issued-jwt" class="section-name selfRef">Platform-Issued JWT</a>
+          <h4 id="name-bearer-jwt-credential-reuse">
+<a href="#section-3.1.1" class="section-number selfRef">3.1.1. </a><a href="#name-bearer-jwt-credential-reuse" class="section-name selfRef">Bearer JWT Credential Reuse</a>
           </h4>
-<p id="section-3.1.1-1">The client <span class="bcp14">MUST</span> present a JWT issued by an approved platform as
+<p id="section-3.1.1-1">This section applies to platform JWT evidence and JWT-SVID client
+authentication. The same credential <span class="bcp14">MAY</span> be reused with fresh DPoP
+proofs. After validating the request and before issuance, the IdP
+<span class="bcp14">MUST</span> atomically establish or enforce the following association:<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3.1.1-2">
+<li id="section-3.1.1-2.1">
+              <p id="section-3.1.1-2.1.1">Compute the SHA-256 digest of the JWS Signing Input <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>.<a href="#section-3.1.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.1.1-2.2">
+              <p id="section-3.1.1-2.2.1">On first use, associate that digest with the Federation Binding
+and proven DPoP key.<a href="#section-3.1.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.1.1-2.3">
+              <p id="section-3.1.1-2.3.1">Retain the association until <code>exp</code> plus allowable clock skew, even
+if a configured maximum age makes the JWT unusable sooner.<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.1.1-2.4">
+              <p id="section-3.1.1-2.4.1">Reject reuse with another binding or key. Reuse with the same
+association remains subject to current validation and
+status checks, but <span class="bcp14">MUST NOT</span> be rejected solely because the JWT or
+its <code>jti</code> was previously seen.<a href="#section-3.1.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+<p id="section-3.1.1-3">The IdP <span class="bcp14">MUST</span> enforce one association across acquisition and exchange,
+including direct WAG and delegated ID-JAG requests and all endpoint
+replicas. Excluding the signature from the digest prevents another
+valid signature over the same signing input from bypassing this check.
+Failures use the error defined for the input in <a href="#inputs" class="auto internal xref">Section 3.1</a>.<a href="#section-3.1.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1.1-4">Clients using cached JWTs <span class="bcp14">MUST</span> retain the associated DPoP key. A key
+change requires a newly issued JWT with a different signing input,
+such as a new <code>iat</code> or <code>jti</code>, or another independently authenticated,
+approved binding. The IdP <span class="bcp14">MUST NOT</span> reset the association merely
+because the caller supplies a new key. A renewed credential does not
+change the key binding of an existing grant or access token.<a href="#section-3.1.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="platform-jwt-input">
+<section id="section-3.1.2">
+          <h4 id="name-platform-issued-jwt">
+<a href="#section-3.1.2" class="section-number selfRef">3.1.2. </a><a href="#name-platform-issued-jwt" class="section-name selfRef">Platform-Issued JWT</a>
+          </h4>
+<p id="section-3.1.2-1">The client <span class="bcp14">MUST</span> present a JWT issued by an approved platform as
 <code>subject_token</code>, with
 <code>subject_token_type=urn:ietf:params:oauth:token-type:jwt</code>, in a token
 exchange request. This input is workload evidence, not client
 authentication under <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>. It <span class="bcp14">MUST NOT</span> be presented as
 <code>client_assertion</code>. The requested output is WAG under <a href="#direct-wag" class="auto internal xref">Section 4.2.1</a>
-or an IdP access token under <a href="#platform-acquisition" class="auto internal xref">Section 5.1.1</a>.<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1.1-2">The Federation Binding <span class="bcp14">MUST</span> specify an exact <code>sub</code> value. It <span class="bcp14">MAY</span> also
+or an IdP access token under <a href="#platform-acquisition" class="auto internal xref">Section 5.1.1</a>.<a href="#section-3.1.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-2">The Federation Binding <span class="bcp14">MUST</span> specify an exact <code>sub</code> value. It <span class="bcp14">MAY</span> also
 specify top-level string claims identifying the agent or restricting
-its identity context. The IdP <span class="bcp14">MUST</span> require every configured selector to:<a href="#section-3.1.1-2" class="pilcrow">¶</a></p>
+its identity context. The IdP <span class="bcp14">MUST</span> require every configured selector to:<a href="#section-3.1.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1.1-3.1">
-              <p id="section-3.1.1-3.1.1">Be present as a nonempty string.<a href="#section-3.1.1-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.1.2-3.1">
+              <p id="section-3.1.2-3.1.1">Be present as a nonempty string.<a href="#section-3.1.2-3.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.1-3.2">
-              <p id="section-3.1.1-3.2.1">Match the configured value exactly, without patterns or prefixes.<a href="#section-3.1.1-3.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.2-3.2">
+              <p id="section-3.1.2-3.2.1">Match the configured value exactly, without patterns or prefixes.<a href="#section-3.1.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.1-3.3">
-              <p id="section-3.1.1-3.3.1">Together with the issuer, resolve to one Registered Agent.<a href="#section-3.1.1-3.3.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.2-3.3">
+              <p id="section-3.1.2-3.3.1">Together with the issuer, resolve to one Registered Agent.<a href="#section-3.1.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-3.1.1-4">For example, an agent identifier and tenant claim can qualify a
+<p id="section-3.1.2-4">For example, an agent identifier and tenant claim can qualify a
 shared platform <code>sub</code>. Selectors come from trusted configuration;
-no external claim need equal an OAuth <code>client_id</code>.<a href="#section-3.1.1-4" class="pilcrow">¶</a></p>
-<p id="section-3.1.1-5">Client authentication, when required, follows <a href="#platform-client" class="auto internal xref">Section 3.1.2</a>.
+no external claim need equal an OAuth <code>client_id</code>.<a href="#section-3.1.2-4" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-5">Client authentication, when required, follows <a href="#platform-client" class="auto internal xref">Section 3.1.3</a>.
 A Federation Binding <span class="bcp14">MAY</span> designate an IdP-assigned OAuth client or an
 explicit set of permitted clients, independently of the platform's
 identity namespace. That association authorizes use of the binding
-by those clients; it <span class="bcp14">MUST NOT</span> substitute for client authentication.<a href="#section-3.1.1-5" class="pilcrow">¶</a></p>
+by those clients; it <span class="bcp14">MUST NOT</span> substitute for client authentication.<a href="#section-3.1.2-5" class="pilcrow">¶</a></p>
 <div id="issuer-configuration-and-validation">
-<section id="section-3.1.1.1">
+<section id="section-3.1.2.1">
             <h5 id="name-issuer-configuration-and-va">
-<a href="#section-3.1.1.1" class="section-number selfRef">3.1.1.1. </a><a href="#name-issuer-configuration-and-va" class="section-name selfRef">Issuer Configuration and Validation</a>
+<a href="#section-3.1.2.1" class="section-number selfRef">3.1.2.1. </a><a href="#name-issuer-configuration-and-va" class="section-name selfRef">Issuer Configuration and Validation</a>
             </h5>
-<p id="section-3.1.1.1-1">For each approved platform issuer, the IdP <span class="bcp14">MUST</span> configure:<a href="#section-3.1.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1.2.1-1">For each approved platform issuer, the IdP <span class="bcp14">MUST</span> configure:<a href="#section-3.1.2.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1.1.1-2.1">
-                <p id="section-3.1.1.1-2.1.1">The exact issuer identifier and a trusted key source: issuer
+<li class="normal" id="section-3.1.2.1-2.1">
+                <p id="section-3.1.2.1-2.1.1">The exact issuer identifier and a trusted key source: issuer
 metadata under <span>[<a href="#OIDC" class="cite xref">OIDC</a>]</span> or <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>, or a configured key set.
-A URL or key supplied in the JWT <span class="bcp14">MUST NOT</span> establish that trust.<a href="#section-3.1.1.1-2.1.1" class="pilcrow">¶</a></p>
+A URL or key supplied in the JWT <span class="bcp14">MUST NOT</span> establish that trust.<a href="#section-3.1.2.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-3.1.1.1-2.2">
-                <p id="section-3.1.1.1-2.2.1">Accepted audiences identifying the IdP and permitted asymmetric
-signature algorithms.<a href="#section-3.1.1.1-2.2.1" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-3.1.2.1-2.2">
+                <p id="section-3.1.2.1-2.2.1">Accepted audiences identifying the IdP and permitted asymmetric
+signature algorithms.<a href="#section-3.1.2.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-3.1.1.1-2.3">
-                <p id="section-3.1.1.1-2.3.1">Maximum credential age and lifetime, accounting for the platform's
+              <li class="normal" id="section-3.1.2.1-2.3">
+                <p id="section-3.1.2.1-2.3.1">Maximum credential age and lifetime, accounting for the platform's
 issuance and caching behavior. The maximum age <span class="bcp14">SHOULD</span> be no more
 than 300 seconds where the platform can refresh credentials that
-frequently; a longer age requires an explicit deployment policy.<a href="#section-3.1.1.1-2.3.1" class="pilcrow">¶</a></p>
+frequently; a longer age requires an explicit deployment policy.<a href="#section-3.1.2.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-3.1.1.1-2.4">
-                <p id="section-3.1.1.1-2.4.1">Validation rules distinguishing workload credentials from other
+              <li class="normal" id="section-3.1.2.1-2.4">
+                <p id="section-3.1.2.1-2.4.1">Validation rules distinguishing workload credentials from other
 tokens issued by the platform. These can use an explicit <code>typ</code>, a
 dedicated issuer or audience, or an audience combined with exact
-workload identity claims. Generic <code>typ=JWT</code> alone is insufficient.<a href="#section-3.1.1.1-2.4.1" class="pilcrow">¶</a></p>
+workload identity claims. Generic <code>typ=JWT</code> alone is insufficient.<a href="#section-3.1.2.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
-<p id="section-3.1.1.1-3">The IdP <span class="bcp14">MUST</span> validate the JWT under <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> and <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>,
+<p id="section-3.1.2.1-3">The IdP <span class="bcp14">MUST</span> validate the JWT under <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> and <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>,
 including its signature, issuer, audience, and credential class, and
-reject it if any of the following applies:<a href="#section-3.1.1.1-3" class="pilcrow">¶</a></p>
+reject it if any of the following applies:<a href="#section-3.1.2.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1.1.1-4.1">
-                <p id="section-3.1.1.1-4.1.1"><code>iss</code> or <code>sub</code> is missing or is not a nonempty string.<a href="#section-3.1.1.1-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.1.2.1-4.1">
+                <p id="section-3.1.2.1-4.1.1"><code>iss</code> or <code>sub</code> is missing or is not a nonempty string.<a href="#section-3.1.2.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-3.1.1.1-4.2">
-                <p id="section-3.1.1.1-4.2.1"><code>iat</code> or <code>exp</code> is missing or is not a NumericDate, <code>iat</code> does not
-precede <code>exp</code>, or a time check in <a href="#time-validation" class="auto internal xref">Section 8.2</a> fails.<a href="#section-3.1.1.1-4.2.1" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-3.1.2.1-4.2">
+                <p id="section-3.1.2.1-4.2.1"><code>iat</code> or <code>exp</code> is missing or is not a NumericDate, <code>iat</code> does not
+precede <code>exp</code>, or a time check in <a href="#time-validation" class="auto internal xref">Section 8.2</a> fails.<a href="#section-3.1.2.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-3.1.1.1-4.3">
-                <p id="section-3.1.1.1-4.3.1">Its age or lifetime exceeds the configured limit.<a href="#section-3.1.1.1-4.3.1" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-3.1.2.1-4.3">
+                <p id="section-3.1.2.1-4.3.1">Its age or lifetime exceeds the configured limit.<a href="#section-3.1.2.1-4.3.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-3.1.1.1-4.4">
-                <p id="section-3.1.1.1-4.4.1">It identifies a user rather than an approved workload, or its
+              <li class="normal" id="section-3.1.2.1-4.4">
+                <p id="section-3.1.2.1-4.4.1">It identifies a user rather than an approved workload, or its
 audience and credential class do not authorize use as workload
-evidence at this IdP.<a href="#section-3.1.1.1-4.4.1" class="pilcrow">¶</a></p>
+evidence at this IdP.<a href="#section-3.1.2.1-4.4.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-3.1.1.1-4.5">
-                <p id="section-3.1.1.1-4.5.1">It contains <code>act</code> or fails a configured identity selector.<a href="#section-3.1.1.1-4.5.1" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-3.1.2.1-4.5">
+                <p id="section-3.1.2.1-4.5.1">It contains <code>act</code> or fails a configured identity selector.<a href="#section-3.1.2.1-4.5.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </section>
 </div>
 <div id="dpop-binding-and-credential-reuse">
-<section id="section-3.1.1.2">
+<section id="section-3.1.2.2">
             <h5 id="name-dpop-binding-and-credential">
-<a href="#section-3.1.1.2" class="section-number selfRef">3.1.1.2. </a><a href="#name-dpop-binding-and-credential" class="section-name selfRef">DPoP Binding and Credential Reuse</a>
+<a href="#section-3.1.2.2" class="section-number selfRef">3.1.2.2. </a><a href="#name-dpop-binding-and-credential" class="section-name selfRef">DPoP Binding and Credential Reuse</a>
             </h5>
-<p id="section-3.1.1.2-1">A platform-issued JWT is a bearer credential with no key of its
+<p id="section-3.1.2.2-1">A platform-issued JWT is a bearer credential with no key of its
 own. A separate DPoP proof establishes the token-binding key, which
-the platform need not know. Both <span class="bcp14">MUST</span> be validated in the same request.<a href="#section-3.1.1.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.1.1.2-2">Nonce policy follows the common rule in <a href="#exchange" class="auto internal xref">Section 4</a>. A nonce
+the platform need not know. Both <span class="bcp14">MUST</span> be validated in the same request.<a href="#section-3.1.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.1.2.2-2">Nonce policy follows the common rule in <a href="#exchange" class="auto internal xref">Section 4</a>. A nonce
 prevents proof pre-generation; it does not prevent theft of the bearer
-JWT before its first use or bind that JWT to a platform-proven key.<a href="#section-3.1.1.2-2" class="pilcrow">¶</a></p>
-<p id="section-3.1.1.2-3">The same platform JWT <span class="bcp14">MAY</span> be reused with fresh DPoP proofs. For each
-successful use, the IdP <span class="bcp14">MUST</span> enforce the following association:<a href="#section-3.1.1.2-3" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-3.1.1.2-4">
-<li id="section-3.1.1.2-4.1">
-                <p id="section-3.1.1.2-4.1.1">Compute the SHA-256 digest of the JWS Signing Input <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>.<a href="#section-3.1.1.2-4.1.1" class="pilcrow">¶</a></p>
-</li>
-              <li id="section-3.1.1.2-4.2">
-                <p id="section-3.1.1.2-4.2.1">On first use, atomically associate that digest with the Federation
-Binding and proven DPoP key.<a href="#section-3.1.1.2-4.2.1" class="pilcrow">¶</a></p>
-</li>
-              <li id="section-3.1.1.2-4.3">
-                <p id="section-3.1.1.2-4.3.1">Retain the association until <code>exp</code> plus allowable clock skew, even
-if the configured maximum age makes the JWT unusable sooner.<a href="#section-3.1.1.2-4.3.1" class="pilcrow">¶</a></p>
-</li>
-              <li id="section-3.1.1.2-4.4">
-                <p id="section-3.1.1.2-4.4.1">Reject reuse with another binding or key. Reuse with the same
-binding and key remains subject to current validation and status
-checks, but <span class="bcp14">MUST NOT</span> be rejected solely because the JWT or its
-<code>jti</code> was previously seen.<a href="#section-3.1.1.2-4.4.1" class="pilcrow">¶</a></p>
-</li>
-            </ol>
-<p id="section-3.1.1.2-5">Excluding the signature from the digest prevents another valid
-signature over the same signing input from bypassing this check.
-Validation failures use <code>invalid_grant</code>; separate client
-authentication errors retain their base processing.<a href="#section-3.1.1.2-5" class="pilcrow">¶</a></p>
-<p id="section-3.1.1.2-6">Clients using cached JWTs <span class="bcp14">MUST</span> retain the associated DPoP key. A key
-change requires a newly issued JWT with a different signing input,
-such as a new <code>iat</code> or <code>jti</code>, or another independently authenticated,
-approved binding. The IdP <span class="bcp14">MUST NOT</span> reset the association merely
-because the caller supplies a new key.<a href="#section-3.1.1.2-6" class="pilcrow">¶</a></p>
-<p id="section-3.1.1.2-7">Platforms unable to issue a fresh credential or target the IdP
+JWT before its first use or bind that JWT to a platform-proven key.<a href="#section-3.1.2.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.1.2.2-3">Platform JWTs <span class="bcp14">MUST</span> follow the association and key-change rules in
+<a href="#bearer-reuse" class="auto internal xref">Section 3.1.1</a>. Validation failures use <code>invalid_grant</code>; separate
+client authentication errors retain their base processing.<a href="#section-3.1.2.2-3" class="pilcrow">¶</a></p>
+<p id="section-3.1.2.2-4">Platforms unable to issue a fresh credential or target the IdP
 audience can provide a token-exchange service or act as an ATTEST
-attester instead.<a href="#section-3.1.1.2-7" class="pilcrow">¶</a></p>
+attester instead.<a href="#section-3.1.2.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="platform-client">
-<section id="section-3.1.2">
+<section id="section-3.1.3">
           <h4 id="name-client-authentication-for-p">
-<a href="#section-3.1.2" class="section-number selfRef">3.1.2. </a><a href="#name-client-authentication-for-p" class="section-name selfRef">Client Authentication for Platform Evidence</a>
+<a href="#section-3.1.3" class="section-number selfRef">3.1.3. </a><a href="#name-client-authentication-for-p" class="section-name selfRef">Client Authentication for Platform Evidence</a>
           </h4>
-<p id="section-3.1.2-1">For direct platform-JWT-to-WAG exchange, the IdP <span class="bcp14">MAY</span> permit requests
+<p id="section-3.1.3-1">For direct platform-JWT-to-WAG exchange, the IdP <span class="bcp14">MAY</span> permit requests
 without OAuth client authentication or identification, as allowed by
 <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a></span>. This does not waive validation of the platform
 JWT, DPoP nonce and key association, or agent authorization. A binding
-configured to require client authentication <span class="bcp14">MUST NOT</span> permit its omission.<a href="#section-3.1.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.1.2-2">Acquisition from platform evidence and subsequent use of the IdP
-access token <span class="bcp14">MUST</span> authenticate the OAuth client independently:<a href="#section-3.1.2-2" class="pilcrow">¶</a></p>
+configured to require client authentication <span class="bcp14">MUST NOT</span> permit its omission.<a href="#section-3.1.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.1.3-2">Acquisition from platform evidence and subsequent use of the IdP
+access token <span class="bcp14">MUST</span> authenticate the OAuth client independently:<a href="#section-3.1.3-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1.2-3.1">
-              <p id="section-3.1.2-3.1.1">The client uses a separately configured OAuth authentication method,
-such as <code>private_key_jwt</code> under <span>[<a href="#OIDC" class="cite xref">OIDC</a>]</span> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>, or ATTEST.<a href="#section-3.1.2-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.1.3-3.1">
+              <p id="section-3.1.3-3.1.1">The client uses a separately configured OAuth authentication method,
+such as <code>private_key_jwt</code> under <span>[<a href="#OIDC" class="cite xref">OIDC</a>]</span> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>, or ATTEST.<a href="#section-3.1.3-3.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.2-3.2">
-              <p id="section-3.1.2-3.2.1">The request includes <code>client_id</code>, and the IdP verifies that it
-identifies the authenticated client permitted by the binding.<a href="#section-3.1.2-3.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.3-3.2">
+              <p id="section-3.1.3-3.2.1">The request includes <code>client_id</code>, and the IdP verifies that it
+identifies the authenticated client permitted by the binding.<a href="#section-3.1.3-3.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.2-3.3">
-              <p id="section-3.1.2-3.3.1">Neither DPoP possession nor the mapped platform identity substitutes
-for client authentication.<a href="#section-3.1.2-3.3.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.3-3.3">
+              <p id="section-3.1.3-3.3.1">Neither DPoP possession nor the mapped platform identity substitutes
+for client authentication.<a href="#section-3.1.3-3.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-3.1.2-4">Requests using a platform-origin IdP access token follow the same
-nonce policy as other inputs under <a href="#exchange" class="auto internal xref">Section 4</a>.<a href="#section-3.1.2-4" class="pilcrow">¶</a></p>
-<p id="section-3.1.2-5">A JWT used for client authentication <span class="bcp14">MUST</span> satisfy that method's client
+<p id="section-3.1.3-4">Requests using a platform-origin IdP access token follow the same
+nonce policy as other inputs under <a href="#exchange" class="auto internal xref">Section 4</a>.<a href="#section-3.1.3-4" class="pilcrow">¶</a></p>
+<p id="section-3.1.3-5">A JWT used for client authentication <span class="bcp14">MUST</span> satisfy that method's client
 identity and key requirements independently of the platform JWT. For
 RFC 7523 client authentication, <code>sub</code> <span class="bcp14">MUST</span> be the OAuth <code>client_id</code>.
 For ATTEST used solely in this role, its client authentication rules
 apply; it does not independently select the Registered Agent for the
 platform evidence path. No new client
-authentication method or assertion type is defined here.<a href="#section-3.1.2-5" class="pilcrow">¶</a></p>
+authentication method or assertion type is defined here.<a href="#section-3.1.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="agent-evidence">
-<section id="section-3.1.3">
+<section id="section-3.1.4">
           <h4 id="name-client-attestation-and-shar">
-<a href="#section-3.1.3" class="section-number selfRef">3.1.3. </a><a href="#name-client-attestation-and-shar" class="section-name selfRef">Client Attestation and Shared-Agent Binding</a>
+<a href="#section-3.1.4" class="section-number selfRef">3.1.4. </a><a href="#name-client-attestation-and-shar" class="section-name selfRef">Client Attestation and Shared-Agent Binding</a>
           </h4>
-<p id="section-3.1.3-1">The client <span class="bcp14">MUST</span> use <code>attest_jwt_client_auth_dpop</code> under <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span>.
+<p id="section-3.1.4-1">The client <span class="bcp14">MUST</span> use <code>attest_jwt_client_auth_dpop</code> under <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span>.
 This section defines an ATTEST extension for agent identity binding;
 base ATTEST validation alone does not establish an agent identity.
 An IdP enables the extension only for an approved Federation Binding.
-The Client Attestation <span class="bcp14">MUST</span> satisfy ATTEST and these additional rules:<a href="#section-3.1.3-1" class="pilcrow">¶</a></p>
+The Client Attestation <span class="bcp14">MUST</span> satisfy ATTEST and these additional rules:<a href="#section-3.1.4-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1.3-2.1">
-              <p id="section-3.1.3-2.1.1"><code>iss</code> and <code>sub</code> are nonempty strings; <code>sub</code> equals <code>client_id</code>.<a href="#section-3.1.3-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.1.4-2.1">
+              <p id="section-3.1.4-2.1.1"><code>iss</code> and <code>sub</code> are nonempty strings; <code>sub</code> equals <code>client_id</code>.<a href="#section-3.1.4-2.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.3-2.2">
-              <p id="section-3.1.3-2.2.1"><code>iat</code> and <code>exp</code> are NumericDates, with <code>iat</code> preceding <code>exp</code>.<a href="#section-3.1.3-2.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.4-2.2">
+              <p id="section-3.1.4-2.2.1"><code>iat</code> and <code>exp</code> are NumericDates, with <code>iat</code> preceding <code>exp</code>.<a href="#section-3.1.4-2.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.3-2.3">
-              <p id="section-3.1.3-2.3.1">The signature uses an approved asymmetric algorithm and a <code>kid</code>
+            <li class="normal" id="section-3.1.4-2.3">
+              <p id="section-3.1.4-2.3.1">The signature uses an approved asymmetric algorithm and a <code>kid</code>
 resolved through trusted attester configuration. Implementations
-<span class="bcp14">MUST</span> support <code>ES256</code>.<a href="#section-3.1.3-2.3.1" class="pilcrow">¶</a></p>
+<span class="bcp14">MUST</span> support <code>ES256</code>.<a href="#section-3.1.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.3-2.4">
-              <p id="section-3.1.3-2.4.1">For a shared client, <code>agent_id</code> is a nonempty StringOrURI
+            <li class="normal" id="section-3.1.4-2.4">
+              <p id="section-3.1.4-2.4.1">For a shared client, <code>agent_id</code> is a nonempty StringOrURI
 <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> naming the agent in the attester's namespace. When the
 agent is the client, the binding uses <code>(iss, sub)</code>; an additional
-<code>agent_id</code> claim does not change that binding.<a href="#section-3.1.3-2.4.1" class="pilcrow">¶</a></p>
+<code>agent_id</code> claim does not change that binding.<a href="#section-3.1.4-2.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-3.1.3-3">The shared-client binding assumes that the attester verifies the
+<p id="section-3.1.4-3">The shared-client binding assumes that the attester verifies the
 named agent's authorized execution and possession of the <code>cnf.jwk</code>
 key. The IdP should approve an attester for this binding only when
-its issuance policy provides that assurance.<a href="#section-3.1.3-3" class="pilcrow">¶</a></p>
-<p id="section-3.1.3-4">The IdP <span class="bcp14">MUST</span> validate the attestation and combined-mode proof under
+its issuance policy provides that assurance.<a href="#section-3.1.4-3" class="pilcrow">¶</a></p>
+<p id="section-3.1.4-4">The IdP <span class="bcp14">MUST</span> validate the attestation and combined-mode proof under
 ATTEST, including the match between the DPoP key and <code>cnf.jwk</code>, and
-apply a configured maximum age and lifetime for each attester:<a href="#section-3.1.3-4" class="pilcrow">¶</a></p>
+apply a configured maximum age and lifetime for each attester:<a href="#section-3.1.4-4" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1.3-5.1">
-              <p id="section-3.1.3-5.1.1">Missing or incorrectly typed required claims, invalid time ordering,
+<li class="normal" id="section-3.1.4-5.1">
+              <p id="section-3.1.4-5.1.1">Missing or incorrectly typed required claims, invalid time ordering,
 or an invalid shared-client <code>agent_id</code> produce
-<code>invalid_client_attestation</code>.<a href="#section-3.1.3-5.1.1" class="pilcrow">¶</a></p>
+<code>invalid_client_attestation</code>.<a href="#section-3.1.4-5.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.3-5.2">
-              <p id="section-3.1.3-5.2.1">An attestation outside configured age or lifetime limits produces
-<code>use_fresh_attestation</code> under ATTEST.<a href="#section-3.1.3-5.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.4-5.2">
+              <p id="section-3.1.4-5.2.1">An attestation outside configured age or lifetime limits produces
+<code>use_fresh_attestation</code> under ATTEST.<a href="#section-3.1.4-5.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-3.1.3-6">Request freshness comes from the proof and current status checks;
-this profile does not impose a fixed attestation lifetime.<a href="#section-3.1.3-6" class="pilcrow">¶</a></p>
+<p id="section-3.1.4-6">Request freshness comes from the proof and current status checks;
+this profile does not impose a fixed attestation lifetime.<a href="#section-3.1.4-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="jwt-svid-input">
+<section id="section-3.1.5">
+          <h4 id="name-spiffe-jwt-svid">
+<a href="#section-3.1.5" class="section-number selfRef">3.1.5. </a><a href="#name-spiffe-jwt-svid" class="section-name selfRef">SPIFFE JWT-SVID</a>
+          </h4>
+<p id="section-3.1.5-1">The client <span class="bcp14">MUST</span> authenticate under <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02#section-3.1" class="relref">Section 3.1</a></span> with:<a href="#section-3.1.5-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.5-2.1">
+              <p id="section-3.1.5-2.1.1"><code>client_assertion_type</code> set to
+<code>urn:ietf:params:oauth:client-assertion-type:jwt-spiffe</code>.<a href="#section-3.1.5-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.5-2.2">
+              <p id="section-3.1.5-2.2.1"><code>client_assertion</code> containing a single JWT-SVID.<a href="#section-3.1.5-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.5-2.3">
+              <p id="section-3.1.5-2.3.1"><code>client_id</code> equal to the exact SPIFFE ID in the JWT-SVID's <code>sub</code>.
+This is a narrowing of SPIFFE OAuth's client-identifier association
+options; this input represents the agent as its own client.<a href="#section-3.1.5-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.1.5-3">The IdP <span class="bcp14">MUST</span> validate the JWT-SVID under that specification, including
+its required <code>sub</code>, <code>aud</code>, and <code>exp</code>, signature, and time checks under
+<a href="#time-validation" class="auto internal xref">Section 8.2</a>. In particular:<a href="#section-3.1.5-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.5-4.1">
+              <p id="section-3.1.5-4.1.1">The sole audience <span class="bcp14">MUST</span> be the IdP issuer identifier, not the RAS
+issuer, token endpoint URL, or dedicated exchange audience of the
+IdP access token.<a href="#section-3.1.5-4.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.5-4.2">
+              <p id="section-3.1.5-4.2.1">Verification keys <span class="bcp14">MUST</span> come from the configured trust domain in
+the SPIFFE ID, using <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02#section-6" class="relref">Section 6</a></span>. The IdP <span class="bcp14">MUST</span> resolve
+the exact Federation Binding under <a href="#identity" class="auto internal xref">Section 3</a>.<a href="#section-3.1.5-4.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.5-4.3">
+              <p id="section-3.1.5-4.3.1">An optional <code>iss</code> <span class="bcp14">MUST NOT</span> select trust anchors or replace that
+lookup. Absence of <code>iss</code> or <code>iat</code> alone <span class="bcp14">MUST NOT</span> cause rejection;
+SPIFFE OAuth defines this adaptation of <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>.<a href="#section-3.1.5-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.1.5-5">JWT-SVID authenticates the client as a bearer credential. The IdP <span class="bcp14">MUST</span>
+also validate the separate DPoP proof under <a href="#inputs" class="auto internal xref">Section 3.1</a> and enforce
+<a href="#bearer-reuse" class="auto internal xref">Section 3.1.1</a>. DPoP does not prove possession of a key certified by
+that JWT-SVID. Nonce policy follows <a href="#exchange" class="auto internal xref">Section 4</a>.<a href="#section-3.1.5-5" class="pilcrow">¶</a></p>
+<p id="section-3.1.5-6">For self-acting access, the client uses <a href="#direct-wag" class="auto internal xref">Section 4.2.1</a>. For acquisition,
+it uses the client credentials grant under <a href="#bootstrap" class="auto internal xref">Section 5</a>. At exchange
+of an IdP access token, a renewed JWT-SVID <span class="bcp14">MAY</span> authenticate the same
+client and Federation Binding; DPoP <span class="bcp14">MUST</span> still prove the token's key.
+Delegated exchange retains the IdP access token as <code>actor_token</code>.<a href="#section-3.1.5-6" class="pilcrow">¶</a></p>
+<p id="section-3.1.5-7">JWT-SVID authentication and credential-reuse failures produce
+<code>invalid_client</code> under <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.2" class="relref">Section 3.2</a></span>. DPoP failures use the
+errors in <a href="#exchange-errors" class="auto internal xref">Section 4.7</a>. A valid authentication assertion that
+differs from the direct WAG <code>subject_token</code> produces <code>invalid_grant</code>.<a href="#section-3.1.5-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="spiffe-input">
-<section id="section-3.1.4">
+<section id="section-3.1.6">
           <h4 id="name-spiffe-x509-svid">
-<a href="#section-3.1.4" class="section-number selfRef">3.1.4. </a><a href="#name-spiffe-x509-svid" class="section-name selfRef">SPIFFE X.509-SVID</a>
+<a href="#section-3.1.6" class="section-number selfRef">3.1.6. </a><a href="#name-spiffe-x509-svid" class="section-name selfRef">SPIFFE X.509-SVID</a>
           </h4>
-<p id="section-3.1.4-1">The client <span class="bcp14">MUST</span> authenticate using <code>spiffe_x509</code> under
+<p id="section-3.1.6-1">The client <span class="bcp14">MUST</span> authenticate using <code>spiffe_x509</code> under
 <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02#section-3.2" class="relref">Section 3.2</a></span>, with <code>client_id</code> equal to the exact
 SPIFFE ID in the certificate's URI SAN. The IdP <span class="bcp14">MUST</span> validate the
 SVID and trust bundle under that specification and resolve the
 approved trust-domain and identity binding in <a href="#identity" class="auto internal xref">Section 3</a>. This
-input represents the agent as client.<a href="#section-3.1.4-1" class="pilcrow">¶</a></p>
-<p id="section-3.1.4-2">A separate DPoP proof establishes the token-binding key. This key
+input represents the agent as client.<a href="#section-3.1.6-1" class="pilcrow">¶</a></p>
+<p id="section-3.1.6-2">A separate DPoP proof establishes the token-binding key. This key
 <span class="bcp14">MAY</span> differ from the SVID's TLS key. Both proofs <span class="bcp14">MUST</span> be validated
 in the same authenticated token request. At exchange, a renewed SVID
 <span class="bcp14">MAY</span> authenticate the same SPIFFE ID under the same approved binding;
-the DPoP key <span class="bcp14">MUST</span> still match the access token.<a href="#section-3.1.4-2" class="pilcrow">¶</a></p>
-<p id="section-3.1.4-3">WIT-SVID uses the separate binding in <a href="#wit-input" class="auto internal xref">Section 3.1.5</a>. A JWT-SVID lacks
-the <code>iss</code> claim <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> requires and remains outside this profile.<a href="#section-3.1.4-3" class="pilcrow">¶</a></p>
+the DPoP key <span class="bcp14">MUST</span> still match the access token.<a href="#section-3.1.6-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="wit-input">
-<section id="section-3.1.5">
+<section id="section-3.1.7">
           <h4 id="name-spiffe-wit-svid">
-<a href="#section-3.1.5" class="section-number selfRef">3.1.5. </a><a href="#name-spiffe-wit-svid" class="section-name selfRef">SPIFFE WIT-SVID</a>
+<a href="#section-3.1.7" class="section-number selfRef">3.1.7. </a><a href="#name-spiffe-wit-svid" class="section-name selfRef">SPIFFE WIT-SVID</a>
           </h4>
-<p id="section-3.1.5-1">The client <span class="bcp14">MUST</span> authenticate using <code>spiffe_wit</code> under
+<p id="section-3.1.7-1">The client <span class="bcp14">MUST</span> authenticate using <code>spiffe_wit</code> under
 <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02#section-3.3" class="relref">Section 3.3</a></span>. It <span class="bcp14">MUST</span> send the WIT-SVID directly in
 <code>OAuth-Client-Attestation</code> and a fresh Client Attestation PoP JWT in
 <code>OAuth-Client-Attestation-PoP</code>, with <code>client_id</code> equal to the exact
 SPIFFE ID in the WIT's <code>sub</code>. This input represents the agent as
-client. The requirements specific to <a href="#agent-evidence" class="auto internal xref">Section 3.1.3</a> do not apply
-to this input.<a href="#section-3.1.5-1" class="pilcrow">¶</a></p>
-<p id="section-3.1.5-2">The IdP <span class="bcp14">MUST</span> validate the WIT under <span>[<a href="#WIT" class="cite xref">WIT</a>]</span>, including <code>typ=wit+jwt</code>,
+client. The requirements specific to <a href="#agent-evidence" class="auto internal xref">Section 3.1.4</a> do not apply
+to this input.<a href="#section-3.1.7-1" class="pilcrow">¶</a></p>
+<p id="section-3.1.7-2">The IdP <span class="bcp14">MUST</span> validate the WIT under <span>[<a href="#WIT" class="cite xref">WIT</a>]</span>, including <code>typ=wit+jwt</code>,
 expiration, signature, and the public key and proof algorithm in
 <code>cnf.jwk</code>. It <span class="bcp14">MUST</span> use trust anchors configured for the trust domain
 in <code>sub</code> and resolve the exact binding in <a href="#identity" class="auto internal xref">Section 3</a>. The optional
 <code>iss</code> claim <span class="bcp14">MUST NOT</span> select trust anchors or replace that lookup;
-its absence alone <span class="bcp14">MUST NOT</span> cause rejection.<a href="#section-3.1.5-2" class="pilcrow">¶</a></p>
-<p id="section-3.1.5-3">The IdP <span class="bcp14">MUST</span> validate the Client Attestation PoP JWT under <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span>,
+its absence alone <span class="bcp14">MUST NOT</span> cause rejection.<a href="#section-3.1.7-2" class="pilcrow">¶</a></p>
+<p id="section-3.1.7-3">The IdP <span class="bcp14">MUST</span> validate the Client Attestation PoP JWT under <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span>,
 including the IdP issuer audience, freshness, and required challenge.
 The request also includes the DPoP proof required by <a href="#inputs" class="auto internal xref">Section 3.1</a>.
-For those proofs:<a href="#section-3.1.5-3" class="pilcrow">¶</a></p>
+For those proofs:<a href="#section-3.1.7-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1.5-4.1">
-              <p id="section-3.1.5-4.1.1">Both <span class="bcp14">MUST</span> use the WIT's <code>cnf.jwk</code> key and its <code>alg</code> value.<a href="#section-3.1.5-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.1.7-4.1">
+              <p id="section-3.1.7-4.1.1">Both <span class="bcp14">MUST</span> use the WIT's <code>cnf.jwk</code> key and its <code>alg</code> value.<a href="#section-3.1.7-4.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.5-4.2">
-              <p id="section-3.1.5-4.2.1">The IdP <span class="bcp14">MUST</span> compare keys using <span>[<a href="#RFC7638" class="cite xref">RFC7638</a>]</span> thumbprints and reject
-a mismatch.<a href="#section-3.1.5-4.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.7-4.2">
+              <p id="section-3.1.7-4.2.1">The IdP <span class="bcp14">MUST</span> compare keys using <span>[<a href="#RFC7638" class="cite xref">RFC7638</a>]</span> thumbprints and reject
+a mismatch.<a href="#section-3.1.7-4.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.5-4.3">
-              <p id="section-3.1.5-4.3.1">Implementations <span class="bcp14">MUST</span> support <code>ES256</code>.<a href="#section-3.1.5-4.3.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.7-4.3">
+              <p id="section-3.1.7-4.3.1">Implementations <span class="bcp14">MUST</span> support <code>ES256</code>.<a href="#section-3.1.7-4.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-3.1.5-5">The attestation proof authenticates the client; DPoP establishes the
+<p id="section-3.1.7-5">The attestation proof authenticates the client; DPoP establishes the
 token binding. DPoP alone <span class="bcp14">MUST NOT</span> replace the attestation proof.
-Validation errors follow ATTEST or DPoP, as applicable.<a href="#section-3.1.5-5" class="pilcrow">¶</a></p>
-<p id="section-3.1.5-6">A renewed WIT-SVID <span class="bcp14">MAY</span> authenticate an exchange using an existing
+Validation errors follow ATTEST or DPoP, as applicable.<a href="#section-3.1.7-5" class="pilcrow">¶</a></p>
+<p id="section-3.1.7-6">A renewed WIT-SVID <span class="bcp14">MAY</span> authenticate an exchange using an existing
 eligible IdP access token only if its identity binding and proof key
-remain the same. If the WIT key changes:<a href="#section-3.1.5-6" class="pilcrow">¶</a></p>
+remain the same. If the WIT key changes:<a href="#section-3.1.7-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1.5-7.1">
-              <p id="section-3.1.5-7.1.1">The IdP access-token path requires new acquisition.<a href="#section-3.1.5-7.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.1.7-7.1">
+              <p id="section-3.1.7-7.1.1">The IdP access-token path requires new acquisition.<a href="#section-3.1.7-7.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-3.1.5-7.2">
-              <p id="section-3.1.5-7.2.1">A direct WAG request proves the new key under <a href="#direct-wag" class="auto internal xref">Section 4.2.1</a>.<a href="#section-3.1.5-7.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.1.7-7.2">
+              <p id="section-3.1.7-7.2.1">A direct WAG request proves the new key under <a href="#direct-wag" class="auto internal xref">Section 4.2.1</a>.<a href="#section-3.1.7-7.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-3.1.5-8"><span>[<a href="#WIT" class="cite xref">WIT</a>]</span> recommends a fresh key for each WIT, so reuse across renewal
+<p id="section-3.1.7-8"><span>[<a href="#WIT" class="cite xref">WIT</a>]</span> recommends a fresh key for each WIT, so reuse across renewal
 is expected only where the deployment retains the key. The lifetime
-limit in <a href="#idp-access-token" class="auto internal xref">Section 3.3</a> applies to the access token, not the WIT.<a href="#section-3.1.5-8" class="pilcrow">¶</a></p>
+limit in <a href="#idp-access-token" class="auto internal xref">Section 3.3</a> applies to the access token, not the WIT.<a href="#section-3.1.7-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2379,7 +2463,7 @@ produces <code>use_dpop_nonce</code> with a fresh <code>DPoP-Nonce</code> value 
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">WAG; platform JWT, ATTEST, or WIT-SVID</td>
+              <td class="text-left" rowspan="1" colspan="1">WAG; platform JWT, ATTEST, JWT-SVID, or WIT-SVID</td>
               <td class="text-left" rowspan="1" colspan="1">The JWT credential as <code>subject_token</code>, type <code>jwt</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Not required; preferred path</td>
@@ -2447,6 +2531,12 @@ The IdP <span class="bcp14">MUST</span> validate the <code>subject_token</code> 
                 <td class="text-left" rowspan="1" colspan="1">Approved <code>(iss, sub)</code> or shared-client <code>(iss, sub, agent_id)</code> binding</td>
               </tr>
               <tr>
+                <td class="text-left" rowspan="1" colspan="1">JWT-SVID</td>
+                <td class="text-left" rowspan="1" colspan="1">Same JWT in <code>subject_token</code> and <code>client_assertion</code>, with the <code>jwt-spiffe</code> assertion type</td>
+                <td class="text-left" rowspan="1" colspan="1">Approved trust domain and exact SPIFFE ID in <code>sub</code>
+</td>
+              </tr>
+              <tr>
                 <td class="text-left" rowspan="1" colspan="1">WIT-SVID</td>
                 <td class="text-left" rowspan="1" colspan="1">Same JWT in <code>subject_token</code> and <code>OAuth-Client-Attestation</code>
 </td>
@@ -2455,10 +2545,11 @@ The IdP <span class="bcp14">MUST</span> validate the <code>subject_token</code> 
               </tr>
             </tbody>
           </table>
-<p id="section-4.2.1-3">For ATTEST and WIT-SVID, the IdP <span class="bcp14">MUST</span> reject a different JWT in
-<code>subject_token</code> with <code>invalid_grant</code>, even if both JWTs identify the
-same agent. The generic JWT token type <span class="bcp14">MUST NOT</span> select an input or
-relax its validation requirements. Trusted configuration determines
+<p id="section-4.2.1-3">For ATTEST, JWT-SVID, and WIT-SVID, <code>subject_token</code> <span class="bcp14">MUST</span> contain the
+identical JWT used for client authentication. The IdP <span class="bcp14">MUST</span> reject a
+mismatch with <code>invalid_grant</code>, even if both JWTs identify the same
+agent. The generic JWT token type <span class="bcp14">MUST NOT</span> select an input or relax
+its validation requirements. Trusted configuration determines
 credential type, issuer or trust-domain validation, identity mapping,
 and required proofs under <a href="#inputs" class="auto internal xref">Section 3.1</a>. A direct input carrying <code>act</code>
             <span class="bcp14">MUST</span> be rejected with <code>invalid_grant</code>; this path represents a
@@ -2472,10 +2563,11 @@ that value was authenticated.<a href="#section-4.2.1-4" class="pilcrow">¶</a></
 <p id="section-4.2.1-5">For a shared client, <code>agent_id</code> selects an approved binding without
 granting authority.<a href="#section-4.2.1-5" class="pilcrow">¶</a></p>
 <p id="section-4.2.1-6">For ATTEST and WIT-SVID, the DPoP key <span class="bcp14">MUST</span> match the credential's
-<code>cnf.jwk</code> under the selected input. Platform JWTs retain the bearer
-credential and DPoP association rules in <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.1</a>.
-For ATTEST and WIT-SVID the same JWT also authenticates the client.
-No additional credential issuance is required for any direct JWT input.<a href="#section-4.2.1-6" class="pilcrow">¶</a></p>
+<code>cnf.jwk</code> under the selected input. Platform JWTs and JWT-SVIDs retain
+the bearer credential and DPoP association rules in <a href="#bearer-reuse" class="auto internal xref">Section 3.1.1</a>.
+For ATTEST, JWT-SVID, and WIT-SVID the same JWT also authenticates the
+client. No additional credential issuance is required for any direct
+JWT input.<a href="#section-4.2.1-6" class="pilcrow">¶</a></p>
 <p id="section-4.2.1-7">Example direct exchange using Client Attestation:<a href="#section-4.2.1-7" class="pilcrow">¶</a></p>
 <div class="lang-http sourcecode" id="section-4.2.1-8">
 <pre>
@@ -2597,7 +2689,7 @@ Source Tenant, and input method.<a href="#section-4.4-2.2.2.2.1" class="pilcrow"
                 <p id="section-4.4-2.2.2.3.1">For ATTEST and SPIFFE, match current authentication to that binding.<a href="#section-4.4-2.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-4.4-2.2.2.4">
-                <p id="section-4.4-2.2.2.4.1">For platform origin, apply <a href="#platform-client" class="auto internal xref">Section 3.1.2</a> to the recorded
+                <p id="section-4.4-2.2.2.4.1">For platform origin, apply <a href="#platform-client" class="auto internal xref">Section 3.1.3</a> to the recorded
 binding. No new platform JWT is needed; the IdP access token
 does not authenticate the client.<a href="#section-4.4-2.2.2.4.1" class="pilcrow">¶</a></p>
 </li>
@@ -3161,7 +3253,7 @@ grant_type=client_credentials
 <a href="#section-5.1.1" class="section-number selfRef">5.1.1. </a><a href="#name-acquisition-from-platform-j" class="section-name selfRef">Acquisition from Platform JWT Evidence</a>
           </h4>
 <p id="section-5.1.1-1">The client <span class="bcp14">MUST</span> use token exchange with separate client authentication
-under <a href="#platform-client" class="auto internal xref">Section 3.1.2</a> and the following parameters:<a href="#section-5.1.1-1" class="pilcrow">¶</a></p>
+under <a href="#platform-client" class="auto internal xref">Section 3.1.3</a> and the following parameters:<a href="#section-5.1.1-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-13">
             <caption><a href="#table-13" class="selfRef">Table 13</a></caption>
 <thead>
@@ -3183,7 +3275,7 @@ under <a href="#platform-client" class="auto internal xref">Section 3.1.2</a> an
                 <td class="text-left" rowspan="1" colspan="1">
                   <code>subject_token</code>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Platform JWT validated under <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.1</a>
+                <td class="text-left" rowspan="1" colspan="1">Platform JWT validated under <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.2</a>
 </td>
               </tr>
               <tr>
@@ -3550,7 +3642,8 @@ this contract without defining new SCIM attributes.<a href="#section-6.6-3" clas
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-metadata-and-configuration" class="section-name selfRef">Metadata and Configuration</a>
       </h2>
 <p id="section-7-1">The IdP <span class="bcp14">MUST</span> advertise its implemented capabilities through existing
-metadata under <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> and the referenced specifications:<a href="#section-7-1" class="pilcrow">¶</a></p>
+metadata under <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> and the referenced specifications, except
+for the JWT-SVID configuration described below:<a href="#section-7-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-16">
         <caption><a href="#table-16" class="selfRef">Table 16</a></caption>
 <thead>
@@ -3596,18 +3689,23 @@ metadata under <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> a
           </tr>
         </tbody>
       </table>
-<p id="section-7-3">Platform JWT evidence defines no client authentication method. Its
+<p id="section-7-3">JWT-SVID support <span class="bcp14">MUST</span> be agreed through trusted configuration using
+the assertion type in <a href="#jwt-svid-input" class="auto internal xref">Section 3.1.5</a>. SPIFFE OAuth defines that
+assertion type but no corresponding <code>token_endpoint_auth_methods_supported</code>
+value. This profile does not invent one or treat <code>private_key_jwt</code>
+as an advertisement of JWT-SVID support.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<p id="section-7-4">Platform JWT evidence defines no client authentication method. Its
 issuer and claim mappings use trusted configuration. An IdP supporting
 <a href="#platform-acquisition" class="auto internal xref">Section 5.1.1</a> also advertises the separate authentication
-methods accepted on that path.<a href="#section-7-3" class="pilcrow">¶</a></p>
-<p id="section-7-4">A RAS <span class="bcp14">MUST</span> advertise <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> in
+methods accepted on that path.<a href="#section-7-4" class="pilcrow">¶</a></p>
+<p id="section-7-5">A RAS <span class="bcp14">MUST</span> advertise <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> in
 <code>grant_types_supported</code>, DPoP support under <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and metadata
 required by the selected grant and Actor Profile. Before issuance,
 the IdP <span class="bcp14">MUST</span> verify that the configured RAS supports the required
-grant, key binding, and actor processing.<a href="#section-7-4" class="pilcrow">¶</a></p>
-<p id="section-7-5">Metadata discovery does not establish issuer trust or delegation
+grant, key binding, and actor processing.<a href="#section-7-5" class="pilcrow">¶</a></p>
+<p id="section-7-6">Metadata discovery does not establish issuer trust or delegation
 authority. <a href="#identity" class="auto internal xref">Section 3</a> defines trusted profile selection. No new
-metadata parameter, bootstrap scope, or grant-profile URI is defined.<a href="#section-7-5" class="pilcrow">¶</a></p>
+metadata parameter, bootstrap scope, or grant-profile URI is defined.<a href="#section-7-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security">
@@ -3644,7 +3742,8 @@ credential classes they accept, under <span>[<a href="#RFC8725" class="cite xref
 In particular, an IdP access token, WAG, ID-JAG, client assertion, or
 platform JWT does not become another credential class merely because
 it has a trusted signature. The intentional dual use of a Client
-Attestation or WIT-SVID in <a href="#direct-wag" class="auto internal xref">Section 4.2.1</a> requires both sets of checks.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+Attestation, JWT-SVID, or WIT-SVID in <a href="#direct-wag" class="auto internal xref">Section 4.2.1</a> requires both sets
+of checks.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 <p id="section-8.2-2">For JWTs accepted under this profile, validators <span class="bcp14">MUST</span>:<a href="#section-8.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.2-3.1">
@@ -3655,7 +3754,8 @@ credential class and issuer or trust domain.<a href="#section-8.2-3.1.1" class="
             <p id="section-8.2-3.2.1">Enforce <code>exp</code> and, when present, <code>nbf</code> under <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-8.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.2-3.3">
-            <p id="section-8.2-3.3.1">Reject <code>iat</code> later than the current time plus configured clock skew.<a href="#section-8.2-3.3.1" class="pilcrow">¶</a></p>
+            <p id="section-8.2-3.3.1">When <code>iat</code> is present, reject a non-NumericDate value or a value
+later than the current time plus configured clock skew.<a href="#section-8.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.2-3.4">
             <p id="section-8.2-3.4.1">Use a configured clock-skew allowance, without increasing a
@@ -3735,19 +3835,25 @@ flow. A shared client alone does not authenticate the agent behind it.
 Instance context does not authorize key rebinding or delegation.<a href="#section-8.5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="platform-credential-theft">
+<div id="bearer-workload-credential-theft">
 <section id="section-8.6">
-        <h3 id="name-platform-credential-theft">
-<a href="#section-8.6" class="section-number selfRef">8.6. </a><a href="#name-platform-credential-theft" class="section-name selfRef">Platform Credential Theft</a>
+        <h3 id="name-bearer-workload-credential-">
+<a href="#section-8.6" class="section-number selfRef">8.6. </a><a href="#name-bearer-workload-credential-" class="section-name selfRef">Bearer Workload Credential Theft</a>
         </h3>
-<p id="section-8.6-1">A platform JWT is a bearer credential. Theft before first use can let
-an attacker establish the initial DPoP key association. Subsequent
-key matching cannot prevent that race; audience restriction, bounded
-age, and transport protection limit exposure.<a href="#section-8.6-1" class="pilcrow">¶</a></p>
-<p id="section-8.6-2">The reuse association in <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.1</a> prevents an already
-used JWT from enrolling another key. Platforms <span class="bcp14">MUST NOT</span> share one
-cached JWT among clients using independent DPoP keys. Platforms unable
-to meet those prerequisites need another approved evidence path.<a href="#section-8.6-2" class="pilcrow">¶</a></p>
+<p id="section-8.6-1">Platform JWTs and JWT-SVIDs are bearer credentials. Theft before first
+use can let an attacker establish the initial DPoP key association.
+Subsequent key matching cannot prevent that race; audience restriction,
+short credential lifetimes, and transport protection limit exposure.
+A DPoP nonce does not bind the bearer credential to its intended holder.<a href="#section-8.6-1" class="pilcrow">¶</a></p>
+<p id="section-8.6-2">The reuse association in <a href="#bearer-reuse" class="auto internal xref">Section 3.1.1</a> prevents an already used JWT
+from enrolling another key. Platforms <span class="bcp14">MUST NOT</span> share one cached JWT
+among clients using independent DPoP keys. This also applies to SPIFFE
+replicas that share a workload identity: independent keys require
+credentials with distinct signing inputs. A request for another
+JWT-SVID does not guarantee that its signing input differs.<a href="#section-8.6-2" class="pilcrow">¶</a></p>
+<p id="section-8.6-3">Deployments unable to obtain distinct credentials need another approved
+evidence path, such as X.509-SVID or WIT-SVID. None of these inputs
+establishes distinct replica identity without additional evidence.<a href="#section-8.6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="status-changes">
@@ -3824,12 +3930,12 @@ the "JSON Web Token Claims" registry established by <span>[<a href="#RFC7519" cl
             <p id="section-10.1-2.3.1">Change Controller: IETF<a href="#section-10.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-10.1-2.4">
-            <p id="section-10.1-2.4.1">Specification Document(s): <a href="#agent-evidence" class="auto internal xref">Section 3.1.3</a> of this document<a href="#section-10.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-10.1-2.4.1">Specification Document(s): <a href="#agent-evidence" class="auto internal xref">Section 3.1.4</a> of this document<a href="#section-10.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-10.1-3">The value is a nonempty StringOrURI distinguishing agents represented
 by a shared ATTEST client. Platform JWT identity selectors are
-configured separately under <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.1</a>.<a href="#section-10.1-3" class="pilcrow">¶</a></p>
+configured separately under <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.2</a>.<a href="#section-10.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="wag-identifiers-pending-coordination">
@@ -4049,10 +4155,10 @@ and assignments are policy inputs; group claims about an ID-JAG user
 do not describe the agent actor's memberships. Provisioning transport,
 synchronization, policy engines, access-token formats, and introspection
 <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span> are deployment choices outside this profile.<a href="#appendix-A-5" class="pilcrow">¶</a></p>
-<p id="appendix-A-6">Platform-issued JWTs follow <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.1</a>; native SPIFFE
-X.509-SVID and WIT-SVID authentication follow <a href="#spiffe-input" class="auto internal xref">Section 3.1.4</a> and
-<a href="#wit-input" class="auto internal xref">Section 3.1.5</a>. Other credential types need explicit binding and proof
-rules; support for one platform's tokens does not imply that every
+<p id="appendix-A-6">Platform-issued JWTs follow <a href="#platform-jwt-input" class="auto internal xref">Section 3.1.2</a>; native SPIFFE
+JWT-SVID, X.509-SVID, and WIT-SVID authentication follow
+<a href="#jwt-svid-input" class="auto internal xref">Section 3.1.5</a>, <a href="#spiffe-input" class="auto internal xref">Section 3.1.6</a>, and <a href="#wit-input" class="auto internal xref">Section 3.1.7</a>. Other credential
+types need explicit binding and proof rules; support for one platform's tokens does not imply that every
 token format is accepted. Direct WIT actor evidence under Actor
 Profile is a different input path. It would need explicit
 external-subject mapping and proof rules; it does not implicitly
