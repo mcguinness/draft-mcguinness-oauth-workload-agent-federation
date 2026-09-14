@@ -1458,13 +1458,20 @@ ID-JAG's format and downstream processing follow <span>[<a href="#ID-JAG" class=
 <a href="#wag-profile" class="auto internal xref">Section 4.5.1</a>; open coordination items are recorded in
 <a href="https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/coordination.md#coordination">Coordination with Related Work</a>.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <p id="section-1.2-2">Actor Profile applies to user delegation. The Registered Agent is the
-actor. Instance identification is outside this version's scope;
-key possession does not identify an installation or execution.
-Self-acting access does not require Actor Profile.<a href="#section-1.2-2" class="pilcrow">¶</a></p>
-<p id="section-1.2-3">Existing client-based delegation, including MCP Enterprise-Managed
+actor. Actor representation and chain processing belong to Actor
+Profile and its consuming authorization profiles; this version does
+not support delegation chains. Self-acting access does not require
+Actor Profile.<a href="#section-1.2-2" class="pilcrow">¶</a></p>
+<p id="section-1.2-3">Instance identification is separate from authorization identity
+(<a href="#instance-identification" class="auto internal xref">Section 3.2</a>). Provisioning and lifecycle mechanisms
+supply governance inputs; this profile defines their use in federation,
+not their transport. Enrollment, clone detection, and verified key
+replacement depend on platform evidence mechanisms. Model and runtime
+assurance semantics are outside this profile.<a href="#section-1.2-3" class="pilcrow">¶</a></p>
+<p id="section-1.2-4">Existing client-based delegation, including MCP Enterprise-Managed
 Authorization, can be used when a separately governed agent principal
 is unnecessary. <a href="#models" class="auto internal xref">Section 1.3</a> covers model selection, <a href="#deployment" class="auto internal xref">Appendix A</a>
-covers compatibility, and <a href="https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/deployment-examples.md#flows">End-to-End Deployment Examples</a> provides end-to-end examples.<a href="#section-1.2-3" class="pilcrow">¶</a></p>
+covers compatibility, and <a href="https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/deployment-examples.md#flows">End-to-End Deployment Examples</a> provides end-to-end examples.<a href="#section-1.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="models">
@@ -1722,6 +1729,11 @@ can be imported from a platform registry. The IdP <span class="bcp14">MUST</span
 binding changes, including imports. Operators <span class="bcp14">SHOULD</span> authenticate and
 audit the administrative source of each change. Binding configuration
 identifies the credential authority and exact identity selectors.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">A deployment can use a client's endorsement of an attester to narrow
+the authorities permitted for that client. Such an endorsement does
+not establish IdP trust in the attester; the IdP's configured trust
+policy remains the authority. This profile defines no endorsement
+discovery protocol.<a href="#section-3-4" class="pilcrow">¶</a></p>
 <table class="center" id="table-3">
         <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
 <thead>
@@ -1754,31 +1766,32 @@ identifies the credential authority and exact identity selectors.<a href="#secti
           </tr>
         </tbody>
       </table>
-<p id="section-3-5">The IdP <span class="bcp14">MUST</span> resolve the lookup to exactly one active Registered Agent
+<p id="section-3-6">The IdP <span class="bcp14">MUST</span> resolve the lookup to exactly one active Registered Agent
 through an enabled binding. Missing or ambiguous matches cause
 rejection. ATTEST's <code>agent_id</code> rules follow <a href="#agent-evidence" class="auto internal xref">Section 3.1.3</a>; claim
-presence <span class="bcp14">MUST NOT</span> select the identity model.<a href="#section-3-5" class="pilcrow">¶</a></p>
-<p id="section-3-6">The Registered Agent identifier <span class="bcp14">MUST</span> be unique and non-reassignable
+presence <span class="bcp14">MUST NOT</span> select the identity model.<a href="#section-3-6" class="pilcrow">¶</a></p>
+<p id="section-3-7">The Registered Agent identifier <span class="bcp14">MUST</span> be unique and non-reassignable
 within the IdP issuer's namespace. It need not equal the external
 identifier. Multiple approved bindings can identify the same agent;
 display names or unqualified strings <span class="bcp14">MUST NOT</span> establish equivalence.
-A new installation, execution, or key does not create a new principal.<a href="#section-3-6" class="pilcrow">¶</a></p>
-<p id="section-3-7">The IdP <span class="bcp14">MUST</span> verify all configured evidence and an unambiguous Source
-Tenant; grant issuance also requires an unambiguous Target Tenant. Evidence has distinct roles:<a href="#section-3-7" class="pilcrow">¶</a></p>
+A new installation, execution, or key does not by itself create a new
+authorization principal.<a href="#section-3-7" class="pilcrow">¶</a></p>
+<p id="section-3-8">The IdP <span class="bcp14">MUST</span> verify all configured evidence and an unambiguous Source
+Tenant; grant issuance also requires an unambiguous Target Tenant. Evidence has distinct roles:<a href="#section-3-8" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3-8.1">
-          <p id="section-3-8.1.1">Client authentication establishes the OAuth client.<a href="#section-3-8.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3-9.1">
+          <p id="section-3-9.1.1">Client authentication establishes the OAuth client.<a href="#section-3-9.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-8.2">
-          <p id="section-3-8.2.1">The Federation Binding establishes the Registered Agent.<a href="#section-3-8.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-3-9.2">
+          <p id="section-3-9.2.1">The Federation Binding establishes the Registered Agent.<a href="#section-3-9.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-8.3">
-          <p id="section-3-8.3.1">The DPoP proof establishes possession of the binding key.<a href="#section-3-8.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-3-9.3">
+          <p id="section-3-9.3.1">The DPoP proof establishes possession of the binding key.<a href="#section-3-9.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-3-9">The IdP <span class="bcp14">MUST NOT</span> substitute one role for another or bypass a required
+<p id="section-3-10">The IdP <span class="bcp14">MUST NOT</span> substitute one role for another or bypass a required
 binding when evidence is omitted. Other client flows retain their own
-requirements.<a href="#section-3-9" class="pilcrow">¶</a></p>
+requirements.<a href="#section-3-10" class="pilcrow">¶</a></p>
 <div id="inputs">
 <section id="section-3.1">
         <h3 id="name-evidence-and-client-authent">
@@ -2123,6 +2136,35 @@ limit in <a href="#idp-access-token" class="auto internal xref">Section 3.3</a> 
 semantics are outside this version's scope. This profile does not
 interpret <code>client_instance_id</code> or <code>client_instance</code>. Unrecognized
 claims do not establish identity, key binding, or authorization.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">An identifier labels claimed continuity; trusted evidence establishes
+whether that continuity is accepted. Key possession alone does not
+identify an installation or execution. Native workload credentials
+also need not distinguish replicas. This profile defines no instance
+enrollment, clone-detection, or key-replacement protocol.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3">The authorization representation remains:<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.2-4.1">
+            <p id="section-3.2-4.1.1">For self-acting access, <code>sub</code> identifies the Registered Agent and
+WAG contains no <code>act</code>.<a href="#section-3.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.2-4.2">
+            <p id="section-3.2-4.2.1">For user-delegated access, <code>sub</code> identifies the user and <code>act</code>
+identifies the Registered Agent.<a href="#section-3.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.2-4.3">
+            <p id="section-3.2-4.3.1">Restarting an execution or replacing a replica does not by itself
+change either principal.<a href="#section-3.2-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-3.2-5">The <code>act</code> claim expresses delegation and identifies the acting party
+(<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a></span>); authenticating a runtime does not by itself
+make that runtime an actor. Granting independent authority to a
+particular execution requires a specialized authorization profile.<a href="#section-3.2-5" class="pilcrow">¶</a></p>
+<p id="section-3.2-6">A future instance-context extension needs to define whose instance is
+described and how exchange and redemption propagate or replace that
+context. The intended association is the agent subject for WAG and the
+agent actor for ID-JAG. These are design boundaries, not instance-claim
+processing requirements in this revision.<a href="#section-3.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="idp-access-token">
