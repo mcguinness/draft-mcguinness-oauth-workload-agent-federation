@@ -140,9 +140,17 @@ ID-JAG's format and downstream processing follow {{ID-JAG}} and
 [Coordination with Related Work](https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/coordination.md#coordination).
 
 Actor Profile applies to user delegation. The Registered Agent is the
-actor. Instance identification is outside this version's scope;
-key possession does not identify an installation or execution.
-Self-acting access does not require Actor Profile.
+actor. Actor representation and chain processing belong to Actor
+Profile and its consuming authorization profiles; this version does
+not support delegation chains. Self-acting access does not require
+Actor Profile.
+
+Instance identification is separate from authorization identity
+({{instance-identification}}). Provisioning and lifecycle mechanisms
+supply governance inputs; this profile defines their use in federation,
+not their transport. Enrollment, clone detection, and verified key
+replacement depend on platform evidence mechanisms. Model and runtime
+assurance semantics are outside this profile.
 
 Existing client-based delegation, including MCP Enterprise-Managed
 Authorization, can be used when a separately governed agent principal
@@ -284,6 +292,12 @@ binding changes, including imports. Operators SHOULD authenticate and
 audit the administrative source of each change. Binding configuration
 identifies the credential authority and exact identity selectors.
 
+A deployment can use a client's endorsement of an attester to narrow
+the authorities permitted for that client. Such an endorsement does
+not establish IdP trust in the attester; the IdP's configured trust
+policy remains the authority. This profile defines no endorsement
+discovery protocol.
+
 | Input and identity model | Federation Binding lookup |
 |---|---|
 | Platform-issued JWT, imported workload | Approved issuer and configured exact identity claims under {{platform-jwt-input}}; OAuth client identity is separate |
@@ -301,7 +315,8 @@ The Registered Agent identifier MUST be unique and non-reassignable
 within the IdP issuer's namespace. It need not equal the external
 identifier. Multiple approved bindings can identify the same agent;
 display names or unqualified strings MUST NOT establish equivalence.
-A new installation, execution, or key does not create a new principal.
+A new installation, execution, or key does not by itself create a new
+authorization principal.
 
 The IdP MUST verify all configured evidence and an unambiguous Source
 Tenant; grant issuance also requires an unambiguous Target Tenant. Evidence has distinct roles:
@@ -562,12 +577,38 @@ remain the same. If the WIT key changes:
 is expected only where the deployment retains the key. The lifetime
 limit in {{idp-access-token}} applies to the access token, not the WIT.
 
-## Instance Identification
+## Instance Identification {#instance-identification}
 
 Stable instance identifiers, instance claims, and their lifecycle
 semantics are outside this version's scope. This profile does not
 interpret `client_instance_id` or `client_instance`. Unrecognized
 claims do not establish identity, key binding, or authorization.
+
+An identifier labels claimed continuity; trusted evidence establishes
+whether that continuity is accepted. Key possession alone does not
+identify an installation or execution. Native workload credentials
+also need not distinguish replicas. This profile defines no instance
+enrollment, clone-detection, or key-replacement protocol.
+
+The authorization representation remains:
+
+* For self-acting access, `sub` identifies the Registered Agent and
+  WAG contains no `act`.
+* For user-delegated access, `sub` identifies the user and `act`
+  identifies the Registered Agent.
+* Restarting an execution or replacing a replica does not by itself
+  change either principal.
+
+The `act` claim expresses delegation and identifies the acting party
+({{RFC8693, Section 4.1}}); authenticating a runtime does not by itself
+make that runtime an actor. Granting independent authority to a
+particular execution requires a specialized authorization profile.
+
+A future instance-context extension needs to define whose instance is
+described and how exchange and redemption propagate or replace that
+context. The intended association is the agent subject for WAG and the
+agent actor for ID-JAG. These are design boundaries, not instance-claim
+processing requirements in this revision.
 
 ## IdP Access Token {#idp-access-token}
 

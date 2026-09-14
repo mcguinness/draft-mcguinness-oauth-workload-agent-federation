@@ -4,6 +4,74 @@
 
 This repository note tracks unresolved design and dependency decisions. It is not part of the normative draft.
 
+## Scope and ownership
+
+Keep the external-identity-to-governed-agent binding and downstream grant
+issuance in Agent Federation. Related gaps have different owners:
+
+| Gap | Recommended home |
+|---|---|
+| External workload or platform identity → governed agent → downstream grant | Agent Federation |
+| Who may act for whom; actor representation and chain processing | Actor Profile and its consuming authorization profiles |
+| Stable installation or execution identity | Identification |
+| Client endorsement of an attester, constrained by IdP trust policy | Federation configuration initially; a small CLIENT-ATTEST trust profile only if implementations need interoperable discovery |
+| Agent ownership, groups, provisioning, and disablement signals | Provisioning and lifecycle work, coordinated with Federation |
+| Enrollment, clone detection, and verified key replacement | Platform-specific evidence mechanisms initially |
+| Interoperable model or runtime assurance | Defer a dedicated profile until concrete producers and consumers agree on semantics |
+
+Client endorsement can restrict the attesters accepted for a client within
+the IdP's configured trust policy. It cannot make an otherwise untrusted
+attester authoritative. A future discovery mechanism needs to preserve that
+boundary; no additional discovery protocol is required by this revision.
+
+### Identification boundaries
+
+Two gaps need to remain explicit in Identification:
+
+1. **Continuity depends on evidence.** An identifier labels the continuity
+   asserted under trusted evidence rules; it does not establish that continuity.
+   Identification does not supply an enrollment or key-replacement protocol.
+   Evidence for enrollment, replica distinction, clone detection, and verified
+   key replacement initially remains platform-specific.
+2. **Context propagation needs a consuming profile.** That profile needs to
+   identify whose instance is described and define what happens during exchange:
+   * Which evidence establishes the instance association.
+   * Whether the context is retained, replaced, or omitted in each output.
+   * How a change of actor affects the association.
+
+Native workload credentials do not automatically provide replica identity.
+SPIFFE permits a workload to span multiple running instances; distinguishing
+those replicas requires additional evidence. See
+[SPIFFE Concepts](https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/).
+
+### Authorization principal and optional instance context
+
+Treat an instance as a distinct identification subject when its continuity
+matters. Treat it as an authorization principal only when the deployment
+deliberately grants authority to that instance.
+
+The following table records the intended architecture. Instance context is
+not implemented by this revision. Agent-to-agent delegation and independently
+authorized executions also require other authorization profiles.
+
+| Situation | Authorization representation | Optional instance context under a future consuming profile |
+|---|---|---|
+| Agent acts as itself | `sub` = governed agent; WAG has no `act` | Instance of the agent subject |
+| Agent acts for a user | `sub` = user; `act` = governed agent under the delegation profile | Instance executing as that actor |
+| Agent restarts or replaces a replica | Authorization identity stays unchanged | New execution identifier; installation continuity follows Identification's evidence rules |
+| Agent delegates to another governed agent | Actor relationship changes under the consuming delegation profile | Context follows the new actor; the previous actor's instance is not relabeled as the new actor's |
+| A particular execution is deliberately granted independent authority | Execution may be subject or actor | Defined by the specialized authorization profile |
+
+[RFC 8693 Section 4.1](https://www.rfc-editor.org/rfc/rfc8693.html#section-4.1)
+defines `act` as a representation of delegation and the acting party. It does
+not require every authenticated runtime to become an actor.
+
+Earlier Federation text defined subject-instance context for WAG and
+actor-instance context for ID-JAG. The current revision removed that wire
+behavior with the unpublished INSTANCE dependency. Preserve those associations
+as design requirements for a future consuming extension, without restoring a
+normative dependency or implying current interoperability.
+
 <a id="wag-gaps"></a>
 
 ## WAG Gaps Filled by This Document
