@@ -1,4 +1,4 @@
-<!-- regenerate: on (set to off if you edit this file) -->
+<!-- regenerate: off (set to off if you edit this file) -->
 
 # OAuth 2.0 Profile for Agent Federation
 
@@ -29,3 +29,9 @@ $ make
 Command line usage requires that you have the necessary software installed.  See
 [the instructions](https://github.com/martinthomson/i-d-template/blob/main/doc/SETUP.md).
 
+## Supporting material
+
+* [Deployment examples](docs/deployment-examples.md)
+* [Interoperability cases](docs/interoperability.md)
+* [Coordination and design decisions](docs/coordination.md)
+* [Review disposition](docs/review-disposition.md)
