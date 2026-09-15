@@ -1,8 +1,8 @@
 <!-- regenerate: off (set to off if you edit this file) -->
 
-# OAuth 2.0 Profile for Agent Federation
+# OAuth 2.0 Profile for Governed Agent Federation
 
-This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Agent Federation".
+This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Governed Agent Federation".
 
 The goal is a prescriptive integration contract for agent-platform vendors
 and IdPs: supply workload evidence, bind it to a governed agent and permitted
