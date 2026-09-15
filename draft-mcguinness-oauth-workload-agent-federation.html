@@ -1401,6 +1401,8 @@ resolving its governed identity alone does not complete that path.<a href="#sect
 <p id="section-1.2-1">The IdP, RAS, and client roles claiming this profile <span class="bcp14">MUST</span> implement
 <a href="#delegated-flow" class="auto internal xref">Section 6</a>. The required common path uses an ID Token subject,
 a platform JWT actor, <code>private_key_jwt</code> client authentication, and DPoP.
+An IdP-issued refresh token is an optional subject input under
+<a href="#exchange-request" class="auto internal xref">Section 6.2</a>.
 It does not require the optional instance-identification input. Additional
 credential inputs have the status listed in <a href="#actor-inputs" class="auto internal xref">Section 6.3</a>.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <p id="section-1.2-2">The API <span class="bcp14">MUST</span> support the access-token processing in <a href="#api-processing" class="auto internal xref">Section 6.7</a>.
@@ -1599,7 +1601,7 @@ also apply, subject to the explicit narrowings below.<a href="#section-2.1-1" cl
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Exchange</td>
-              <td class="text-left" rowspan="1" colspan="1">ID Token subject and direct JWT actor; both actor parameters <span class="bcp14">REQUIRED</span>
+              <td class="text-left" rowspan="1" colspan="1">ID Token or supported IdP refresh-token subject, with a direct JWT actor; both actor parameters <span class="bcp14">REQUIRED</span>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#exchange-request" class="auto internal xref">Section 6.2</a>
@@ -2248,15 +2250,14 @@ parameters are <span class="bcp14">REQUIRED</span>:<a href="#section-6.2-1" clas
               <td class="text-left" rowspan="1" colspan="1">
                 <code>subject_token</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">User ID Token issued by this IdP for the authenticated client</td>
+              <td class="text-left" rowspan="1" colspan="1">User ID Token, or a refresh token when supported, issued by this IdP for the authenticated client</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>subject_token_type</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>urn:ietf:params:oauth:token-type:id_token</code>
-</td>
+                <code>urn:ietf:params:oauth:token-type:id_token</code> for an ID Token; <code>urn:ietf:params:oauth:token-type:refresh_token</code> for a refresh token</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -2298,17 +2299,30 @@ parameters are <span class="bcp14">REQUIRED</span>:<a href="#section-6.2-1" clas
 resource and scope, and DPoP. <code>authorization_details</code>, when present,
 retains ID-JAG's processing rules; it does not replace these required
 parameters. No new request parameter is introduced.<a href="#section-6.2-3" class="pilcrow">¶</a></p>
-<p id="section-6.2-4">The IdP <span class="bcp14">MUST</span> validate the ID Token according to <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.3.3" class="relref">Section 4.3.3</a></span>,
-including its signature, issuer, expiration, audience, and applicable
-client-binding checks. The audience <span class="bcp14">MUST</span> identify the authenticated
-IdP client. Validation of the user's ID Token does not supply approval
-for the actor. The IdP <span class="bcp14">MUST</span> separately apply <a href="#delegation-approval" class="auto internal xref">Section 5.1</a>.<a href="#section-6.2-4" class="pilcrow">¶</a></p>
-<p id="section-6.2-5">An IdP <span class="bcp14">MAY</span> additionally accept its own refresh token as <code>subject_token</code>
-with <code>subject_token_type=urn:ietf:params:oauth:token-type:refresh_token</code>,
-using ID-JAG's refresh-token subject rules. This support <span class="bcp14">MUST</span> be agreed
-in client configuration. The actor credential, client authentication,
-DPoP proof, and current delegation checks remain required on every
-request. It is not an intermediate actor-normalization token.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
+<p id="section-6.2-4">The IdP <span class="bcp14">MUST</span> support ID Token subjects and <span class="bcp14">MAY</span> additionally support its
+own refresh tokens. Refresh-token support <span class="bcp14">MUST</span> be agreed in client
+configuration. The IdP <span class="bcp14">MUST</span> validate the selected subject token under
+<span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.3.3" class="relref">Section 4.3.3</a></span>:<a href="#section-6.2-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2-5.1">
+            <p id="section-6.2-5.1.1">For an ID Token, validate its signature, issuer, expiration, audience,
+and applicable client-binding checks. The audience <span class="bcp14">MUST</span> identify the
+authenticated IdP client.<a href="#section-6.2-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.2-5.2">
+            <p id="section-6.2-5.2.1">For a refresh token, apply the validation used for a <code>refresh_token</code>
+grant, including issuance by this IdP, binding to the authenticated
+client, validity, revocation status, and applicable proof requirements.
+Requested scopes and audience <span class="bcp14">MUST</span> remain within the refresh token's
+retained authorization context.<a href="#section-6.2-5.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.2-6">Neither subject input supplies approval for the actor. The actor
+credential, client authentication, DPoP proof, and current delegation
+checks under <a href="#delegation-approval" class="auto internal xref">Section 5.1</a> remain required on every request.
+Using a refresh token avoids obtaining a new ID Token solely for this
+exchange; the request still uses the Token Exchange grant type and
+requests an ID-JAG. It does not request a RAS refresh token.<a href="#section-6.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-inputs">
@@ -2870,17 +2884,27 @@ identity resolution to this profile:<a href="#section-7.1-2" class="pilcrow">¶<
 subject in the IdP's governed-agent namespace.<a href="#section-7.1-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.1-3.2">
-            <p id="section-7.1-3.2.1">WAG-owned token-type and JWT-type identifiers and their registrations,
-plus issuance/redemption capability discovery.<a href="#section-7.1-3.2.1" class="pilcrow">¶</a></p>
+            <p id="section-7.1-3.2.1">IdP issuance using its own refresh token as <code>subject_token</code>, where
+retained authorization permits continuing self-acting workload access.
+Define how that authorization is established, how the governed subject
+and client are bound, which current workload evidence and proofs are
+required, and how revocation and authority limits are enforced. A
+user's refresh token alone does not establish independent agent authority.<a href="#section-7.1-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.1-3.3">
-            <p id="section-7.1-3.3.1">Sender constraint at issuance and redemption, key relationships,
-audience selection, errors, nonce handling, and any replay policy.<a href="#section-7.1-3.3.1" class="pilcrow">¶</a></p>
+            <p id="section-7.1-3.3.1">WAG-owned token-type and JWT-type identifiers and their registrations,
+plus issuance/redemption capability discovery.<a href="#section-7.1-3.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.1-3.4">
-            <p id="section-7.1-3.4.1">Resource and scope ceilings, including absent or unsupported limits.
+            <p id="section-7.1-3.4.1">Sender constraint at issuance and redemption, key relationships,
+audience selection, errors, nonce handling, and any replay policy.<a href="#section-7.1-3.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.1-3.5">
+            <p id="section-7.1-3.5.1">Resource and scope ceilings, including absent or unsupported limits.
 Review continuing access and explain or revise the current refresh
-prohibition in WAG itself.<a href="#section-7.1-3.4.1" class="pilcrow">¶</a></p>
+prohibition at WAG redemption. That output prohibition is distinct
+from accepting an existing IdP refresh token as an issuance input;
+WAG does not currently specify the latter composition.<a href="#section-7.1-3.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-7.1-4">This document proposes a RAS-issuer audience and DPoP binding to align
