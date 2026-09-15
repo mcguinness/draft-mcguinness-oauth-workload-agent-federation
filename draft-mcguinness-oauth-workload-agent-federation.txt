@@ -15,11 +15,11 @@ Abstract
 
    This document specifies how an agent platform integrates with an
    identity provider to obtain downstream authorization for its agents.
-   It defines workload-evidence requirements, governed-agent resolution,
-   OAuth client association, and subject linking.  The governed agent is
-   the subject for self-acting Workload Authorization Grant (WAG) access
-   or the actor for user-delegated Identity Assertion JWT Authorization
-   Grant (ID-JAG) access.
+   It defines a platform workload-evidence JWT profile, governed-agent
+   resolution, OAuth client association, and subject linking.  The
+   governed agent is the subject for self-acting Workload Authorization
+   Grant (WAG) access or the actor for user-delegated Identity Assertion
+   JWT Authorization Grant (ID-JAG) access.
 
    The document defines a complete ID-JAG flow with proof-bound grants
    and resource-specific access-token protection.  The WAG wire profile
@@ -94,15 +94,17 @@ Table of Contents
        4.3.2.  Resolution at the RAS
        4.3.3.  Account Linking
    5.  Evidence and Client Authentication
-     5.1.  Platform-Issued JWT
+     5.1.  Platform Workload Evidence JWT
        5.1.1.  Platform Evidence Contract
-       5.1.2.  IdP Validation
-     5.2.  Client Attestation
-       5.2.1.  Attester Trust and Agent Resolution
-     5.3.  SPIFFE JWT-SVID
-     5.4.  SPIFFE X.509-SVID
-     5.5.  SPIFFE WIT-SVID
-     5.6.  Credential Use Requirements
+       5.1.2.  Format and Claims
+       5.1.3.  Key Sources and IdP Validation
+     5.2.  Imported Platform JWT Compatibility
+     5.3.  Client Attestation
+       5.3.1.  Attester Trust and Agent Resolution
+     5.4.  SPIFFE JWT-SVID
+     5.5.  SPIFFE X.509-SVID
+     5.6.  SPIFFE WIT-SVID
+     5.7.  Credential Use Requirements
    6.  Authorization Policy
      6.1.  Delegation Approval
      6.2.  Canonical Agent Attribution
@@ -145,6 +147,8 @@ Table of Contents
      11.4.  Authorization Changes and Revocation
    12. Privacy Considerations
    13. IANA Considerations
+     13.1.  ID-JAG Grant Profile URI
+     13.2.  Workload Evidence Media Type
    14. References
      14.1.  Normative References
      14.2.  Informative References
@@ -317,8 +321,8 @@ Table of Contents
          DPoP at the token endpoints.  A platform providing evidence for
          this path MUST implement Section 5.1.1.
 
-      -  IdP refresh-token subjects and the additional inputs in
-         Section 8.2.4 are OPTIONAL.
+      -  Imported JWTs, IdP refresh-token subjects, and the additional
+         inputs in Section 8.2.4 are OPTIONAL.
 
    *  *WAG:* Section 7 defines the federation requirements.  Complete
       protocol conformance remains pending the upstream contract in
@@ -350,8 +354,9 @@ Table of Contents
    | Implementer | Requirement                            | Defined   |
    |             |                                        | in        |
    +=============+========================================+===========+
-   | Platform    | Verifiable workload JWT and agreed     | Section   |
-   |             | evidence contract                      | 5.1.1     |
+   | Platform    | Fixed workload-evidence JWT with       | Section   |
+   |             | required type, claims, and issuer-     | 5.1.1     |
+   |             | scoped keys                            |           |
    +-------------+----------------------------------------+-----------+
    | Client,     | Platform JWT, private_key_jwt, RS256,  | Section   |
    | IdP, and    | and ES256 DPoP common capabilities     | 8.1       |
@@ -416,7 +421,7 @@ Table of Contents
 
    *  Credential-authority trust policy, approved keys or key-source
       selection rules, and validation rules for each accepted credential
-      class.  Attester approval follows Section 5.2.1.
+      class.  Attester approval follows Section 5.3.1.
 
    *  Exact external identity selectors and their Source Tenant and
       Registered Agent associations.
@@ -429,7 +434,7 @@ Table of Contents
    Request hints, discovered client metadata, and unverified JWT claims
    MUST NOT by themselves establish credential-authority trust or change
    an approved Federation Binding.  Configured attester-to-client
-   associations under Section 5.2.1 do not themselves authorize a
+   associations under Section 5.3.1 do not themselves authorize a
    governed-agent mapping.
 
    The IdP MUST authorize binding creation and changes, including
@@ -442,13 +447,17 @@ Table of Contents
      | Evidence      | Identity used for    | Qualification          |
      |               | resolution           |                        |
      +===============+======================+========================+
-     | Platform JWT  | Approved issuer and  | Workload evidence; not |
-     |               | exact subject, with  | automatically OAuth    |
-     |               | configured           | client authentication  |
+     | Platform      | Approved issuer and  | Common input; separate |
+     | workload      | exact subject under  | OAuth client           |
+     | evidence JWT  | Section 5.1.2        | authentication         |
+     +---------------+----------------------+------------------------+
+     | Imported      | Approved issuer and  | Optional compatibility |
+     | platform JWT  | exact subject, with  | input under            |
+     |               | configured           | Section 5.2            |
      |               | additional selectors |                        |
      +---------------+----------------------+------------------------+
      | Client        | Attester selected    | Client-to-agent        |
-     | Attestation,  | under Section 5.2.1; | mapping is explicit    |
+     | Attestation,  | under Section 5.3.1; | mapping is explicit    |
      | agent has its | client sub           |                        |
      | own client    |                      |                        |
      +---------------+----------------------+------------------------+
@@ -612,77 +621,149 @@ Table of Contents
    The IdP MUST NOT substitute one role for another.  Credential and
    proof validation MUST refer to the same request and applicable
    principal.  DPoP with bearer evidence does not establish issuer
-   endorsement of the proof key; Section 5.6 defines the assurance
+   endorsement of the proof key; Section 5.7 defines the assurance
    limits.
 
    Unrecognized request parameters and JWT claims follow [RFC6749],
    Section 3.2 and [RFC7519], Section 4.  An unconfigured claim MUST NOT
    select an identity model or establish a Federation Binding.
 
-5.1.  Platform-Issued JWT
+5.1.  Platform Workload Evidence JWT
 
 5.1.1.  Platform Evidence Contract
 
-   For the common integration path, the platform MUST supply a signed
-   JWT containing iss, sub, aud, and exp that satisfies the agreed IdP
-   validation policy below.  The platform's credential authority MUST
-   derive the workload identity from authenticated platform evidence; a
-   caller's requested subject or agent identifier alone MUST NOT
-   authorize issuance.
+   This document defines a fixed JWT profile for the common platform_jwt
+   input.  It identifies a platform workload to the IdP for agent
+   resolution; it is not a downstream grant, access token, or OAuth
+   client assertion.  The IdP and platforms implementing the common path
+   MUST support it.  Existing credential formats use the OPTIONAL
+   imported_jwt input under Section 5.2.
 
-   Before use, the platform and IdP MUST agree on:
+   The platform's credential authority MUST derive the workload identity
+   from authenticated platform evidence.  A caller's requested subject
+   or agent identifier alone MUST NOT authorize issuance.  The platform
+   MUST provide an authorized workload a way to obtain the credential;
+   this profile does not standardize that platform interface.
 
-   *  The credential issuer, verification-key source, and algorithms.
+   The issuer and subject pair MUST identify one stable platform agent
+   or workload, unique across the issuer's tenants and not reassigned to
+   a different workload.  Tenant qualification can be in the issuer or
+   subject namespace.  Replicas MAY share this identity.  The IdP MUST
+   resolve the pair without requiring vendor-specific tenant or agent
+   claims; its Federation Binding supplies the governed-agent and Source
+   Tenant mapping.
 
-   *  The exact workload identity selectors and their meaning, including
-      any platform tenant or agent selector needed to distinguish
-      workloads.
+5.1.2.  Format and Claims
 
-   *  The audience authorizing presentation as workload evidence to the
-      IdP.
+   The credential MUST be a signed JWT using JWS Compact Serialization
+   under [RFC7515].  Its protected header MUST contain:
 
-   *  Credential classification and time limits, including issuance and
-      caching behavior.
+        +===========+=============================================+
+        | Parameter | Requirement                                 |
+        +===========+=============================================+
+        | typ       | oauth-workload-evidence+jwt                 |
+        +-----------+---------------------------------------------+
+        | alg       | An approved asymmetric signature algorithm; |
+        |           | RS256 support is REQUIRED under Section 8.1 |
+        +-----------+---------------------------------------------+
+        | kid       | Non-empty string selecting the issuer's     |
+        |           | verification key                            |
+        +-----------+---------------------------------------------+
 
-   For repeatable integrations, platforms SHOULD use the following
-   common identity conventions:
+                                  Table 4
 
-        +============+===========================================+
-        | Element    | Convention                                |
-        +============+===========================================+
-        | iss and    | Identify one stable platform agent or     |
-        | sub        | workload across its replicas; include the |
-        |            | platform tenant in the issuer or subject  |
-        |            | namespace when needed for uniqueness      |
-        +------------+-------------------------------------------+
-        | aud        | The target IdP issuer identifier; an      |
-        |            | existing credential audience may instead  |
-        |            | be explicitly approved by IdP policy      |
-        +------------+-------------------------------------------+
-        | Key source | One approved issuer-scoped JWK Set URI    |
-        |            | reusable across customer integrations     |
-        +------------+-------------------------------------------+
-        | Additional | Needed only when iss and sub do not       |
-        | selectors  | sufficiently distinguish the governed     |
-        |            | workload                                  |
-        +------------+-------------------------------------------+
+   The IdP MUST also accept the full media-type form application/oauth-
+   workload-evidence+jwt, applying RFC 7515's case-insensitive media-
+   type comparison.  A generic typ=JWT does not satisfy this input
+   profile.
 
-                                 Table 4
+   The following claims are REQUIRED:
 
-   The IdP MUST support the issuer-and-subject mapping without requiring
-   vendor-specific agent claims.  Existing native JWT formats remain
-   usable under the validation rules below.  No new JWT type or issuer-
-   discovery document is defined; key locations are configured or
-   obtained through an independently supported, trusted issuer-discovery
-   mechanism.
+    +=======+========================================================+
+    | Claim | Requirement                                            |
+    +=======+========================================================+
+    | iss   | HTTPS URL identifying the approved platform credential |
+    |       | authority, without userinfo, query, or fragment        |
+    +-------+--------------------------------------------------------+
+    | sub   | Non-empty string identifying the platform workload     |
+    |       | within that issuer's namespace                         |
+    +-------+--------------------------------------------------------+
+    | aud   | The target IdP issuer identifier, as a string or       |
+    |       | single-element array; no other audience is permitted   |
+    +-------+--------------------------------------------------------+
+    | iat   | NumericDate identifying issuance time                  |
+    +-------+--------------------------------------------------------+
+    | exp   | NumericDate later than iat, identifying expiration     |
+    +-------+--------------------------------------------------------+
 
-   The platform MUST provide an authorized workload a way to obtain that
-   evidence.  This document does not standardize that platform
-   interface.  The client presents the JWT as actor_token and separately
-   authenticates under Section 8.2; the JWT need not use the IdP's
-   Registered Agent identifier or OAuth client_id as its subject.
+                                 Table 5
 
-5.1.2.  IdP Validation
+   The platform MUST issue credentials with a finite lifetime.  The IdP
+   MUST validate expiration and reject future issuance times beyond its
+   configured clock skew.  It MUST configure and enforce finite maximum
+   age and issuance-to-expiration limits.  These limits are deployment
+   parameters that account for platform issuance and caching; this
+   profile sets no universal five-minute limit on workload evidence.
+
+   The credential MAY include cnf to bind the issuance DPoP key.  When
+   present, it MUST be an object containing a jkt thumbprint under
+   [RFC9449], Section 6.1.  The platform MUST establish that key's
+   association with the workload and verify possession before issuing
+   the credential.  The IdP MUST require that thumbprint to match the
+   validated issuance proof key.
+
+   Other confirmation methods are outside this input profile and MUST be
+   rejected if present.  Without cnf, the bearer-evidence limitations in
+   Section 5.7 apply.
+
+5.1.3.  Key Sources and IdP Validation
+
+   The IdP MUST associate each approved issuer with its verification
+   keys or an approved HTTPS JWK Set URI under [RFC7517].  It MAY obtain
+   that URI through an independently supported issuer-discovery
+   mechanism, including [RFC8414] for issuers implementing that
+   specification.  Discovery MUST validate the expected issuer and MUST
+   NOT establish issuer trust by itself.  No new discovery document is
+   defined here.
+
+   The IdP MUST validate the credential under [RFC7519] and [RFC8725]:
+
+   *  Require the format, header, and claims above; resolve kid to one
+      eligible issuer-scoped key and verify the asymmetric signature.
+      Token-supplied keys or key URLs MUST NOT override the approved
+      source.
+
+   *  Compare iss, sub, and the audience as exact, case-sensitive
+      strings without URI normalization.  The audience MUST equal this
+      IdP's configured issuer identifier, not merely its token endpoint.
+
+   *  Resolve the exact issuer and subject through an enabled Federation
+      Binding and enforce the authenticated client's permission for that
+      binding, input, and flow under Section 4.
+
+   *  Enforce time and confirmation requirements.  The credential MUST
+      NOT contain act; workload evidence alone does not establish
+      delegation.
+
+   The client presents the credential as actor_token, with the generic
+   JWT token-type URI, and authenticates separately under Section 8.2.
+   The external sub need not equal the Registered Agent identifier or
+   OAuth client_id.  Validation failures use Section 8.4; a failed
+   fixed-profile check MUST NOT fall back to imported JWT processing.
+
+   Recipients MUST NOT accept this credential as an OAuth client
+   assertion, authorization grant, or API access token.  Its type
+   identifies workload evidence; only the approved Federation Binding
+   establishes the governed agent and permitted OAuth client.
+
+5.2.  Imported Platform JWT Compatibility
+
+   The OPTIONAL imported_jwt input accommodates existing platform
+   credentials that do not use Section 5.1.2.  It requires trusted
+   configuration for the authenticated client and credential class.  It
+   MUST NOT accept the workload-evidence media type under these
+   alternative rules or bypass any binding established for a fixed-
+   profile credential.
 
    For an imported workload, the Federation Binding MUST specify an
    exact issuer and sub.  It MAY require additional top-level string
@@ -734,7 +815,7 @@ Table of Contents
 
    The JWT is presented as actor_token under Section 8.2.
 
-5.2.  Client Attestation
+5.3.  Client Attestation
 
    Client Attestation is an OPTIONAL direct actor input.  The client
    MUST present the identical compact JWT in actor_token and the OAuth-
@@ -743,7 +824,7 @@ Table of Contents
    before resolving the agent.  Section 8.2.4 defines the proof/key
    relationship.
 
-5.2.1.  Attester Trust and Agent Resolution
+5.3.1.  Attester Trust and Agent Resolution
 
    The IdP MUST use configured attester-to-client and key associations.
    For an agent with its own client, it MUST identify the attester
@@ -759,7 +840,7 @@ Table of Contents
    and Appendix A.10.2.  ATTEST's additional-signal mode is not a
    separate actor input in this revision.
 
-5.3.  SPIFFE JWT-SVID
+5.4.  SPIFFE JWT-SVID
 
    JWT-SVID client authentication follows [SPIFFE-OAUTH], Section 3.1,
    including client_assertion_type equal to
@@ -776,16 +857,16 @@ Table of Contents
 
    Direct actor presentation follows Section 8.2.4, selected through
    trusted configuration under Section 10.  Its bearer-evidence
-   limitation is specified in Section 5.6.
+   limitation is specified in Section 5.7.
 
-5.4.  SPIFFE X.509-SVID
+5.5.  SPIFFE X.509-SVID
 
    X.509-SVID MAY authenticate the client under [SPIFFE-OAUTH],
    Section 3.2.  The request still requires a supported JWT actor
    credential; connection evidence alone as actor input is outside this
    revision (Appendix A.8).
 
-5.5.  SPIFFE WIT-SVID
+5.6.  SPIFFE WIT-SVID
 
    WIT-SVID MAY authenticate the client under [SPIFFE-OAUTH],
    Section 3.3 and [WIT], including their proof and key-use
@@ -793,7 +874,7 @@ Table of Contents
    credential.  Direct WIT-SVID actor input remains outside this
    revision (Appendix A.9).
 
-5.6.  Credential Use Requirements
+5.7.  Credential Use Requirements
 
    Each input retains its credential specification's validation, proof,
    replay, and key-use requirements.  The IdP MUST apply the selected
@@ -801,8 +882,8 @@ Table of Contents
    Federation Binding and client association.  DPoP MUST NOT substitute
    for another required credential proof.
 
-   For bearer JWT-SVID and platform JWT inputs, co-presentation with
-   DPoP does not establish issuer endorsement of the proof key.  A
+   For bearer JWT-SVID and unbound platform JWT inputs, co-presentation
+   with DPoP does not establish issuer endorsement of the proof key.  A
    deployment requiring that assurance MUST use evidence that
    cryptographically binds the key.  Bearer-evidence theft remains a
    threat even when the output is sender-constrained (Section 11).
@@ -945,7 +1026,7 @@ Table of Contents
       |                 | authorization uses that agent's authority |
       +-----------------+-------------------------------------------+
 
-                                  Table 5
+                                  Table 6
 
    The RAS MUST apply these linking requirements:
 
@@ -1024,7 +1105,7 @@ Table of Contents
       endpoint URL as the assertion audience.  This selects an RFC 7523
       audience option.
 
-   *  JWT-SVID uses the IdP issuer as its sole audience (Section 5.3).
+   *  JWT-SVID uses the IdP issuer as its sole audience (Section 5.4).
 
    *  Client Attestation PoP JWTs use ATTEST's audience rules.
 
@@ -1084,7 +1165,7 @@ Table of Contents
      |                      | resource                               |
      +----------------------+----------------------------------------+
 
-                                  Table 6
+                                  Table 7
 
    This profile narrows ID-JAG by requiring actor evidence, an explicit
    resource and scope, and DPoP. authorization_details, when present,
@@ -1133,28 +1214,32 @@ Table of Contents
    actor_token_type=urn:ietf:params:oauth:token-type:jwt.
 
    +====================+==========+===================================+
-   | Input              | Support  | Presentation and                  |
-   |                    |          | validation                        |
+   | Input              | Support  | Presentation and validation       |
    +====================+==========+===================================+
-   | platform_jwt       | REQUIRED | JWT in actor_token;               |
-   |                    | at the   | validate under Section 5.1        |
-   |                    | IdP      | and authenticate the              |
-   |                    |          | client separately                 |
+   | platform_jwt       | REQUIRED | Fixed workload-evidence JWT       |
+   |                    | at the   | in actor_token; validate          |
+   |                    | IdP      | under Section 5.1 and             |
+   |                    |          | authenticate separately           |
+   +--------------------+----------+-----------------------------------+
+   | imported_jwt       | OPTIONAL | Existing platform JWT in          |
+   |                    |          | actor_token; validate under       |
+   |                    |          | Section 5.2 and                   |
+   |                    |          | authenticate separately           |
    +--------------------+----------+-----------------------------------+
    | spiffe_jwt_svid    | OPTIONAL | Identical compact JWT in          |
    |                    |          | actor_token and                   |
    |                    |          | client_assertion; native          |
    |                    |          | JWT-SVID authentication           |
-   |                    |          | under Section 5.3                 |
+   |                    |          | under Section 5.4                 |
    +--------------------+----------+-----------------------------------+
    | client_attestation | OPTIONAL | Identical compact JWT in          |
    |                    |          | actor_token and OAuth-            |
    |                    |          | Client-Attestation; own-          |
    |                    |          | client processing under           |
-   |                    |          | Section 5.2                       |
+   |                    |          | Section 5.3                       |
    +--------------------+----------+-----------------------------------+
 
-                                  Table 7
+                                  Table 8
 
    The client and IdP MUST select the input using the authenticated
    client's configured credential classes and trusted issuer or attester
@@ -1164,7 +1249,10 @@ Table of Contents
 
    The IdP MUST apply the selected input's requirements:
 
-   *  *Platform JWT:* Require iss, sub, aud, and exp.
+   *  *Fixed platform JWT:* Apply Section 5.1.2 and Section 5.1.3,
+      including iat and any cnf.jkt.
+
+   *  *Imported platform JWT:* Require iss, sub, aud, and exp.
 
       -  Match issuer and subject to the approved binding and audience
          to this IdP's workload-evidence purpose.
@@ -1183,7 +1271,7 @@ Table of Contents
          remain applicable.
 
    *  *JWT-SVID:* Authorize the credential/client/agent association and
-      output key under Section 6 and Section 5.6.
+      output key under Section 6 and Section 5.7.
 
    To preserve the single user-to-agent relationship, the IdP MUST
    reject:
@@ -1242,7 +1330,7 @@ Table of Contents
    |           | client mapping                                       |
    +-----------+------------------------------------------------------+
 
-                                 Table 8
+                                 Table 9
 
    The aud retains ID-JAG's RAS-issuer semantics.  User and target
    tenant claims and any subject translation MUST follow Section 4.3;
@@ -1388,7 +1476,7 @@ Table of Contents
      |            |                         | by policy              |
      +------------+-------------------------+------------------------+
 
-                                  Table 9
+                                  Table 10
 
    For mutual TLS, the client MUST also prove possession of the grant's
    DPoP key in the same authenticated redemption request.  The RAS MUST
@@ -1473,7 +1561,7 @@ Table of Contents
       |                                     | response headers      |
       +-------------------------------------+-----------------------+
 
-                                  Table 10
+                                  Table 11
 
    Actor-credential failures use invalid_grant instead of the default
    invalid_request described by RFC 8693; this narrowing is intentional.
@@ -1527,7 +1615,7 @@ Table of Contents
         |                          | files.read in acme-data      |
         +--------------------------+------------------------------+
 
-                                  Table 11
+                                  Table 12
 
    Alice's ID Token has sub=alice-app and the shared client URL as aud.
    The IdP translates her subject to alice-ras for the RAS, which links
@@ -1538,11 +1626,15 @@ Table of Contents
 8.5.2.  Platform Evidence
 
    The platform supplies a signed JWT with the following decoded header
-   and payload.  This example's credential class is selected by approved
-   issuer, audience, and exact workload subject; typ=JWT alone does not
-   select it.  Times are illustrative NumericDate values.
+   and payload under Section 5.1.2.  The IdP verifies its type, approved
+   issuer, audience, and exact workload subject.  Times are illustrative
+   NumericDate values.
 
-   {"alg":"RS256","typ":"JWT","kid":"workload-key-1"}
+   {
+     "alg": "RS256",
+     "typ": "oauth-workload-evidence+jwt",
+     "kid": "workload-key-1"
+   }
 
    {
      "iss": "https://platform.example/",
@@ -1880,6 +1972,8 @@ Table of Contents
 
 13.  IANA Considerations
 
+13.1.  ID-JAG Grant Profile URI
+
    This document requests registration in the "OAuth URI" registry
    established by [RFC6755]:
 
@@ -1893,9 +1987,59 @@ Table of Contents
 
    The profile URI uses ID-JAG's existing authorization server and
    client metadata parameter.  This document requests no new metadata
-   parameter, JWT claim, grant type, JWT type, or OAuth token-type URI
+   parameter, JWT claim, grant type, or OAuth token-type URI
    registration.  Instance and endorsement registrations remain with
    their separate drafts.
+
+13.2.  Workload Evidence Media Type
+
+   This document requests registration of application/oauth-workload-
+   evidence+jwt in the "Media Types" registry under [RFC6838]:
+
+   *  Type name: application
+
+   *  Subtype name: oauth-workload-evidence+jwt
+
+   *  Required parameters: None.
+
+   *  Optional parameters: None.
+
+   *  Encoding considerations: Same as application/jwt in [RFC7519].
+
+   *  Security considerations: Section 5.1.3, Section 11, and Section 12
+      of this document.
+
+   *  Interoperability considerations: The format and validation
+      requirements are defined in Section 5.1.
+
+   *  Published specification: This document, Section 5.1.
+
+   *  Applications that use this media type: Agent platforms and
+      identity providers exchanging workload evidence for agent
+      federation.
+
+   *  Fragment identifier considerations: Not applicable.
+
+   *  Additional information:
+
+      -  Deprecated alias names: None.
+
+      -  Magic number(s): None.
+
+      -  File extension(s): None.
+
+      -  Macintosh file type code(s): None.
+
+   *  Person and email address to contact for further information: Karl
+      McGuinness, public@karlmcguinness.com.
+
+   *  Intended usage: COMMON.
+
+   *  Restrictions on usage: None.
+
+   *  Author: Karl McGuinness, public@karlmcguinness.com.
+
+   *  Change controller: IETF.
 
 14.  References
 
@@ -1976,6 +2120,14 @@ Table of Contents
               RFC 6749, DOI 10.17487/RFC6749, October 2012,
               <https://www.rfc-editor.org/rfc/rfc6749>.
 
+   [RFC7515]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web
+              Signature (JWS)", RFC 7515, DOI 10.17487/RFC7515, May
+              2015, <https://www.rfc-editor.org/rfc/rfc7515>.
+
+   [RFC7517]  Jones, M., "JSON Web Key (JWK)", RFC 7517,
+              DOI 10.17487/RFC7517, May 2015,
+              <https://www.rfc-editor.org/rfc/rfc7517>.
+
    [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
               (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
               <https://www.rfc-editor.org/rfc/rfc7519>.
@@ -2014,6 +2166,11 @@ Table of Contents
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
 14.2.  Informative References
+
+   [RFC6838]  Freed, N., Klensin, J., and T. Hansen, "Media Type
+              Specifications and Registration Procedures", BCP 13,
+              RFC 6838, DOI 10.17487/RFC6838, January 2013,
+              <https://www.rfc-editor.org/rfc/rfc6838>.
 
    [INSTANCE] McGuinness, K., "Client Instance Identification for
               Attestation-Based Client Authentication", Work in
@@ -2134,7 +2291,7 @@ A.1.  Responsibility Boundaries
       | disablement signals       | lifecycle specifications       |
       +---------------------------+--------------------------------+
 
-                                 Table 12
+                                 Table 13
 
 A.2.  Operational Guidance
 
@@ -2305,7 +2462,7 @@ A.9.  Additional Credential Compositions
    use restrictions.
 
    Bearer-input assurance limits and key requirements are specified in
-   Section 5.6; they require no change to ATTEST.
+   Section 5.7; they require no change to ATTEST.
 
 A.10.  Attestation Extension Boundaries
 
