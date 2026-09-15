@@ -11,37 +11,33 @@ the platform, client, IdP, RAS, and API each implement. Its common delegated
 path uses a platform JWT, user ID Token, `private_key_jwt`, and DPoP.
 
 The draft retains both self-acting WAG and user-delegated ID-JAG, including
-subject resolution and linking for each path. The ID-JAG flow defines issuance
-from direct workload evidence, governed-actor mapping, `jwt-dpop` redemption,
-and DPoP-bound API access. WAG keeps its name and federation requirements in the
-main profile; its complete wire contract remains pending upstream coordination.
+subject resolution and linking for each path. ID-JAG uses direct workload
+evidence, governed-actor mapping, and RFC 7523 `jwt-bearer` redemption with
+mandatory grant confirmation checks. WAG keeps its name and federation
+requirements; its complete wire contract remains pending upstream coordination.
 
-The core covers external evidence, governed-agent resolution, the permitted
-OAuth client and flow, and preservation of the agent in the grant and access
-token. Provisioning and account administration are informative deployment
-guidance rather than conformance requirements.
+DPoP remains required at the IdP and RAS token endpoints. Access-token sender
+constraint is recommended: the resource policy can select DPoP, mutual TLS,
+or explicitly permitted bearer access. The actor authorization gate is
+required; independent agent permissions on every data object are local policy.
 
-Continuing access uses
-[Identity Continuation Assertion](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion)
-through a separate federation composition. The draft records that extension's
-identity, binding, and eligibility questions; it does not define ICA exchange
-or lifecycle requirements. ICA is an informative dependency. RAS refresh
-tokens are not issued; an IdP refresh token can still serve as a new exchange's
-subject input.
+The common path supports a shared platform SSO client, with registration or
+CIMD where supported, and includes complete parameter-level HTTP examples.
+Workload JWTs use existing formats and an issuer/subject mapping; no per-replica
+IdP registration, new workload JWT type, or discovery protocol is required.
 
-The optional `instance_attestation` input reuses
-[Client Instance Identification for Attestation-Based Client Authentication](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-instance-id.html).
-Federation maps a validated instance identity to a governed agent and
-separately authorizes delegation. The required platform-JWT path and
-own-client attestation input do not depend on Identification. No separate
-attested-agent claim or draft is defined here.
+RAS refresh tokens retain ID-JAG's default recommendation against issuance,
+with a constrained exception for authorized long-running work. Refresh tokens
+are client- and DPoP-key-bound and retain the original authorization ceiling.
+Cross-resource continuing access remains separate composition work with
+[Identity Continuation Assertion](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion).
 
-Attester trust can use configured associations or
-[Client Attester Endorsement](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-attesters.html).
-When selected, endorsement requires both current client metadata and IdP
-policy approval. It does not establish a Federation Binding or select instance
-identification. Both references track the editor's copies dated 15 September
-2026; downstream instance-context propagation remains outside this revision.
+[Client Instance Identification](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-id/draft-mcguinness-oauth-client-instance-id.html)
+and
+[Client Attester Endorsement](https://mcguinness.github.io/draft-mcguinness-oauth-client-attesters/draft-mcguinness-oauth-client-attesters.html)
+are informative extension dependencies, outside core conformance. Their
+canonical editor's-copy URLs replace the old repository's redirect stubs.
+Configured ATTEST trust and the own-client attestation input remain available.
 
 * [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-workload-agent-federation)
