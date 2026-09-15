@@ -10,13 +10,18 @@ from direct workload evidence, governed-actor mapping, `jwt-dpop` redemption,
 and DPoP-bound API access. WAG keeps its name and federation requirements in the
 main profile; its complete wire contract remains pending upstream coordination.
 
-Optional continuing access for the delegated path uses
+The core covers external evidence, governed-agent resolution, the permitted
+OAuth client and flow, and preservation of the agent in the grant and access
+token. Provisioning and account administration are informative deployment
+guidance rather than conformance requirements.
+
+Continuing access uses
 [Identity Continuation Assertion](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion)
-for the same governed agent in an eligible receiving-service or assigned-task
-deployment. The chain retains its original Federation Binding and uses fresh
-IdP authorization and ICA's lifecycle rules. General calling-agent continuation
-remains an upstream coordination item. RAS refresh tokens are not issued;
-an IdP refresh token can still serve as a new root exchange's subject input.
+through a separate federation composition. The draft records that extension's
+identity, binding, and eligibility questions; it does not define ICA exchange
+or lifecycle requirements. ICA is an informative dependency. RAS refresh
+tokens are not issued; an IdP refresh token can still serve as a new exchange's
+subject input.
 
 The optional `instance_attestation` input reuses
 [Client Instance Identification for Attestation-Based Client Authentication](https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/main/draft-mcguinness-oauth-client-instance-id.md).
