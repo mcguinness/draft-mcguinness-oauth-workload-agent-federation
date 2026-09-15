@@ -8,6 +8,12 @@ The main draft defines delegated ID-JAG issuance from direct workload evidence,
 governed-actor mapping, redemption, and DPoP-bound API access. Self-acting WAG
 access remains deferred.
 
+Optional continuing access uses
+[Identity Continuation Assertion](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion)
+for the same governed agent, with fresh IdP authorization and ICA's
+chain lifecycle. RAS refresh tokens are not issued in this profile;
+an IdP refresh token can still serve as the root exchange's subject input.
+
 The optional `instance_attestation` input reuses
 [Client Instance Identification for Attestation-Based Client Authentication](https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/main/draft-mcguinness-oauth-client-instance-id.md).
 Federation maps a validated instance identity to a governed agent and

@@ -31,6 +31,7 @@ normative:
   ATTEST: I-D.ietf-oauth-attestation-based-client-auth
   ACTOR-PROFILE: I-D.mcguinness-oauth-actor-profile
   ID-JAG: I-D.ietf-oauth-identity-assertion-authz-grant
+  ICA: I-D.mcguinness-oauth-id-continuation-assertion
   INSTANCE:
     title: "Client Instance Identification for Attestation-Based Client Authentication"
     target: https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/26abba5fb612381331c670f4d6dfc54737f698af/draft-mcguinness-oauth-client-instance-id.md
@@ -131,7 +132,9 @@ The IdP, RAS, and client roles claiming this profile MUST implement
 a platform JWT actor, `private_key_jwt` client authentication, and DPoP.
 An IdP-issued refresh token is an optional subject input under
 {{exchange-request}}.
-It does not require the optional instance-identification input. Additional
+Continuing access is OPTIONAL and uses the Identity Continuation Assertion
+(ICA) composition in {{continuing-access}}. The common path does not
+require that extension or the optional instance-identification input. Additional
 credential inputs have the status listed in {{actor-inputs}}.
 
 The API MUST support the access-token processing in {{api-processing}}.
@@ -146,6 +149,7 @@ and enrollment/key-replacement protocols are outside this revision.
 |---|---|
 | External identity to governed agent; delegated issuance and redemption | This profile, using the extension point in {{ID-JAG, Section 9.7}} |
 | ID-JAG format and base grant processing | {{ID-JAG}} |
+| Continuing access, continuation evidence, and chain lifecycle | {{ICA}}, composed under {{continuing-access}} |
 | Actor object, current actor, and actor-aware resource policy | Selected rules of {{ACTOR-PROFILE}}, as specified in {{actor-construction}} |
 | Base workload authentication and proofs | SPIFFE OAuth, WIMSE, and ATTEST |
 | Attested instance identity, continuity, and receiver scoping | {{INSTANCE}}; this profile defines instance-to-agent resolution |
@@ -208,15 +212,15 @@ also apply, subject to the explicit narrowings below.
 | Authorization | Current binding, status, assignments, target, and scope policy | {{authorization}} |
 | Delegation | Explicit authorization for the resolved agent to act for the user | {{delegation-approval}} |
 | Attribution | Preserve issuer-qualified agent identity and subject/actor roles | {{agent-correlation}} |
-| Exchange | ID Token or supported IdP refresh-token subject, with a direct JWT actor; both actor parameters REQUIRED | {{exchange-request}} |
+| Root exchange | ID Token or supported IdP refresh-token subject, with a direct JWT actor; both actor parameters REQUIRED | {{exchange-request}} |
 | Common capabilities | Platform JWT input, `private_key_jwt`, RS256 signatures, and ES256 DPoP | {{flow-configuration}} |
 | Chain scope | One direct user-to-agent relationship; reject pre-existing actor chains on issuance inputs | {{actor-inputs}} |
 | Explicit authority | One `resource` and non-empty `scope` REQUIRED in issuance; both claims REQUIRED in the ID-JAG | {{exchange-request}} |
 | Actor mapping | Governed `act.sub` and IdP `act.iss`, rather than copying the external credential subject | {{actor-construction}} |
 | Proof | DPoP REQUIRED at both token endpoints; same key retained in grant and access token | {{grant-issuance}} and {{redemption}} |
-| Lifetime | Finite grant lifetime bounded by input credential expiry; five minutes RECOMMENDED | {{grant-issuance}} |
+| Root grant lifetime | Finite grant lifetime bounded by input credential expiry; five minutes RECOMMENDED | {{grant-issuance}} |
 | Redemption | One matching `resource` REQUIRED; JWT access token with actor and key binding | {{redemption}} |
-| Continuing access | A finite refresh deadline without renewed IdP authorization; configured termination events | {{continuing-access}} |
+| Continuing access | Optional ICA composition; same governed actor; no RAS refresh tokens | {{continuing-access}} |
 | API | Configured applicability independent of token contents; required actor and proof validation, with resource errors | {{api-processing}} |
 | Errors | Credential validation uses `invalid_grant`, rather than RFC 8693's `invalid_request` default; delegation denial uses `actor_unauthorized` | {{errors}} |
 | Discovery | Role-specific `agent_federation` metadata and configured applicability | {{metadata}} |
@@ -840,35 +844,61 @@ grant expiry alone does not revoke an issued token.
 
 ### Continuing Access {#continuing-access}
 
-A RAS SHOULD NOT issue a refresh token, as in ID-JAG. A deployment
-permitting that exception MUST configure:
+Deployments offering continuing access under this profile MUST use
+{{ICA}}. A trusted Continuation Assertion Issuer (CAI) attests to an
+accepted, active authorization; the agent exchanges that assertion at
+the IdP for a new ID-JAG. This keeps continuation subject to IdP
+authorization. The RAS MUST NOT issue refresh tokens on root or onward
+ID-JAG redemption, narrowing ID-JAG's SHOULD NOT. An IdP refresh token
+remains an optional root subject credential under {{exchange-request}}.
 
-* A finite maximum period of continuing access without renewed IdP
-  authorization, measured from the authorizing ID-JAG's `iat`.
-* The events that terminate that authority, including withdrawal of
-  applicable RAS authorization and any received, authenticated IdP
-  notification disabling the user, actor, binding, or delegation.
-* The treatment of delayed or unavailable status information, including
-  freshness limits when an online check or status feed is required.
+#### Establishing Continuation
 
-The RAS MUST retain the user, governed actor, client, resource and
-authority ceiling, and DPoP key binding. On every refresh, it MUST
-validate client authentication and the bound-key proof, recheck applicable
-RAS policy, and reject a terminated or expired authorization with
-`invalid_grant`. Authentication and proof errors retain their base errors.
+The root exchange retains this profile's direct actor evidence and
+delegation checks. To establish continuation, the IdP MUST also:
 
-Refresh-token rotation, reuse of the same ID-JAG, and successful RAS
-policy checks MUST NOT advance the continuation deadline. Access and
-refresh tokens issued under this exception MUST NOT remain valid beyond
-that deadline. Extending it requires a newly issued, valid ID-JAG and
-the issuance and redemption checks of this profile; this document
-defines no additional renewal grant or status protocol.
+* Apply ICA's chain-establishment and lifecycle-anchor requirements.
+  An eligible user session or, where supported, the IdP refresh token's
+  OAuth grant anchors the chain; credential expiry alone does not
+  define the chain lifetime.
+* Require the authenticated client's configured canonical actor identity
+  under {{ICA, Section 5.5.2}} to equal the governed `(iss, sub)` pair
+  resolved under {{actor-construction}}. A shared client with no
+  unambiguous mapping to that agent cannot establish this composition.
 
-Without an applicable status signal or online check, upstream disablement
-can remain unknown to the RAS until renewed IdP authorization is required.
-The configured period bounds that exposure for further issuance.
-Termination prevents further issuance; revocation of outstanding access
-tokens remains subject to {{status-changes}}.
+If continuation cannot be established, an otherwise valid root exchange
+can issue an ordinary ID-JAG without a continuation handle, following
+{{ICA, Section 5.1}}. The client MUST NOT infer continuation authority
+from successful root issuance. A continuation-aware RAS MUST implement
+ICA's acceptance and handle-binding requirements.
+
+#### Continuing as the Governed Agent
+
+The client, CAI, IdP, and RAS MUST implement their applicable ICA roles,
+including assertion issuance, validation, replay handling, trust,
+errors, and recovery. In particular:
+
+* The continuation request uses ICA as `subject_token` and carries no
+  `actor_token` or `actor_token_type`. ICA's client authentication and
+  assertion matching replace this profile's root actor-input processing.
+* For this composition, the current actor MUST remain the root's
+  Registered Agent. The IdP MUST recheck current agent, binding, and
+  delegation policy as well as ICA's chain authorization. Continuation
+  involving a different actor is outside this profile.
+* The request MUST identify one resource and a non-empty scope. The
+  onward grant follows {{ICA, Section 5.5.5}} and retains this profile's
+  governed actor, resource, scope, and downstream client requirements.
+  Its lifetime and key binding follow ICA rather than the root input
+  credential limits in {{grant-issuance}}.
+* Redemption uses ICA's DPoP-bound JWT grant,
+  `urn:ietf:params:oauth:grant-type:jwt-dpop`, instead of the root flow's
+  JWT bearer grant. The additional RAS checks and access-token requirements
+  in {{redemption}}, and API processing in {{api-processing}}, still apply.
+
+ICA governs chain lifetime and termination; this document defines no
+separate continuation deadline or renewal protocol. Ending a chain
+prevents further continuation but does not itself revoke outstanding
+grants or access tokens; {{status-changes}} still applies.
 
 ## API Processing {#api-processing}
 
@@ -965,6 +995,13 @@ Both MUST advertise the supported client authentication methods and
 DPoP algorithms, including the common capabilities in
 {{flow-configuration}}.
 
+Continuing access additionally uses the metadata and trust configuration
+in {{ICA, Section 7}}. For this composition, the IdP MUST advertise
+`identity_continuation_supported` as `true`; a continuation-aware RAS
+MUST advertise ICA's continuation grant profile and required grant types.
+The `agent_federation` object alone does not advertise ICA support or
+authorize establishment of a continuation chain.
+
 The `agent_federation` object, not generic JWT actor support, identifies
 this mapped-actor composition. Actor Profile metadata MAY describe
 other implemented paths; this profile alone MUST NOT cause a server to
@@ -983,8 +1020,8 @@ advertisement is not a downgrade switch.
 
 This section is informative. It records problems and specific requests
 that remain outside the complete delegated path. The assessed revisions
-are WAG-00, ID-JAG-04, Actor Profile-00, SPIFFE OAuth-02, ATTEST-11,
-and WIT-02.
+are WAG-00, ID-JAG-04, ICA-02, Actor Profile-00, SPIFFE OAuth-02,
+ATTEST-11, and WIT-02.
 
 ## Self-Acting WAG {#wag-gaps}
 
@@ -1162,9 +1199,11 @@ require the separate delegation decision in {{delegation-approval}}.
 
 Cross-system disablement and token revocation require the mechanisms
 in {{lifecycle-gap}}. Without an applicable signal or online check, an
-already issued token can remain usable until expiration. The refresh
-exception is bounded by {{continuing-access}}; it does not make upstream
-status immediately visible or grant new refresh authority.
+already issued token can remain usable until expiration. Continuing
+access under {{continuing-access}} requires fresh IdP authorization
+under ICA's active chain and anchor checks. Chain termination does not
+make upstream status immediately visible to a resource or revoke tokens
+already issued by a RAS.
 
 # Privacy Considerations {#privacy}
 
