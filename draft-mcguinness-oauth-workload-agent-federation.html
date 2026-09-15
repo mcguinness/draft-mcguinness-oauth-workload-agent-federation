@@ -1056,7 +1056,7 @@ svg {
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 18 March 2027</td>
+<td class="center">Expires 19 March 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1069,12 +1069,12 @@ svg {
 <dd class="internet-draft">draft-mcguinness-oauth-workload-agent-federation-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-09-14" class="published">14 September 2026</time>
+<time datetime="2026-09-15" class="published">15 September 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-03-18">18 March 2027</time></dd>
+<dd class="expires"><time datetime="2027-03-19">19 March 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1131,7 +1131,7 @@ pending the grant changes identified in this document.<a href="#section-abstract
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 18 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 19 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1201,6 +1201,11 @@ pending the grant changes identified in this document.<a href="#section-abstract
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
                 <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-client-attestation" class="internal xref">Client Attestation</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.1">
+                    <p id="section-toc.1-1.4.2.2.2.1.1"><a href="#section-4.2.1" class="auto internal xref">4.2.1</a>.  <a href="#name-instance-to-agent-resolutio" class="internal xref">Instance-to-Agent Resolution</a></p>
+</li>
+                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
                 <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-spiffe-jwt-svid" class="internal xref">SPIFFE JWT-SVID</a></p>
@@ -1399,7 +1404,7 @@ resolving its governed identity alone does not complete that path.<a href="#sect
 <p id="section-1.2-1">The IdP, RAS, and client roles claiming this profile <span class="bcp14">MUST</span> implement
 <a href="#delegated-flow" class="auto internal xref">Section 6</a>. The required common path uses an ID Token subject,
 a platform JWT actor, <code>private_key_jwt</code> client authentication, and DPoP.
-It does not require the companion attested-agent draft. Additional
+It does not require the optional instance-identification input. Additional
 credential inputs have the status listed in <a href="#actor-inputs" class="auto internal xref">Section 6.3</a>.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <p id="section-1.2-2">The API <span class="bcp14">MUST</span> support the access-token processing in <a href="#api-processing" class="auto internal xref">Section 6.7</a>.
 Implementations <span class="bcp14">MAY</span> support other flows, but <span class="bcp14">MUST NOT</span> use them as a
@@ -1443,9 +1448,9 @@ and enrollment/key-replacement protocols are outside this revision.<a href="#sec
               <td class="text-left" rowspan="1" colspan="1">SPIFFE OAuth, WIMSE, and ATTEST</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Attested agent identity and trust restrictions</td>
-              <td class="text-left" rowspan="1" colspan="1">Companion profile <span>[<a href="#AGENT-ATTEST" class="cite xref">AGENT-ATTEST</a>]</span>
-</td>
+              <td class="text-left" rowspan="1" colspan="1">Attested instance identity, continuity, and receiver scoping</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span>; this profile defines instance-to-agent resolution</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Self-acting workload grant</td>
@@ -1453,8 +1458,9 @@ and enrollment/key-replacement protocols are outside this revision.<a href="#sec
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Stable installation or execution identity</td>
-              <td class="text-left" rowspan="1" colspan="1">A future identification specification and its consuming profiles</td>
+              <td class="text-left" rowspan="1" colspan="1">Downstream instance context</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> defines the object; propagation through this flow is outside this revision</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Agent provisioning and disablement signals</td>
@@ -1466,9 +1472,11 @@ and enrollment/key-replacement protocols are outside this revision.<a href="#sec
 permits extensions. It uses ID-JAG's actor extension point and imports
 Actor Profile's representation rules; it does not claim conformance to
 Actor Profile's different credential-to-subject copying algorithm.
-The attested-agent profile is maintained as a separate, self-contained
-Standards Track draft. Its editor's copy is included in this repository;
-it is a dependency only for the optional shared-client input.<a href="#section-1.3-2" class="pilcrow">¶</a></p>
+The optional instance-attestation input uses the editor's copy of
+<span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span>, pinned by the reference to the reviewed repository revision.
+It is a dependency only for that input; the reference
+does not imply that the identification draft has been submitted to
+the Datatracker. This document defines no additional agent-identity claim.<a href="#section-1.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1558,10 +1566,10 @@ also apply, subject to the explicit narrowings below.<a href="#section-2.1-1" cl
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Shared-client ATTEST</td>
-              <td class="text-left" rowspan="1" colspan="1">Apply the companion claim and trust profile only when that optional input is selected</td>
+              <td class="text-left" rowspan="1" colspan="1">Instance ATTEST</td>
+              <td class="text-left" rowspan="1" colspan="1">Validate Identification's instance evidence, then resolve its approved agent binding and client association</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#agent-evidence" class="auto internal xref">Section 4.2</a>
+                <a href="#instance-agent-resolution" class="auto internal xref">Section 4.2.1</a>
 </td>
             </tr>
             <tr>
@@ -1745,10 +1753,10 @@ rules of the credential itself.<a href="#section-3-4" class="pilcrow">¶</a></p>
               <td class="text-left" rowspan="1" colspan="1">Client-to-agent mapping is explicit</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Shared-client Client Attestation</td>
-              <td class="text-left" rowspan="1" colspan="1">Approved attester, client <code>sub</code>, and signed <code>attested_agent_id</code>
+              <td class="text-left" rowspan="1" colspan="1">Instance Client Attestation</td>
+              <td class="text-left" rowspan="1" colspan="1">Validated (<code>iss</code>, <code>client_instance_id</code>), associated with the authenticated client <code>sub</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Optional input using <span>[<a href="#AGENT-ATTEST" class="cite xref">AGENT-ATTEST</a>]</span>
+              <td class="text-left" rowspan="1" colspan="1">Optional input using <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> and <a href="#instance-agent-resolution" class="auto internal xref">Section 4.2.1</a>
 </td>
             </tr>
             <tr>
@@ -1905,16 +1913,71 @@ authority associated with the trusted key that verified the attestation.
 The IdP <span class="bcp14">MUST</span> select that authority unambiguously and resolve the pair
 of its identifier and the validated client <code>sub</code>. An <code>iss</code>, when
 present, <span class="bcp14">MUST</span> match that authority. It is not required in this mode.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
-<p id="section-4.2-3">For a shared client, the IdP and client <span class="bcp14">MUST</span> implement <span>[<a href="#AGENT-ATTEST" class="cite xref">AGENT-ATTEST</a>]</span>
-and use its authenticated (<code>iss</code>, <code>sub</code>, <code>attested_agent_id</code>) tuple.
-That companion draft owns the claim, attester restrictions, profile
-selection, and registration. The IdP <span class="bcp14">MUST</span> resolve the resulting tuple
-through a Federation Binding. The configured mode <span class="bcp14">MUST NOT</span> change
-based on the presence or absence of a claim.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
-<p id="section-4.2-4">Both modes produce the governed actor specified in <a href="#actor-construction" class="auto internal xref">Section 6.4</a>,
-even when its identifier differs from the attestation's client <code>sub</code>.
-The own-client path uses base ATTEST and does not depend on the companion
-claim registration.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+<p id="section-4.2-3">For instance-based agent resolution, including agents sharing an OAuth
+client, the IdP and client <span class="bcp14">MUST</span> use <a href="#instance-agent-resolution" class="auto internal xref">Section 4.2.1</a>.
+The client and IdP <span class="bcp14">MUST</span> select own-client or instance-based resolution
+through trusted client configuration before accepting requests. Claims
+<span class="bcp14">MUST NOT</span> switch modes, and failed instance validation <span class="bcp14">MUST NOT</span> fall back
+to own-client resolution.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<p id="section-4.2-4">Both inputs produce the governed actor under <a href="#actor-construction" class="auto internal xref">Section 6.4</a>.
+The own-client input uses base ATTEST without requiring Identification.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+<div id="instance-agent-resolution">
+<section id="section-4.2.1">
+          <h4 id="name-instance-to-agent-resolutio">
+<a href="#section-4.2.1" class="section-number selfRef">4.2.1. </a><a href="#name-instance-to-agent-resolutio" class="section-name selfRef">Instance-to-Agent Resolution</a>
+          </h4>
+<p id="section-4.2.1-1">The <code>instance_attestation</code> input uses <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> to identify an
+enrolled installation or execution unit. Identification supplies
+instance evidence; this profile supplies the approved agent mapping
+and the separate authorization decision. The IdP <span class="bcp14">MUST</span>:<a href="#section-4.2.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.2.1-2">
+<li id="section-4.2.1-2.1">
+              <p id="section-4.2.1-2.1.1">Act as a Receiver under Identification and apply its Receiver
+validation and instance-policy requirements, using the configured
+attester trust, client association, receiver scope, granularity,
+continuity evidence, and freshness limits.
+Validate the ATTEST proof and the output-key relationship in
+<a href="#actor-inputs" class="auto internal xref">Section 6.3</a> against the same attestation in the request.<a href="#section-4.2.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-4.2.1-2.2">
+              <p id="section-4.2.1-2.2.1">Use the validated (<code>iss</code>, <code>client_instance_id</code>) pair as the external
+instance identity. Match it exactly through an enabled Federation
+Binding to one active Registered Agent, checking the authenticated
+client <code>sub</code>, Source Tenant, and configured receiver scope. A shared
+OAuth client or matching proof key <span class="bcp14">MUST NOT</span> establish that binding.<a href="#section-4.2.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-4.2.1-2.3">
+              <p id="section-4.2.1-2.3.1">Reject a missing or ambiguous agent mapping. Several instances <span class="bcp14">MAY</span>
+map to one agent. An instance hosting several agents is insufficient
+evidence for selecting among them; this input defines no additional
+agent selector. Such a deployment needs another supported input
+that unambiguously identifies the selected agent.<a href="#section-4.2.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-4.2.1-2.4">
+              <p id="section-4.2.1-2.4.1">Apply <a href="#authorization" class="auto internal xref">Section 5</a> and <a href="#delegation-approval" class="auto internal xref">Section 5.1</a> to the resolved
+agent. Set <code>act</code> from the governed identity under
+<a href="#actor-construction" class="auto internal xref">Section 6.4</a>, not from the instance identifier.<a href="#section-4.2.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+<p id="section-4.2.1-3">The attester remains responsible for enrollment and continuity evidence
+under Identification; an identifier alone does not prove continuity.
+Renewal and verified key changes retain or replace instance identity
+only under Identification's lifecycle rules. A new instance identifier
+requires an approved binding; the IdP <span class="bcp14">MUST NOT</span> inherit one merely from
+an earlier key, shared client, or claimed predecessor. The new binding
+<span class="bcp14">MAY</span> resolve to the same governed agent. Neither instance continuity nor
+a new binding transfers an existing grant to a replacement key.<a href="#section-4.2.1-3" class="pilcrow">¶</a></p>
+<p id="section-4.2.1-4">Identification claim and instance-policy failures use its
+<code>invalid_client_attestation</code> error. After successful instance validation,
+missing, disabled, or ambiguous agent bindings and denied delegation use
+<code>actor_unauthorized</code> under <a href="#errors" class="auto internal xref">Section 6.8</a>. The distinction does not permit
+disclosure of instance or agent status in error details.<a href="#section-4.2.1-4" class="pilcrow">¶</a></p>
+<p id="section-4.2.1-5">This input does not define downstream instance-context propagation.
+The IdP <span class="bcp14">MUST NOT</span> copy <code>client_instance_id</code> into <code>act.sub</code> merely because
+it was authenticated. <a href="#instance-identification" class="auto internal xref">Section 7.5</a> records the remaining
+context composition work.<a href="#section-4.2.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="jwt-svid-input">
@@ -2300,12 +2363,12 @@ carried with <code>actor_token_type=urn:ietf:params:oauth:token-type:jwt</code>.
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>shared_client_attestation</code>
+                <code>instance_attestation</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
                 <span class="bcp14">OPTIONAL</span>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Same presentation as Client Attestation; shared-client processing under <span>[<a href="#AGENT-ATTEST" class="cite xref">AGENT-ATTEST</a>]</span> and <a href="#agent-evidence" class="auto internal xref">Section 4.2</a>
+              <td class="text-left" rowspan="1" colspan="1">Same presentation as Client Attestation; validate Identification and the instance-to-agent binding under <a href="#instance-agent-resolution" class="auto internal xref">Section 4.2.1</a>
 </td>
             </tr>
           </tbody>
@@ -2667,13 +2730,18 @@ whether a particular user or agent exists.<a href="#section-6.8-1" class="pilcro
 </td>
             </tr>
             <tr>
+              <td class="text-left" rowspan="1" colspan="1">Instance-identification claim or instance-policy failure</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_client_attestation</code> under Identification</td>
+            </tr>
+            <tr>
               <td class="text-left" rowspan="1" colspan="1">Invalid subject or actor credential, disallowed inbound actor chain, or invalid ID-JAG</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_grant</code>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Valid identity evidence but absent/disabled agent binding or unauthorized delegation</td>
+              <td class="text-left" rowspan="1" colspan="1">Valid identity evidence but absent, disabled, or ambiguous agent binding, or unauthorized delegation</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>actor_unauthorized</code>, as defined by Actor Profile</td>
             </tr>
@@ -2890,12 +2958,16 @@ reopen ATTEST or to add a new proof protocol here.<a href="#section-7.4-3" class
 <span>[<a href="#SPIFFE-CONCEPTS" class="cite xref">SPIFFE-CONCEPTS</a>]</span>. An identifier alone establishes neither continuity
 nor enrollment or key replacement. Runtime identification does not by
 itself make that runtime an authorization principal.<a href="#section-7.5-1" class="pilcrow">¶</a></p>
-<p id="section-7.5-2"><strong>Request to a future identification specification and its consumers.</strong>
-Define trusted continuity evidence and which instance is described at
-each exchange. Self-acting context would describe the subject's
-instance; delegated context would describe the actor's instance.
-Consumers need explicit retain, replace, or omit rules when the actor
-changes. No instance claim or instance-proof protocol is defined here.<a href="#section-7.5-2" class="pilcrow">¶</a></p>
+<p id="section-7.5-2"><span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> defines instance identity and continuity requirements;
+<a href="#instance-agent-resolution" class="auto internal xref">Section 4.2.1</a> consumes that evidence for agent resolution.
+Enrollment and key-replacement protocols remain outside both profiles.<a href="#section-7.5-2" class="pilcrow">¶</a></p>
+<p id="section-7.5-3"><strong>Remaining work for this consuming profile.</strong> Define propagation of
+Identification's optional <code>client_instance</code> context through the ID-JAG
+and access token, including its relationship to the actor, provenance,
+receiver scoping, and retain, replace, or omit rules during exchange.
+Self-acting context would describe the subject's instance; delegated
+context would describe the actor's instance. This revision defines no
+downstream instance-context composition.<a href="#section-7.5-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="lifecycle-gap">
@@ -2976,9 +3048,13 @@ freshness limits; stale data <span class="bcp14">MUST NOT</span> authorize issua
 trusted scope. Exact bindings, tenant boundaries, issuer-scoped key
 lookup, and limits on attester authority constrain that scope; a new
 JWT type does not repair excessive trust.<a href="#section-8.3-2" class="pilcrow">¶</a></p>
-<p id="section-8.3-3">The optional shared-client input inherits the attester trust and key
-isolation considerations of <span>[<a href="#AGENT-ATTEST" class="cite xref">AGENT-ATTEST</a>]</span>. A valid attestation still
-requires the separate delegation decision in <a href="#delegation-approval" class="auto internal xref">Section 5.1</a>.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
+<p id="section-8.3-3">The optional instance-attestation input inherits Identification's
+attester trust, receiver scoping, continuity, and privacy requirements.
+Its mapping does not establish independent runtime isolation: a holder
+of a shared private key can present attestations issued for that key.
+Deployments requiring isolation between agents need separate key control
+and attester policy. A valid attestation and approved mapping still
+require the separate delegation decision in <a href="#delegation-approval" class="auto internal xref">Section 5.1</a>.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
 <p id="section-8.3-4">Cross-system disablement and token revocation require the mechanisms
 in <a href="#lifecycle-gap" class="auto internal xref">Section 7.6</a>. Without an applicable signal or online check, an
 already issued token can remain usable until expiration. The refresh
@@ -3028,8 +3104,8 @@ issuance and redemption capabilities, including supported actor inputs.<a href="
 </li>
       </ul>
 <p id="section-10-3">The member names and values of this object are defined in <a href="#metadata" class="auto internal xref">Section 6.9</a>;
-no new registry is created. The attested-agent claim registration is
-requested by <span>[<a href="#AGENT-ATTEST" class="cite xref">AGENT-ATTEST</a>]</span>. This document requests no grant type,
+no new registry is created. Instance claim registrations belong to
+<span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span>. This document requests no JWT claim, grant type,
 JWT type, or OAuth token-type URI registration.<a href="#section-10-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3064,9 +3140,9 @@ JWT type, or OAuth token-type URI registration.<a href="#section-10-3" class="pi
         <dd>
 <span class="refAuthor">Parecki, A.</span>, <span class="refAuthor">McGuinness, K.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"Identity Assertion JWT Authorization Grant"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-identity-assertion-authz-grant-04</span>, <time datetime="2026-05-21" class="refDate">21 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="AGENT-ATTEST">[AGENT-ATTEST]</dt>
+<dt id="INSTANCE">[INSTANCE]</dt>
         <dd>
-<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth 2.0 Attested Agent Identity"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-attested-agent-identity</span>, <time datetime="2026-09" class="refDate">September 2026</time>, <span>&lt;<a href="https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html">https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html</a>&gt;</span>. </dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"Client Instance Identification for Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-client-instance-id-latest</span>, <time datetime="2026-09" class="refDate">September 2026</time>, <span>&lt;<a href="https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/26abba5fb612381331c670f4d6dfc54737f698af/draft-mcguinness-oauth-client-instance-id.md">https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/26abba5fb612381331c670f4d6dfc54737f698af/draft-mcguinness-oauth-client-instance-id.md</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC7523">[RFC7523]</dt>
         <dd>
