@@ -51,6 +51,7 @@ normative:
   RFC9449:
   RFC9700:
 informative:
+  RFC6755:
   WAG: I-D.carleton-workload-authz-grant
   SPIFFE-CONCEPTS:
     title: "SPIFFE Concepts"
@@ -223,7 +224,7 @@ also apply, subject to the explicit narrowings below.
 | Continuing access | Optional ICA composition; same governed actor; no RAS refresh tokens | {{continuing-access}} |
 | API | Configured applicability independent of token contents; required actor and proof validation, with resource errors | {{api-processing}} |
 | Errors | Credential validation uses `invalid_grant`, rather than RFC 8693's `invalid_request` default; delegation denial uses `actor_unauthorized` | {{errors}} |
-| Discovery | Role-specific `agent_federation` metadata and configured applicability | {{metadata}} |
+| Discovery | ID-JAG grant-profile URI for RAS and client support; configured IdP support and optional inputs | {{metadata}} |
 
 These narrowings apply only to this profile. Base ID-JAG or generic
 Token Exchange support alone does not imply support for them.
@@ -453,8 +454,8 @@ this document adds no equality requirement beyond that specification.
 JWT-SVID remains bearer evidence. Adding DPoP can constrain an issued
 token under a consuming profile; it does not convert the JWT-SVID into
 a platform-endorsed proof-of-possession credential. The remaining
-actor presentation is defined in {{actor-inputs}} and its capability
-is advertised under {{metadata}}.
+actor presentation is defined in {{actor-inputs}} and its use is agreed
+through trusted configuration under {{metadata}}.
 
 ## SPIFFE X.509-SVID {#spiffe-input}
 
@@ -679,12 +680,12 @@ requests an ID-JAG. It does not request a RAS refresh token.
 
 ## Direct Actor Inputs {#actor-inputs}
 
-The following identifiers are used only in the `actor_inputs_supported`
-metadata member defined in {{metadata}}. They are not OAuth token-type
-URIs or authentication-method names. Every actor in this revision is
+The following labels identify the input choices in this document and
+trusted configuration. They are not wire parameters, OAuth token-type
+URIs, or authentication-method names. Every root actor in this revision is
 carried with `actor_token_type=urn:ietf:params:oauth:token-type:jwt`.
 
-| Input identifier | Support | Presentation and validation |
+| Input | Support | Presentation and validation |
 |---|---|---|
 | `platform_jwt` | REQUIRED at the IdP | JWT in `actor_token`; validate under {{platform-jwt-input}} and authenticate the client separately |
 | `spiffe_jwt_svid` | OPTIONAL | Identical compact JWT in `actor_token` and `client_assertion`; native JWT-SVID authentication under {{jwt-svid-input}} |
@@ -969,22 +970,16 @@ permits issuance after dropping the actor or its proof binding.
 
 ## Metadata {#metadata}
 
-An authorization server implementing this profile MUST publish an
-`agent_federation` object in its {{RFC8414}} metadata. The members are:
+This profile is identified by:
 
-| Member | Type and meaning |
-|---|---|
-| `issuance` | Boolean; `true` advertises the IdP role in this section; omitted means `false` |
-| `redemption` | Boolean; `true` advertises the RAS role in this section; omitted means `false` |
-| `actor_inputs_supported` | Array of distinct input identifiers from {{actor-inputs}}; REQUIRED when `issuance` is `true`, including `platform_jwt` |
+`urn:ietf:params:oauth:grant-profile:id-jag-agent-federation`
 
-At least one role MUST be `true`. A server supporting both roles MUST
-implement both. A client MUST treat incorrectly typed defined members or an
-absent object as no usable advertisement for this profile. Unknown
-members and unknown actor input identifiers
-MUST be ignored by clients; they MUST NOT be interpreted as support
-for another known input. This profile defines the listed input values;
-future extensions may define additional values and their processing.
+The RAS MUST include that URI in `authorization_grant_profiles_supported`
+in its {{RFC8414}} metadata, using {{ID-JAG, Section 7.2}}. It indicates
+support for this profile's redemption and access-token requirements.
+A client SHOULD include the same URI in its client metadata under
+{{ID-JAG, Section 8}} to advertise its corresponding client role.
+These advertisements establish capability, not trust or authorization.
 
 The IdP MUST advertise Token Exchange in `grant_types_supported` and
 ID-JAG in `identity_chaining_requested_token_types_supported` under
@@ -995,25 +990,34 @@ Both MUST advertise the supported client authentication methods and
 DPoP algorithms, including the common capabilities in
 {{flow-configuration}}.
 
+ID-JAG defines `authorization_grant_profiles_supported` for the RAS
+and client roles; its presence does not advertise IdP issuance support.
+The client and IdP MUST agree on this profile's issuance support through
+the trusted configuration in {{flow-configuration}}. That agreement MUST
+also identify any optional actor inputs and refresh-token subject support
+used by the client. Support for the required platform-JWT input follows
+from IdP conformance. Generic JWT input or client-authentication metadata
+alone does not advertise an optional actor composition.
+
 Continuing access additionally uses the metadata and trust configuration
 in {{ICA, Section 7}}. For this composition, the IdP MUST advertise
 `identity_continuation_supported` as `true`; a continuation-aware RAS
 MUST advertise ICA's continuation grant profile and required grant types.
-The `agent_federation` object alone does not advertise ICA support or
+This profile's URI alone does not advertise ICA support or
 authorize establishment of a continuation chain.
 
-The `agent_federation` object, not generic JWT actor support, identifies
-this mapped-actor composition. Actor Profile metadata MAY describe
-other implemented paths; this profile alone MUST NOT cause a server to
+Actor Profile metadata MAY describe other implemented paths; this
+profile alone MUST NOT cause a server to
 advertise conformance to Actor Profile's entire Token Exchange
 algorithm. If `actor_profile_token_exchange` is also published, its
 arrays describe those paths independently and MUST NOT contradict
 shared ID-JAG capabilities.
 
-Clients MUST verify the relevant role and chosen actor input before
-using this flow. The IdP MUST verify the RAS's redemption support as
-part of establishing the trusted relationship. The configured profile
-requirement remains in force if a parameter or claim is omitted;
+Clients MUST verify the RAS's profile advertisement and the configured
+IdP support and chosen input before using this flow. The IdP MUST verify
+the RAS's profile advertisement as part of establishing the trusted
+relationship. The configured profile requirement remains in force if
+a parameter or claim is omitted;
 advertisement is not a downgrade switch.
 
 # Remaining Gaps and Coordination {#upstream-gaps}
@@ -1222,19 +1226,18 @@ clear rules about whose activity it describes.
 
 # IANA Considerations {#iana}
 
-This document requests registration in the "OAuth Authorization Server
-Metadata" registry established by {{RFC8414, Section 7.1}}:
+This document requests registration in the "OAuth URI" registry
+established by {{RFC6755}}:
 
-* Metadata Name: `agent_federation`
-* Metadata Description: Object identifying delegated agent-federation
-  issuance and redemption capabilities, including supported actor inputs.
+* URN: `urn:ietf:params:oauth:grant-profile:id-jag-agent-federation`
+* Common Name: ID-JAG Agent Federation grant profile
 * Change Controller: IETF
-* Specification Document(s): {{metadata}} of this document.
+* Specification Document: {{metadata}} of this document.
 
-The member names and values of this object are defined in {{metadata}};
-no new registry is created. Instance claim registrations belong to
-{{INSTANCE}}. This document requests no JWT claim, grant type,
-JWT type, or OAuth token-type URI registration.
+The profile URI uses ID-JAG's existing authorization server and client
+metadata parameter. This document requests no new metadata parameter,
+JWT claim, grant type, JWT type, or OAuth token-type URI registration.
+Instance claim registrations belong to {{INSTANCE}}.
 
 --- back
 
