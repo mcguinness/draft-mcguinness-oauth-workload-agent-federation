@@ -1403,7 +1403,9 @@ resolving its governed identity alone does not complete that path.<a href="#sect
 a platform JWT actor, <code>private_key_jwt</code> client authentication, and DPoP.
 An IdP-issued refresh token is an optional subject input under
 <a href="#exchange-request" class="auto internal xref">Section 6.2</a>.
-It does not require the optional instance-identification input. Additional
+Continuing access is <span class="bcp14">OPTIONAL</span> and uses the Identity Continuation Assertion
+(ICA) composition in <a href="#continuing-access" class="auto internal xref">Section 6.6.1</a>. The common path does not
+require that extension or the optional instance-identification input. Additional
 credential inputs have the status listed in <a href="#actor-inputs" class="auto internal xref">Section 6.3</a>.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <p id="section-1.2-2">The API <span class="bcp14">MUST</span> support the access-token processing in <a href="#api-processing" class="auto internal xref">Section 6.7</a>.
 Implementations <span class="bcp14">MAY</span> support other flows, but <span class="bcp14">MUST NOT</span> use them as a
@@ -1435,6 +1437,12 @@ and enrollment/key-replacement protocols are outside this revision.<a href="#sec
               <td class="text-left" rowspan="1" colspan="1">ID-JAG format and base grant processing</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Continuing access, continuation evidence, and chain lifecycle</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <span>[<a href="#ICA" class="cite xref">ICA</a>]</span>, composed under <a href="#continuing-access" class="auto internal xref">Section 6.6.1</a>
 </td>
             </tr>
             <tr>
@@ -1600,7 +1608,7 @@ also apply, subject to the explicit narrowings below.<a href="#section-2.1-1" cl
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Exchange</td>
+              <td class="text-left" rowspan="1" colspan="1">Root exchange</td>
               <td class="text-left" rowspan="1" colspan="1">ID Token or supported IdP refresh-token subject, with a direct JWT actor; both actor parameters <span class="bcp14">REQUIRED</span>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1643,7 +1651,7 @@ also apply, subject to the explicit narrowings below.<a href="#section-2.1-1" cl
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Lifetime</td>
+              <td class="text-left" rowspan="1" colspan="1">Root grant lifetime</td>
               <td class="text-left" rowspan="1" colspan="1">Finite grant lifetime bounded by input credential expiry; five minutes <span class="bcp14">RECOMMENDED</span>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1659,7 +1667,7 @@ also apply, subject to the explicit narrowings below.<a href="#section-2.1-1" cl
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Continuing access</td>
-              <td class="text-left" rowspan="1" colspan="1">A finite refresh deadline without renewed IdP authorization; configured termination events</td>
+              <td class="text-left" rowspan="1" colspan="1">Optional ICA composition; same governed actor; no RAS refresh tokens</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#continuing-access" class="auto internal xref">Section 6.6.1</a>
 </td>
@@ -2600,39 +2608,81 @@ grant expiry alone does not revoke an issued token.<a href="#section-6.6-7" clas
           <h4 id="name-continuing-access">
 <a href="#section-6.6.1" class="section-number selfRef">6.6.1. </a><a href="#name-continuing-access" class="section-name selfRef">Continuing Access</a>
           </h4>
-<p id="section-6.6.1-1">A RAS <span class="bcp14">SHOULD NOT</span> issue a refresh token, as in ID-JAG. A deployment
-permitting that exception <span class="bcp14">MUST</span> configure:<a href="#section-6.6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.6.1-1">Deployments offering continuing access under this profile <span class="bcp14">MUST</span> use
+<span>[<a href="#ICA" class="cite xref">ICA</a>]</span>. A trusted Continuation Assertion Issuer (CAI) attests to an
+accepted, active authorization; the agent exchanges that assertion at
+the IdP for a new ID-JAG. This keeps continuation subject to IdP
+authorization. The RAS <span class="bcp14">MUST NOT</span> issue refresh tokens on root or onward
+ID-JAG redemption, narrowing ID-JAG's <span class="bcp14">SHOULD NOT</span>. An IdP refresh token
+remains an optional root subject credential under <a href="#exchange-request" class="auto internal xref">Section 6.2</a>.<a href="#section-6.6.1-1" class="pilcrow">¶</a></p>
+<div id="establishing-continuation">
+<section id="section-6.6.1.1">
+            <h5 id="name-establishing-continuation">
+<a href="#section-6.6.1.1" class="section-number selfRef">6.6.1.1. </a><a href="#name-establishing-continuation" class="section-name selfRef">Establishing Continuation</a>
+            </h5>
+<p id="section-6.6.1.1-1">The root exchange retains this profile's direct actor evidence and
+delegation checks. To establish continuation, the IdP <span class="bcp14">MUST</span> also:<a href="#section-6.6.1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-6.6.1-2.1">
-              <p id="section-6.6.1-2.1.1">A finite maximum period of continuing access without renewed IdP
-authorization, measured from the authorizing ID-JAG's <code>iat</code>.<a href="#section-6.6.1-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.6.1.1-2.1">
+                <p id="section-6.6.1.1-2.1.1">Apply ICA's chain-establishment and lifecycle-anchor requirements.
+An eligible user session or, where supported, the IdP refresh token's
+OAuth grant anchors the chain; credential expiry alone does not
+define the chain lifetime.<a href="#section-6.6.1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-6.6.1-2.2">
-              <p id="section-6.6.1-2.2.1">The events that terminate that authority, including withdrawal of
-applicable RAS authorization and any received, authenticated IdP
-notification disabling the user, actor, binding, or delegation.<a href="#section-6.6.1-2.2.1" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-6.6.1.1-2.2">
+                <p id="section-6.6.1.1-2.2.1">Require the authenticated client's configured canonical actor identity
+under <span>[<a href="#ICA" class="cite xref">ICA</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion-02#section-5.5.2" class="relref">Section 5.5.2</a></span> to equal the governed <code>(iss, sub)</code> pair
+resolved under <a href="#actor-construction" class="auto internal xref">Section 6.4</a>. A shared client with no
+unambiguous mapping to that agent cannot establish this composition.<a href="#section-6.6.1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-6.6.1-2.3">
-              <p id="section-6.6.1-2.3.1">The treatment of delayed or unavailable status information, including
-freshness limits when an online check or status feed is required.<a href="#section-6.6.1-2.3.1" class="pilcrow">¶</a></p>
+            </ul>
+<p id="section-6.6.1.1-3">If continuation cannot be established, an otherwise valid root exchange
+can issue an ordinary ID-JAG without a continuation handle, following
+<span>[<a href="#ICA" class="cite xref">ICA</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion-02#section-5.1" class="relref">Section 5.1</a></span>. The client <span class="bcp14">MUST NOT</span> infer continuation authority
+from successful root issuance. A continuation-aware RAS <span class="bcp14">MUST</span> implement
+ICA's acceptance and handle-binding requirements.<a href="#section-6.6.1.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="continuing-as-the-governed-agent">
+<section id="section-6.6.1.2">
+            <h5 id="name-continuing-as-the-governed-">
+<a href="#section-6.6.1.2" class="section-number selfRef">6.6.1.2. </a><a href="#name-continuing-as-the-governed-" class="section-name selfRef">Continuing as the Governed Agent</a>
+            </h5>
+<p id="section-6.6.1.2-1">The client, CAI, IdP, and RAS <span class="bcp14">MUST</span> implement their applicable ICA roles,
+including assertion issuance, validation, replay handling, trust,
+errors, and recovery. In particular:<a href="#section-6.6.1.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.6.1.2-2.1">
+                <p id="section-6.6.1.2-2.1.1">The continuation request uses ICA as <code>subject_token</code> and carries no
+<code>actor_token</code> or <code>actor_token_type</code>. ICA's client authentication and
+assertion matching replace this profile's root actor-input processing.<a href="#section-6.6.1.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          </ul>
-<p id="section-6.6.1-3">The RAS <span class="bcp14">MUST</span> retain the user, governed actor, client, resource and
-authority ceiling, and DPoP key binding. On every refresh, it <span class="bcp14">MUST</span>
-validate client authentication and the bound-key proof, recheck applicable
-RAS policy, and reject a terminated or expired authorization with
-<code>invalid_grant</code>. Authentication and proof errors retain their base errors.<a href="#section-6.6.1-3" class="pilcrow">¶</a></p>
-<p id="section-6.6.1-4">Refresh-token rotation, reuse of the same ID-JAG, and successful RAS
-policy checks <span class="bcp14">MUST NOT</span> advance the continuation deadline. Access and
-refresh tokens issued under this exception <span class="bcp14">MUST NOT</span> remain valid beyond
-that deadline. Extending it requires a newly issued, valid ID-JAG and
-the issuance and redemption checks of this profile; this document
-defines no additional renewal grant or status protocol.<a href="#section-6.6.1-4" class="pilcrow">¶</a></p>
-<p id="section-6.6.1-5">Without an applicable status signal or online check, upstream disablement
-can remain unknown to the RAS until renewed IdP authorization is required.
-The configured period bounds that exposure for further issuance.
-Termination prevents further issuance; revocation of outstanding access
-tokens remains subject to <a href="#status-changes" class="auto internal xref">Section 8.3</a>.<a href="#section-6.6.1-5" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-6.6.1.2-2.2">
+                <p id="section-6.6.1.2-2.2.1">For this composition, the current actor <span class="bcp14">MUST</span> remain the root's
+Registered Agent. The IdP <span class="bcp14">MUST</span> recheck current agent, binding, and
+delegation policy as well as ICA's chain authorization. Continuation
+involving a different actor is outside this profile.<a href="#section-6.6.1.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.6.1.2-2.3">
+                <p id="section-6.6.1.2-2.3.1">The request <span class="bcp14">MUST</span> identify one resource and a non-empty scope. The
+onward grant follows <span>[<a href="#ICA" class="cite xref">ICA</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion-02#section-5.5.5" class="relref">Section 5.5.5</a></span> and retains this profile's
+governed actor, resource, scope, and downstream client requirements.
+Its lifetime and key binding follow ICA rather than the root input
+credential limits in <a href="#grant-issuance" class="auto internal xref">Section 6.5</a>.<a href="#section-6.6.1.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.6.1.2-2.4">
+                <p id="section-6.6.1.2-2.4.1">Redemption uses ICA's DPoP-bound JWT grant,
+<code>urn:ietf:params:oauth:grant-type:jwt-dpop</code>, instead of the root flow's
+JWT bearer grant. The additional RAS checks and access-token requirements
+in <a href="#redemption" class="auto internal xref">Section 6.6</a>, and API processing in <a href="#api-processing" class="auto internal xref">Section 6.7</a>, still apply.<a href="#section-6.6.1.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+<p id="section-6.6.1.2-3">ICA governs chain lifetime and termination; this document defines no
+separate continuation deadline or renewal protocol. Ending a chain
+prevents further continuation but does not itself revoke outstanding
+grants or access tokens; <a href="#status-changes" class="auto internal xref">Section 8.3</a> still applies.<a href="#section-6.6.1.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 </section>
@@ -2841,18 +2891,24 @@ JWT bearer grants and <code>urn:ietf:params:oauth:grant-profile:id-jag</code> in
 Both <span class="bcp14">MUST</span> advertise the supported client authentication methods and
 DPoP algorithms, including the common capabilities in
 <a href="#flow-configuration" class="auto internal xref">Section 6.1</a>.<a href="#section-6.9-4" class="pilcrow">¶</a></p>
-<p id="section-6.9-5">The <code>agent_federation</code> object, not generic JWT actor support, identifies
+<p id="section-6.9-5">Continuing access additionally uses the metadata and trust configuration
+in <span>[<a href="#ICA" class="cite xref">ICA</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion-02#section-7" class="relref">Section 7</a></span>. For this composition, the IdP <span class="bcp14">MUST</span> advertise
+<code>identity_continuation_supported</code> as <code>true</code>; a continuation-aware RAS
+<span class="bcp14">MUST</span> advertise ICA's continuation grant profile and required grant types.
+The <code>agent_federation</code> object alone does not advertise ICA support or
+authorize establishment of a continuation chain.<a href="#section-6.9-5" class="pilcrow">¶</a></p>
+<p id="section-6.9-6">The <code>agent_federation</code> object, not generic JWT actor support, identifies
 this mapped-actor composition. Actor Profile metadata <span class="bcp14">MAY</span> describe
 other implemented paths; this profile alone <span class="bcp14">MUST NOT</span> cause a server to
 advertise conformance to Actor Profile's entire Token Exchange
 algorithm. If <code>actor_profile_token_exchange</code> is also published, its
 arrays describe those paths independently and <span class="bcp14">MUST NOT</span> contradict
-shared ID-JAG capabilities.<a href="#section-6.9-5" class="pilcrow">¶</a></p>
-<p id="section-6.9-6">Clients <span class="bcp14">MUST</span> verify the relevant role and chosen actor input before
+shared ID-JAG capabilities.<a href="#section-6.9-6" class="pilcrow">¶</a></p>
+<p id="section-6.9-7">Clients <span class="bcp14">MUST</span> verify the relevant role and chosen actor input before
 using this flow. The IdP <span class="bcp14">MUST</span> verify the RAS's redemption support as
 part of establishing the trusted relationship. The configured profile
 requirement remains in force if a parameter or claim is omitted;
-advertisement is not a downgrade switch.<a href="#section-6.9-6" class="pilcrow">¶</a></p>
+advertisement is not a downgrade switch.<a href="#section-6.9-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2864,8 +2920,8 @@ advertisement is not a downgrade switch.<a href="#section-6.9-6" class="pilcrow"
       </h2>
 <p id="section-7-1">This section is informative. It records problems and specific requests
 that remain outside the complete delegated path. The assessed revisions
-are WAG-00, ID-JAG-04, Actor Profile-00, SPIFFE OAuth-02, ATTEST-11,
-and WIT-02.<a href="#section-7-1" class="pilcrow">¶</a></p>
+are WAG-00, ID-JAG-04, ICA-02, Actor Profile-00, SPIFFE OAuth-02,
+ATTEST-11, and WIT-02.<a href="#section-7-1" class="pilcrow">¶</a></p>
 <div id="wag-gaps">
 <section id="section-7.1">
         <h3 id="name-self-acting-wag">
@@ -3077,9 +3133,11 @@ and attester policy. A valid attestation and approved mapping still
 require the separate delegation decision in <a href="#delegation-approval" class="auto internal xref">Section 5.1</a>.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
 <p id="section-8.3-4">Cross-system disablement and token revocation require the mechanisms
 in <a href="#lifecycle-gap" class="auto internal xref">Section 7.6</a>. Without an applicable signal or online check, an
-already issued token can remain usable until expiration. The refresh
-exception is bounded by <a href="#continuing-access" class="auto internal xref">Section 6.6.1</a>; it does not make upstream
-status immediately visible or grant new refresh authority.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
+already issued token can remain usable until expiration. Continuing
+access under <a href="#continuing-access" class="auto internal xref">Section 6.6.1</a> requires fresh IdP authorization
+under ICA's active chain and anchor checks. Chain termination does not
+make upstream status immediately visible to a resource or revoke tokens
+already issued by a RAS.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3159,6 +3217,10 @@ JWT type, or OAuth token-type URI registration.<a href="#section-10-3" class="pi
 <dt id="ID-JAG">[ID-JAG]</dt>
         <dd>
 <span class="refAuthor">Parecki, A.</span>, <span class="refAuthor">McGuinness, K.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"Identity Assertion JWT Authorization Grant"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-identity-assertion-authz-grant-04</span>, <time datetime="2026-05-21" class="refDate">21 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ICA">[ICA]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span> and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"Identity Continuation Assertion for OAuth 2.0 Token Exchange"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-id-continuation-assertion-02</span>, <time datetime="2026-09-08" class="refDate">8 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion-02">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion-02</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="INSTANCE">[INSTANCE]</dt>
         <dd>
