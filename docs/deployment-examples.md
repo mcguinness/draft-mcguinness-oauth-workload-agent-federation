@@ -71,7 +71,7 @@ The client then sends `Authorization: DPoP <access_token>` and `DPoP: <api_proof
 Example IdP extension metadata:
 
 ```json
-{"agent_federation":{"issuance":true,"actor_inputs_supported":["platform_jwt","spiffe_jwt_svid","client_attestation","shared_client_attestation"]}}
+{"agent_federation":{"issuance":true,"actor_inputs_supported":["platform_jwt","spiffe_jwt_svid","client_attestation","instance_attestation"]}}
 ```
 
 Example RAS extension metadata:
@@ -97,7 +97,18 @@ The IdP validates native authentication and maps the exact SPIFFE ID to `agent-4
 
 For either attestation mode, the exact compact Client Attestation appears in `actor_token` and `OAuth-Client-Attestation`. The request uses the configured ATTEST proof mode, and the DPoP output key matches the attestation confirmation key.
 
-Own-client mode resolves the attester identified by the trusted verification key and the client `sub`. Shared-client mode uses the [companion profile](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html#shared-agent), which requires the signed `iss` and `attested_agent_id`. Both resolve the governed agent before actor construction; neither copies a shared OAuth client identifier into `act.sub`.
+Own-client mode resolves the attester identified by the trusted verification key and the client `sub`. The optional `instance_attestation` mode uses [Client Instance Identification](https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/main/draft-mcguinness-oauth-client-instance-id.md). It validates the signed `iss` and `client_instance_id`, the authenticated client association, and Identification's Receiver requirements before applying the Federation Binding.
+
+For example, two attestations for the same shared client can contain these instance identities:
+
+| Attester `iss` | `client_instance_id` | Approved governed agent |
+|---|---|---|
+| `https://attester.example/tenant/acme` | `i-7f3d9a2e6c8145b0a923d47e18f602cd` | `agent-42` |
+| `https://attester.example/tenant/acme` | `i-b92c817fa6d043e59b7816c3a042de85` | `agent-42` |
+
+Each request still needs proof under its attestation key and separate user-to-agent delegation approval. Both produce the governed actor `act={"iss":"https://idp.example/tenant/acme","sub":"agent-42"}`. Neither instance identifier is copied into `act`; downstream instance context is outside this revision.
+
+A replacement instance receives an identifier under Identification's lifecycle rules and needs an approved new binding, which may resolve to `agent-42`. If a single instance instead maps ambiguously to two agents, this input is rejected with `actor_unauthorized`. An invalid instance claim or rejection by instance policy uses Identification's `invalid_client_attestation` error, with no own-client fallback.
 
 ## Other credentials and deferred self-acting access
 

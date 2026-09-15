@@ -31,14 +31,14 @@ normative:
   ATTEST: I-D.ietf-oauth-attestation-based-client-auth
   ACTOR-PROFILE: I-D.mcguinness-oauth-actor-profile
   ID-JAG: I-D.ietf-oauth-identity-assertion-authz-grant
-  AGENT-ATTEST:
-    title: "OAuth 2.0 Attested Agent Identity"
-    target: https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html
+  INSTANCE:
+    title: "Client Instance Identification for Attestation-Based Client Authentication"
+    target: https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/26abba5fb612381331c670f4d6dfc54737f698af/draft-mcguinness-oauth-client-instance-id.md
     author:
       - name: Karl McGuinness
     date: 2026-09
     seriesinfo:
-      Internet-Draft: draft-mcguinness-oauth-attested-agent-identity-latest
+      Internet-Draft: draft-mcguinness-oauth-client-instance-id-latest
   RFC7523:
   RFC8414:
   RFC8707:
@@ -129,7 +129,7 @@ resolving its governed identity alone does not complete that path.
 The IdP, RAS, and client roles claiming this profile MUST implement
 {{delegated-flow}}. The required common path uses an ID Token subject,
 a platform JWT actor, `private_key_jwt` client authentication, and DPoP.
-It does not require the companion attested-agent draft. Additional
+It does not require the optional instance-identification input. Additional
 credential inputs have the status listed in {{actor-inputs}}.
 
 The API MUST support the access-token processing in {{api-processing}}.
@@ -146,18 +146,20 @@ and enrollment/key-replacement protocols are outside this revision.
 | ID-JAG format and base grant processing | {{ID-JAG}} |
 | Actor object, current actor, and actor-aware resource policy | Selected rules of {{ACTOR-PROFILE}}, as specified in {{actor-construction}} |
 | Base workload authentication and proofs | SPIFFE OAuth, WIMSE, and ATTEST |
-| Attested agent identity and trust restrictions | Companion profile {{AGENT-ATTEST}} |
+| Attested instance identity, continuity, and receiver scoping | {{INSTANCE}}; this profile defines instance-to-agent resolution |
 | Self-acting workload grant | WAG; requested changes in {{wag-gaps}} |
-| Stable installation or execution identity | A future identification specification and its consuming profiles |
+| Downstream instance context | {{INSTANCE}} defines the object; propagation through this flow is outside this revision |
 | Agent provisioning and disablement signals | Future provisioning and lifecycle specifications |
 
 This document defines requirements locally where the base protocol
 permits extensions. It uses ID-JAG's actor extension point and imports
 Actor Profile's representation rules; it does not claim conformance to
 Actor Profile's different credential-to-subject copying algorithm.
-The attested-agent profile is maintained as a separate, self-contained
-Standards Track draft. Its editor's copy is included in this repository;
-it is a dependency only for the optional shared-client input.
+The optional instance-attestation input uses the editor's copy of
+{{INSTANCE}}, pinned by the reference to the reviewed repository revision.
+It is a dependency only for that input; the reference
+does not imply that the identification draft has been submitted to
+the Datatracker. This document defines no additional agent-identity claim.
 
 # Conventions and Terminology
 
@@ -199,7 +201,7 @@ also apply, subject to the explicit narrowings below.
 | Trust | Approved credential authority and tenant context | {{identity}} |
 | Identity | Exact, unambiguous mapping to an active Registered Agent | {{identity}} |
 | Evidence | Validate the selected credential; distinguish client, agent, and key evidence | {{inputs}} |
-| Shared-client ATTEST | Apply the companion claim and trust profile only when that optional input is selected | {{agent-evidence}} |
+| Instance ATTEST | Validate Identification's instance evidence, then resolve its approved agent binding and client association | {{instance-agent-resolution}} |
 | Credential use | Apply the selected proof mode and explicit reuse/key-binding limits | {{credential-requirements}} |
 | Authorization | Current binding, status, assignments, target, and scope policy | {{authorization}} |
 | Delegation | Explicit authorization for the resolved agent to act for the user | {{delegation-approval}} |
@@ -248,7 +250,7 @@ rules of the credential itself.
 |---|---|---|
 | Platform JWT | Approved issuer and exact subject, with configured additional selectors | Workload evidence; not automatically OAuth client authentication |
 | Client Attestation, agent has its own client | Attester identified by the trusted verification key; client `sub` | Client-to-agent mapping is explicit |
-| Shared-client Client Attestation | Approved attester, client `sub`, and signed `attested_agent_id` | Optional input using {{AGENT-ATTEST}} |
+| Instance Client Attestation | Validated (`iss`, `client_instance_id`), associated with the authenticated client `sub` | Optional input using {{INSTANCE}} and {{instance-agent-resolution}} |
 | SPIFFE JWT-SVID | Approved trust domain and exact SPIFFE ID in `sub` | OAuth client association follows SPIFFE OAuth |
 | SPIFFE X.509-SVID | Approved trust domain and exact SPIFFE ID in the URI SAN | Client authentication only in this revision; separate actor evidence required |
 | SPIFFE WIT-SVID | Approved trust domain and exact SPIFFE ID in `sub` | Client authentication only in this revision; separate actor evidence required |
@@ -371,17 +373,62 @@ The IdP MUST select that authority unambiguously and resolve the pair
 of its identifier and the validated client `sub`. An `iss`, when
 present, MUST match that authority. It is not required in this mode.
 
-For a shared client, the IdP and client MUST implement {{AGENT-ATTEST}}
-and use its authenticated (`iss`, `sub`, `attested_agent_id`) tuple.
-That companion draft owns the claim, attester restrictions, profile
-selection, and registration. The IdP MUST resolve the resulting tuple
-through a Federation Binding. The configured mode MUST NOT change
-based on the presence or absence of a claim.
+For instance-based agent resolution, including agents sharing an OAuth
+client, the IdP and client MUST use {{instance-agent-resolution}}.
+The client and IdP MUST select own-client or instance-based resolution
+through trusted client configuration before accepting requests. Claims
+MUST NOT switch modes, and failed instance validation MUST NOT fall back
+to own-client resolution.
 
-Both modes produce the governed actor specified in {{actor-construction}},
-even when its identifier differs from the attestation's client `sub`.
-The own-client path uses base ATTEST and does not depend on the companion
-claim registration.
+Both inputs produce the governed actor under {{actor-construction}}.
+The own-client input uses base ATTEST without requiring Identification.
+
+### Instance-to-Agent Resolution {#instance-agent-resolution}
+
+The `instance_attestation` input uses {{INSTANCE}} to identify an
+enrolled installation or execution unit. Identification supplies
+instance evidence; this profile supplies the approved agent mapping
+and the separate authorization decision. The IdP MUST:
+
+1. Act as a Receiver under Identification and apply its Receiver
+   validation and instance-policy requirements, using the configured
+   attester trust, client association, receiver scope, granularity,
+   continuity evidence, and freshness limits.
+   Validate the ATTEST proof and the output-key relationship in
+   {{actor-inputs}} against the same attestation in the request.
+2. Use the validated (`iss`, `client_instance_id`) pair as the external
+   instance identity. Match it exactly through an enabled Federation
+   Binding to one active Registered Agent, checking the authenticated
+   client `sub`, Source Tenant, and configured receiver scope. A shared
+   OAuth client or matching proof key MUST NOT establish that binding.
+3. Reject a missing or ambiguous agent mapping. Several instances MAY
+   map to one agent. An instance hosting several agents is insufficient
+   evidence for selecting among them; this input defines no additional
+   agent selector. Such a deployment needs another supported input
+   that unambiguously identifies the selected agent.
+4. Apply {{authorization}} and {{delegation-approval}} to the resolved
+   agent. Set `act` from the governed identity under
+   {{actor-construction}}, not from the instance identifier.
+
+The attester remains responsible for enrollment and continuity evidence
+under Identification; an identifier alone does not prove continuity.
+Renewal and verified key changes retain or replace instance identity
+only under Identification's lifecycle rules. A new instance identifier
+requires an approved binding; the IdP MUST NOT inherit one merely from
+an earlier key, shared client, or claimed predecessor. The new binding
+MAY resolve to the same governed agent. Neither instance continuity nor
+a new binding transfers an existing grant to a replacement key.
+
+Identification claim and instance-policy failures use its
+`invalid_client_attestation` error. After successful instance validation,
+missing, disabled, or ambiguous agent bindings and denied delegation use
+`actor_unauthorized` under {{errors}}. The distinction does not permit
+disclosure of instance or agent status in error details.
+
+This input does not define downstream instance-context propagation.
+The IdP MUST NOT copy `client_instance_id` into `act.sub` merely because
+it was authenticated. {{instance-identification}} records the remaining
+context composition work.
 
 ## SPIFFE JWT-SVID {#jwt-svid-input}
 
@@ -628,7 +675,7 @@ carried with `actor_token_type=urn:ietf:params:oauth:token-type:jwt`.
 | `platform_jwt` | REQUIRED at the IdP | JWT in `actor_token`; validate under {{platform-jwt-input}} and authenticate the client separately |
 | `spiffe_jwt_svid` | OPTIONAL | Identical compact JWT in `actor_token` and `client_assertion`; native JWT-SVID authentication under {{jwt-svid-input}} |
 | `client_attestation` | OPTIONAL | Identical compact JWT in `actor_token` and `OAuth-Client-Attestation`; own-client processing under {{agent-evidence}} |
-| `shared_client_attestation` | OPTIONAL | Same presentation as Client Attestation; shared-client processing under {{AGENT-ATTEST}} and {{agent-evidence}} |
+| `instance_attestation` | OPTIONAL | Same presentation as Client Attestation; validate Identification and the instance-to-agent binding under {{instance-agent-resolution}} |
 
 The client and IdP MUST select the input using the authenticated
 client's configured credential classes and trusted issuer or attester
@@ -865,8 +912,9 @@ whether a particular user or agent exists.
 |---|---|
 | Missing required parameter, unsupported type/combination, ambiguous input classification, or malformed request | `invalid_request` |
 | Invalid client authentication | Its configured method's error, normally `invalid_client` |
+| Instance-identification claim or instance-policy failure | `invalid_client_attestation` under Identification |
 | Invalid subject or actor credential, disallowed inbound actor chain, or invalid ID-JAG | `invalid_grant` |
-| Valid identity evidence but absent/disabled agent binding or unauthorized delegation | `actor_unauthorized`, as defined by Actor Profile |
+| Valid identity evidence but absent, disabled, or ambiguous agent binding, or unauthorized delegation | `actor_unauthorized`, as defined by Actor Profile |
 | Unsupported or unauthorized target | `invalid_target` under RFC 8693 and the applicable resource rules |
 | Invalid scope | `invalid_scope` |
 | Invalid DPoP proof or required nonce | RFC 9449's `invalid_dpop_proof` or `use_dpop_nonce` and required response headers |
@@ -1010,12 +1058,17 @@ reopen ATTEST or to add a new proof protocol here.
 nor enrollment or key replacement. Runtime identification does not by
 itself make that runtime an authorization principal.
 
-**Request to a future identification specification and its consumers.**
-Define trusted continuity evidence and which instance is described at
-each exchange. Self-acting context would describe the subject's
-instance; delegated context would describe the actor's instance.
-Consumers need explicit retain, replace, or omit rules when the actor
-changes. No instance claim or instance-proof protocol is defined here.
+{{INSTANCE}} defines instance identity and continuity requirements;
+{{instance-agent-resolution}} consumes that evidence for agent resolution.
+Enrollment and key-replacement protocols remain outside both profiles.
+
+**Remaining work for this consuming profile.** Define propagation of
+Identification's optional `client_instance` context through the ID-JAG
+and access token, including its relationship to the actor, provenance,
+receiver scoping, and retain, replace, or omit rules during exchange.
+Self-acting context would describe the subject's instance; delegated
+context would describe the actor's instance. This revision defines no
+downstream instance-context composition.
 
 ## Provisioning and Disablement {#lifecycle-gap}
 
@@ -1082,9 +1135,13 @@ trusted scope. Exact bindings, tenant boundaries, issuer-scoped key
 lookup, and limits on attester authority constrain that scope; a new
 JWT type does not repair excessive trust.
 
-The optional shared-client input inherits the attester trust and key
-isolation considerations of {{AGENT-ATTEST}}. A valid attestation still
-requires the separate delegation decision in {{delegation-approval}}.
+The optional instance-attestation input inherits Identification's
+attester trust, receiver scoping, continuity, and privacy requirements.
+Its mapping does not establish independent runtime isolation: a holder
+of a shared private key can present attestations issued for that key.
+Deployments requiring isolation between agents need separate key control
+and attester policy. A valid attestation and approved mapping still
+require the separate delegation decision in {{delegation-approval}}.
 
 Cross-system disablement and token revocation require the mechanisms
 in {{lifecycle-gap}}. Without an applicable signal or online check, an
@@ -1119,8 +1176,8 @@ Metadata" registry established by {{RFC8414, Section 7.1}}:
 * Specification Document(s): {{metadata}} of this document.
 
 The member names and values of this object are defined in {{metadata}};
-no new registry is created. The attested-agent claim registration is
-requested by {{AGENT-ATTEST}}. This document requests no grant type,
+no new registry is created. Instance claim registrations belong to
+{{INSTANCE}}. This document requests no JWT claim, grant type,
 JWT type, or OAuth token-type URI registration.
 
 --- back

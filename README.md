@@ -8,11 +8,12 @@ The main draft defines delegated ID-JAG issuance from direct workload evidence,
 governed-actor mapping, redemption, and DPoP-bound API access. Self-acting WAG
 access remains deferred.
 
-The companion [OAuth 2.0 Attested Agent Identity](draft-mcguinness-oauth-attested-agent-identity.md)
-is a separate Standards Track draft for the `attested_agent_id` claim and
-ATTEST profile. Its [editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-attested-agent-identity.html) builds from this repository; it
-has not yet been submitted to the Datatracker. The main draft's required
-platform-JWT path does not depend on it.
+The optional `instance_attestation` input reuses
+[Client Instance Identification for Attestation-Based Client Authentication](https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/main/draft-mcguinness-oauth-client-instance-id.md).
+Federation maps a validated instance identity to a governed agent and
+separately authorizes delegation. The required platform-JWT path and
+own-client attestation input do not depend on Identification. No separate
+attested-agent claim or draft is defined here.
 
 * [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-workload-agent-federation)
@@ -30,7 +31,7 @@ don't already know how to do that.
 
 ## Command Line Usage
 
-Formatted text and HTML versions of both drafts can be built using `make`.
+Formatted text and HTML versions of the draft can be built using `make`.
 
 ```sh
 $ make

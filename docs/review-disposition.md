@@ -1,20 +1,24 @@
 # Review disposition
 
-This revision resolves the fresh-eye review of `4deadff`. It retains the delegated ID-JAG architecture and the separate attested-agent draft.
+This revision replaces the separate attested-agent claim with an optional composition of Client Instance Identification. The normative reference identifies the publicly available editor's copy at commit `26abba5fb612381331c670f4d6dfc54737f698af`; it is not presented as a Datatracker publication.
 
-| Review issue | Resolution |
+| Concern | Resolution |
 |---|---|
-| Client authentication forces agent resolution | Only selected actor evidence resolves to a Registered Agent. X.509-SVID and WIT-SVID used for client authentication identify the OAuth client; that client must be permitted to use the separate actor binding. |
-| API applicability and rejection rules incomplete | Trusted resource configuration selects profile-required paths independently of token claims. Those paths require a valid single actor, approved actor namespace, scope and DPoP binding. Resource errors distinguish malformed tokens, denied actor authorization, insufficient scope and proof failures. |
-| Client-assertion audience ambiguous | The token-endpoint audience requirement is explicitly limited to `private_key_jwt`. Native JWT-SVID retains the sole IdP-issuer audience; ATTEST retains its own proof audience. |
-| Requested and granted authority conflated | Ceilings apply to issued authority. Policy may approve a non-empty subset; no authorized scope or unavailable mandatory full approval produces `invalid_scope`. Delegation approval applies to the authority actually issued. |
-| WIT deferral presented as an upstream proof gap | Reframed as a local scope choice. SPIFFE OAuth already supplies the attestation proof. Direct actor composition still needs an explicit output-key choice: WIT-02 §9.4 prohibits key use after credential expiry, so sharing that key with downstream DPoP requires corresponding lifetime limits. No change to ATTEST is requested. |
-| Refresh has no explicit continuation bound | The optional RAS refresh exception requires a finite deadline anchored to the authorizing ID-JAG's `iat`, termination events and status-freshness policy. Rotation and reuse cannot advance the deadline; extending it requires a new ID-JAG and full profile checks. Tokens issued under the exception cannot outlive the deadline. |
+| Additional attested-agent claim duplicates available evidence | Removed the standalone attested-agent draft and its claim registration. The optional `instance_attestation` input reuses Identification's signed `iss` and `client_instance_id`. |
+| Instance identity is not agent authority | Identification validates the instance; Federation checks its approved agent binding, authenticated client association, and separate delegation authorization. Only the governed identity enters `act`. |
+| Multiple instances of one agent | Several issuer-qualified instance identities may resolve through approved bindings to the same governed agent. |
+| Several agents in one identified instance | An ambiguous mapping is rejected. This input defines no additional selector; another supported input must distinguish the selected agent. |
+| Renewal, replacement and key changes | Identification retains ownership of lifecycle and continuity rules. A new identifier needs an approved new binding; continuity does not transfer existing grants to a replacement key. |
+| Claim-triggered fallback | Trusted configuration selects own-client or instance-based processing; invalid instance evidence cannot fall back to the own-client path. |
+| Error ownership | Identification claim/instance-policy rejection uses `invalid_client_attestation`; a valid instance with no usable agent binding or delegation uses `actor_unauthorized`. |
+| Dependency and scope | The required platform-JWT and own-client attestation paths remain independent of Identification. Downstream instance-context propagation remains outside this revision. |
 
-The examples and conformance inventory cover these outcomes, including a hosting client with no agent record, native audience selection, partial scope approval, missing API actor context and refresh deadline behavior. The signed fixture now includes explicit API path and actor-namespace trust configuration, checked against its tokens. These are example-integrity checks and conformance scenarios, not an implemented IdP/RAS pair or independent interoperability results.
+The prior review corrections remain in place: client-only credentials do not require agent records; API applicability and errors are explicit; native audience rules are preserved; scope reduction is defined; WIT deferral is a local scope choice; and continuing access has a finite deadline requiring renewed IdP authorization.
+
+The deployment examples and conformance inventory now describe instance-to-agent resolution, including shared clients, many instances per agent, ambiguous mappings, receiver/client restrictions and replacement identities. The signed fixture continues to exercise the required platform-JWT path. Neither it nor the scenario inventory is an independent implementation interoperability test.
 
 ## Validation
 
-The main draft builds to HTML and text through the repository Makefile; the unchanged companion outputs remain current. Both also render as paginated submission copies. All 130 main-draft and 14 companion cross-references resolve, and all 25 main-draft and 6 companion bibliography entries are cited. Generated HTML fragment links, documentation links and JSON blocks validate. The signed example checker passes all nine JWT signatures, tamper rejection, identity/client/scope/DPoP checks and API configuration checks. `git diff --check` passes.
+The draft builds to HTML and text through the repository Makefile and renders as a paginated submission copy. All 140 XML cross-references resolve, all 25 bibliography entries are cited, and the HTML has 582 unique anchors with 564 valid fragment links. Documentation links and JSON examples validate. The required-path signed fixture passes all nine signature checks and its identity, audience, client, scope, API and DPoP consistency checks. `git diff --check` passes. Retired draft sources, generated local artifacts, identifiers and links have been removed.
 
-The companion passes idnits with no findings. The main draft retains the prior six `POSSIBLE_DOWNREF` flags, two `UNDEFINED_STATE` warnings for the unsubmitted companion, and two generated appendix table-of-contents indentation warnings. No new idnits findings were introduced; the main draft is not described as idnits-clean.
+Idnits reports six `POSSIBLE_DOWNREF` flags, two `UNDEFINED_STATE` warnings for Identification's unsubmitted editor's copy, and two generated appendix table-of-contents indentation warnings. The counts and categories match the preceding revision; Identification replaces the removed attested-agent dependency. The pinned Identification source was verified publicly accessible. The main draft is not described as idnits-clean.

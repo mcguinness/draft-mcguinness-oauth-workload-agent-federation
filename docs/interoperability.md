@@ -60,7 +60,7 @@ This repository is the sole home for the scenario inventory. The drafts contain 
 | SPIFFE client association covers several workload IDs | Resolve the exact authenticated SPIFFE ID, not an implicit prefix-to-agent mapping |
 | Own-client attestation omits `iss` | Identify attester through its trusted verification key and configured authority |
 | Own-client attestation has conflicting `iss` | Reject the attester mismatch |
-| Shared-client attestation validated under the companion profile | Resolve its tuple through the approved binding, then construct the governed actor |
+| Instance attestation validated under Identification | Resolve the issuer-qualified instance through its approved binding and client association, then construct the governed actor |
 | Attestation header differs from `actor_token` | Reject; do not combine claims or keys from different attestations |
 | Normal ATTEST mode uses a separately keyed DPoP proof | Base ATTEST can authenticate, but this federation profile rejects the output-key mismatch |
 | Combined ATTEST mode uses a valid matching DPoP key | One combined proof suffices |
@@ -69,24 +69,29 @@ This repository is the sole home for the scenario inventory. The drafts contain 
 | Authenticated hosting client is not permitted to use the selected actor binding | Reject; client authentication cannot authorize an arbitrary agent |
 | X.509-SVID or WIT-SVID presented as an unsupported sole actor input | No advertised or inferred support |
 
-## Standalone attested-agent profile
+## Instance-to-agent composition
+
+These scenarios exercise Federation's use of Identification. They do not redefine Identification's enrollment or lifecycle requirements.
 
 | Case | Expected outcome |
 |---|---|
-| Own-client mode without `iss` | Return the configured attester/client pair |
-| Verification key associated with several authorities without disambiguating configuration | Reject ambiguity |
-| Two agent claims under the same attester and client | Return distinct attester/client/agent tuples |
-| Shared-client `iss` or `attested_agent_id` absent, empty, or incorrectly typed | `invalid_client_attestation` |
-| Agent ID exists only in a request parameter or proof | It is not attester-authenticated evidence |
-| Same client and agent strings under another attester | Distinct namespace |
-| Same attester/client spans platform tenants | Agent identifiers distinguish tenants or attester namespaces differ |
-| Own-client input contains agent claim | No mode switch or override of the pair |
-| Shared-client validation fails | No own-client fallback |
-| Base ATTEST validator ignores additional claim | It does not establish shared-agent profile support |
-| Proof key mismatches attestation key | Reject under ATTEST |
-| Client restriction excludes an IdP-approved attester | Reject; trust sets are intersected |
-| Client metadata names an unapproved attester | No expansion of verifier trust |
-| Attestation renewed with replacement key | Require new valid key authorization and current policy |
+| Valid (`iss`, `client_instance_id`), authenticated client and enabled binding | Resolve one active governed agent, then apply separate delegation policy |
+| Several validated instances map to the same agent | Preserve the same governed `act.iss` and `act.sub`; instance IDs remain distinct |
+| One instance has ambiguous mappings to several agents | `actor_unauthorized`; no inferred selector or arbitrary choice |
+| Missing, disabled or unapproved agent binding after successful instance validation | `actor_unauthorized` |
+| Required instance claim absent, empty, incorrectly typed or beyond Identification's limit | `invalid_client_attestation` |
+| Instance policy rejects a suspended or retired instance | Identification's `invalid_client_attestation`, without status disclosure |
+| Base ATTEST implementation ignores the instance claim | Does not satisfy configured `instance_attestation` support |
+| Same instance string under another attester | Distinct identity; no shared binding or continuity inferred |
+| Instance attestation presented under an unauthorized client or receiver scope | Reject under the applicable Identification trust or client validation rule |
+| Valid instance and agent binding without delegation | `actor_unauthorized`; instance identity supplies no delegation |
+| Configured own-client input contains an instance claim | No mode switch or replacement of the configured own-client identity |
+| Instance validation fails | No own-client fallback |
+| Renewal or verified key change preserves instance identity under Identification | Revalidate current binding, instance policy and proof; no automatic transfer of existing grants |
+| New enrollment, replacement instance or changed identifier | Require an approved new binding; that binding may resolve to the same agent |
+| Prior key, shared client or claimed predecessor used to infer a replacement binding | Reject that inference; it does not approve a binding |
+| Instance identifier appears only in the request or proof | Does not supply the attested instance identity required by this input |
+| Successful output | Governed actor in `act`; no instance-context propagation defined by this input |
 
 ## Metadata
 
@@ -96,6 +101,7 @@ This repository is the sole home for the scenario inventory. The drafts contain 
 | RAS advertises redemption | Includes required base ID-JAG/JWT bearer/client/DPoP capabilities |
 | Missing object, wrong role, or malformed member types | No usable capability advertisement |
 | Unknown object member or actor input identifier | Ignore it; do not reinterpret as a known capability |
+| Instance input advertised | `actor_inputs_supported` includes `instance_attestation`; base ATTEST support alone does not advertise that composition |
 | Generic JWT actor support without this profile's object | Does not imply governed-actor composition |
 | SPIFFE assertion type present | Does not invent an authentication-method metadata value |
 | Actor or confirmation claim omitted after profile selection | Still enforce the configured profile; no downgrade |
@@ -111,5 +117,5 @@ This repository is the sole home for the scenario inventory. The drafts contain 
 | General actor resolution extension point | Other consuming profiles can use the same mapping semantics; this is consolidation, not a blocker to the defined ID-JAG path |
 | X.509 connection as sole actor evidence | Independent implementations bind the connection identity to the requested actor and output key without fabricated JWTs |
 | Direct WIT-SVID actor input (local scope deferral) | Compose existing credential and attestation proof with exact actor presentation and discovery; define output-key authorization and lifetimes respecting WIT's prohibition on post-expiry key use |
-| Instance context | Trusted evidence establishes continuity; consumers agree whose instance survives or changes at each exchange |
+| Downstream instance context | Compose Identification’s context with the governed actor and define provenance, receiver scoping and retain/replace/omit rules across both exchanges |
 | Lifecycle signals | Receivers handle delay, duplicates, missed events and outstanding tokens within stated freshness/recovery guarantees |
