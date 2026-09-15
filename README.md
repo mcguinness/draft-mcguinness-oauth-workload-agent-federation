@@ -24,11 +24,18 @@ tokens are not issued; an IdP refresh token can still serve as a new exchange's
 subject input.
 
 The optional `instance_attestation` input reuses
-[Client Instance Identification for Attestation-Based Client Authentication](https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/main/draft-mcguinness-oauth-client-instance-id.md).
+[Client Instance Identification for Attestation-Based Client Authentication](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-instance-id.html).
 Federation maps a validated instance identity to a governed agent and
 separately authorizes delegation. The required platform-JWT path and
 own-client attestation input do not depend on Identification. No separate
 attested-agent claim or draft is defined here.
+
+Attester trust can use configured associations or
+[Client Attester Endorsement](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-attesters.html).
+When selected, endorsement requires both current client metadata and IdP
+policy approval. It does not establish a Federation Binding or select instance
+identification. Both references track the editor's copies dated 15 September
+2026; downstream instance-context propagation remains outside this revision.
 
 * [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-workload-agent-federation)
