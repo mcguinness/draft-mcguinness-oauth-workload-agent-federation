@@ -207,6 +207,7 @@ also apply, subject to the explicit narrowings below.
 |---|---|---|
 | Trust | Approved credential authority and tenant context | {{identity}} |
 | Identity | Exact, unambiguous mapping to an active Registered Agent | {{identity}} |
+| Subject resolution | Target-specific user identifier; one local subject; authorized account linking and fail-closed conflict handling | {{subject-resolution}} |
 | Evidence | Validate the selected credential; distinguish client, agent, and key evidence | {{inputs}} |
 | Instance ATTEST | Validate Identification's instance evidence, then resolve its approved agent binding and client association | {{instance-agent-resolution}} |
 | Credential use | Apply the selected proof mode and explicit reuse/key-binding limits | {{credential-requirements}} |
@@ -302,6 +303,94 @@ shared keys do not remove issuer-specific authorization checks.
 Restarting an execution, replacing a replica, or rotating a key does
 not by itself create a new authorization principal. Credential renewal
 still follows the credential's own validation and proof rules.
+
+## Subject Resolution and Linking {#subject-resolution}
+
+Subject resolution determines which user an authenticated identifier
+represents. Linking establishes an approved association between that
+external identity and a local account. Neither operation authorizes the
+agent to act for the user. This section profiles ID-JAG's subject
+resolution rules; it defines no new identifier claim or linking protocol.
+
+### Resolution at the IdP {#idp-subject-resolution}
+
+After validating the subject credential under {{exchange-request}},
+the IdP MUST:
+
+1. Resolve exactly one user from the ID Token's issuer-qualified subject
+   and applicable tenant context, or from the validated refresh token's
+   authorization context. The actor credential and authenticated client
+   MUST NOT substitute for that user identity.
+2. Select the subject namespace associated with the target RAS's SSO
+   relationship under {{ID-JAG, Section 5}}. A client-specific pairwise
+   subject MUST NOT be copied into another relying party's namespace
+   without resolving the same user in that namespace.
+3. Issue `sub` and any additional subject identifiers for that same
+   user under {{ID-JAG, Sections 3.1 and 6}}. The IdP MUST derive
+   `aud_sub`, `aud_tenant`, or `sub_id`, when used, from an authoritative
+   association for the target; a client-supplied account hint does not
+   establish that association.
+
+The resulting ID-JAG `sub` remains in the IdP's namespace for the RAS;
+`aud_sub`, when present, identifies the RAS's local user. Equal strings
+in different namespaces do not establish a link.
+
+### Resolution at the RAS {#ras-subject-resolution}
+
+After validating the ID-JAG and its client and proof bindings, the RAS
+MUST resolve exactly one local user in the authorized Target Tenant
+before issuing an access token. Its configured resolution rules MUST:
+
+* Qualify `sub` by the validated IdP issuer and the tenant context
+  required by {{ID-JAG, Section 6}}. The RAS MUST NOT assume that an IdP
+  tenant identifier is its own local tenant identifier.
+* Use `aud_sub` only when the trusted IdP is authorized to assert local
+  account identifiers for the selected Target Tenant. An asserted local
+  identifier MUST NOT override a conflicting approved link.
+* Use `sub_id` only under ID-JAG's format-specific and issuer-association
+  rules ({{ID-JAG, Sections 3.2.2 and 9.5}}). A SAML NameID retains its
+  issuer, format, and applicable qualifiers; its value alone is not a
+  cross-namespace identifier.
+* Reject conflicting identifiers used for resolution or multiple local
+  matches. The RAS MUST NOT retry with a weaker selector or another
+  tenant after such a conflict.
+
+The access token's `sub` identifies that resolved user in the RAS's
+access-token namespace. The RAS resolves `act.iss` and `act.sub`
+separately under {{agent-correlation}} and MUST NOT link the agent to
+the user's account merely because it acts for that user.
+
+### Account Links and Their Lifecycle {#subject-linking}
+
+The RAS MAY use pre-provisioned links, an authorized account-linking
+flow, or just-in-time account creation. These are deployment choices,
+subject to the following requirements:
+
+* Creating or changing a link to an existing account MUST require an
+  authenticated administrative or provisioning authority authorized for
+  that account, or a user flow that verifies control of both identities.
+  A valid ID-JAG alone does not authorize linking to an arbitrary account.
+* Matching email, username, or display-name attributes alone MUST NOT
+  create or change a link. This narrows ID-JAG's flexible claim-based
+  resolution. A configured, issuer-qualified SAML NameID remains usable
+  under {{ras-subject-resolution}}, including an email-format NameID.
+* Just-in-time creation MUST be authorized for the issuer and Target
+  Tenant. A collision with an existing account MUST NOT silently merge
+  accounts or reactivate a disabled account. Creating a record does not
+  itself grant memberships, entitlements, or delegation approval.
+* Each qualified external identity MUST resolve to at most one local
+  account within a Target Tenant. Multiple external identities MAY link
+  to the same account when each link is independently authorized.
+* A removed, disabled, or reassigned link MUST NOT let a previously
+  issued grant authorize a different account. Link changes MUST NOT
+  transfer existing delegation approval or ICA continuation authority
+  to another user. Implementations MUST reject further use when they
+  cannot establish continuity with the originally authorized user.
+
+If the user or a required link is disabled, or resolution is missing,
+ambiguous, or conflicting, token issuance MUST fail under {{errors}}. Operators
+SHOULD audit link creation, changes, and removal. This document does
+not require a particular mapping database or provisioning protocol.
 
 # Evidence and Client Authentication {#inputs}
 
@@ -523,7 +612,8 @@ Before authorizing issuance, the IdP MUST:
 2. Resolve an active agent through a current, enabled Federation
    Binding and verify any required client association.
 3. Resolve the RAS, resource, and Target Tenant through trusted
-   configuration and check the requested acting relationship.
+   configuration, resolve the user under {{idp-subject-resolution}},
+   and check the requested acting relationship.
 4. Apply current assignments and scope policy. Issued authority
    MUST NOT exceed the agent's authorized authority and, for delegated
    access, the user's authority and applicable delegation.
@@ -583,6 +673,11 @@ that correlation. A missing record MUST prevent authorization that
 depends on that record; it does not prove that the upstream identity
 assertion is invalid.
 
+Creating or changing that agent correlation MUST be authorized for the
+governed agent and Target Tenant. User-account links and agent-record
+links MUST remain distinct. A changed Federation Binding or local agent
+link MUST NOT transfer an existing delegation to a different agent.
+
 Ownership, groups, and assignments belong to the principal they
 describe. User memberships MUST NOT be interpreted as the agent
 actor's memberships, or agent memberships as the user's. Where SCIM
@@ -604,7 +699,8 @@ Before issuance, the IdP MUST have a trusted association between:
 * Its authenticated OAuth client and the client's permitted actor
   evidence classes and Federation Bindings.
 * That client and its client registration at the target RAS.
-* The user and the subject namespace used for that RAS.
+* The user and the subject namespace used for that RAS, following
+  {{subject-resolution}}.
 * The Source Tenant, Target Tenant, RAS issuer, and permitted resource.
 
 The IdP and RAS MUST configure this profile as required for the
@@ -775,8 +871,8 @@ In addition to its base required claims, this profile requires:
 | `client_id` | Client identifier at the RAS selected by the trusted client mapping |
 
 The `aud` retains ID-JAG's RAS-issuer semantics. User and target tenant
-claims and any subject translation MUST follow ID-JAG's tenant and
-subject rules; the agent identifier remains unique within `act.iss`.
+claims and any subject translation MUST follow {{subject-resolution}};
+the agent identifier remains unique within `act.iss`.
 The IdP MUST NOT issue a grant if it cannot determine an unambiguous
 user, actor, downstream client, or tenant relationship.
 
@@ -821,8 +917,9 @@ The RAS MUST perform ID-JAG validation and additionally:
 3. Require the grant's resource and scope constraints. Validate the
    requested resource and any scope reduction, and apply ID-JAG's
    processing for any `authorization_details` present.
-4. Resolve the user and governed actor separately. Apply current RAS
-   policy to the user/actor relationship, client, tenant, and resource.
+4. Resolve the user under {{ras-subject-resolution}} and the governed
+   actor under {{agent-correlation}}. Apply current RAS policy to the
+   user/actor relationship, client, tenant, and resource.
    A valid grant sets an authority ceiling; it does not require issuance.
 5. Issue a JWT access token under {{RFC9068}} with the RAS as issuer,
    the same user in its local subject namespace, and the resource as
@@ -886,6 +983,10 @@ errors, and recovery. In particular:
   Registered Agent. The IdP MUST recheck current agent, binding, and
   delegation policy as well as ICA's chain authorization. Continuation
   involving a different actor is outside this profile.
+* The IdP MUST resolve the chain's original user for each target under
+  {{subject-resolution}}. A continuation handle or prior target's local
+  account identifier MUST NOT substitute for the new target's subject
+  resolution or authorize a new account link.
 * The request MUST identify one resource and a non-empty scope. The
   onward grant follows {{ICA, Section 5.5.5}} and retains this profile's
   governed actor, resource, scope, and downstream client requirements.
@@ -955,6 +1056,7 @@ whether a particular user or agent exists.
 | Invalid client authentication | Its configured method's error, normally `invalid_client` |
 | Instance-identification claim or instance-policy failure | `invalid_client_attestation` under Identification |
 | Invalid subject or actor credential, disallowed inbound actor chain, or invalid ID-JAG | `invalid_grant` |
+| User cannot be resolved, user or required link is disabled, or subject identifiers conflict | `invalid_grant`; no token or automatic linking fallback |
 | Valid identity evidence but absent, disabled, or ambiguous agent binding, or unauthorized delegation | `actor_unauthorized`, as defined by Actor Profile |
 | Unsupported or unauthorized target | `invalid_target` under RFC 8693 and the applicable resource rules |
 | Invalid scope | `invalid_scope` |
@@ -1208,6 +1310,13 @@ access under {{continuing-access}} requires fresh IdP authorization
 under ICA's active chain and anchor checks. Chain termination does not
 make upstream status immediately visible to a resource or revoke tokens
 already issued by a RAS.
+
+Account-linking errors can turn valid identity evidence into access to
+another user's account. The issuer, namespace, tenant, and link-change
+checks in {{subject-resolution}} apply before authorization; proof of
+key possession does not establish account ownership. Removing a link
+prevents further issuance through that link but does not itself revoke
+an outstanding access token.
 
 # Privacy Considerations {#privacy}
 
