@@ -170,16 +170,16 @@ Governed Agent:
 
 Workload:
 : An externally authenticated computational principal identified by
-  platform evidence. A workload is not an agent until an Identity
-  Binding resolves it to one.
+  accepted workload evidence. A workload is not a Governed Agent until
+  an Identity Binding resolves it to one.
 
 Instance:
 : A particular execution or runtime of a workload or client.
 
 Identity Binding:
 : An approved association from an external credential authority and
-  exact external workload identity to one Governed Agent in a
-  Governance Tenant. It is the identity-federation relationship.
+  exact external workload identity to one Governed Agent, administered
+  in a Governance Tenant. It is the identity-federation relationship.
 
 Client Association:
 : An approved permission for an authenticated OAuth client to use a
@@ -189,7 +189,9 @@ Client Association:
 
 Governance Tenant:
 : The IdP tenant within whose governance domain the Governed Agent
-  exists; its issuer identifier qualifies the Governed Agent identifier.
+  exists and is administered. The Governed Agent identifier remains
+  qualified by the IdP issuer ({{canonical-identity}}), not by the
+  tenant.
 
 External Tenant:
 : The platform tenant, if any, that qualifies the external workload
@@ -207,7 +209,8 @@ Agent Status:
 
 ## Grant Paths {#paths}
 
-Both grant paths are part of this revision:
+This revision defines the following two applications of the federation
+model:
 
 | Acting relationship | Grant | Profile status |
 |---|---|---|
@@ -482,11 +485,30 @@ and authorization behavior.
 
 # Federation Model {#model}
 
-The model has four relationships: external evidence to Governed Agent
-(Identity Binding), Governed Agent to permitted OAuth client and flow
-(Client Association), Governed Agent to user (delegation
+The model has four relationships: external workload identity to
+Governed Agent (Identity Binding), authenticated OAuth client to
+permitted use of an Identity Binding in a selected flow and credential
+class (Client Association), Governed Agent to user (delegation
 authorization), and Governed Agent to local principal at the RAS
-(attribution). Their configuration is the IdP's responsibility.
+(attribution). The IdP is authoritative for Identity Bindings, Client
+Associations, and delegation authorization. The RAS is authoritative for
+its local principal association, subject to trusted provisioning from
+the IdP or an authorized directory connector, and for its own
+authorization of the user and actor.
+
+~~~
+ External Workload
+        |
+        |  Identity Binding ---- Client Association ---- OAuth Client
+        v
+  Governed Agent
+        |---- Delegation Authorization ---------------- User
+        '---- Attribution ---------------------- RAS Local Principal
+~~~
+
+The Client Association attaches to the Identity Binding, not to the
+Governed Agent alone: a client permitted to use one workload's binding
+is not thereby permitted to use another binding to the same agent.
 
 The IdP MUST configure:
 
@@ -518,8 +540,8 @@ validation path.
 The IdP MUST distinguish:
 
 * **Client authentication:** evidence authenticating the OAuth client.
-* **Agent resolution:** the Identity Binding from validated external
-  evidence to the Governed Agent.
+* **Agent resolution:** resolution of validated external workload
+  evidence through an Identity Binding to exactly one Governed Agent.
 * **Key possession:** proof that the presenter controls a particular
   key, with the binding semantics specified by the proof mechanism.
 
@@ -539,7 +561,7 @@ DPoP accompanying bearer evidence. Only the former establishes that the
 platform authorized the key; the latter establishes possession alone
 ({{credential-requirements}}).
 
-## Canonical Identity and Tenant Boundaries
+## Canonical Identity and Tenant Boundaries {#canonical-identity}
 
 The Governed Agent identifier MUST be unique and non-reassignable
 within the IdP issuer's namespace. It need not equal an external
