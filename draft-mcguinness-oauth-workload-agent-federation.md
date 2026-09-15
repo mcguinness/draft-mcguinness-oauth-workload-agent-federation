@@ -129,6 +129,8 @@ resolving its governed identity alone does not complete that path.
 The IdP, RAS, and client roles claiming this profile MUST implement
 {{delegated-flow}}. The required common path uses an ID Token subject,
 a platform JWT actor, `private_key_jwt` client authentication, and DPoP.
+An IdP-issued refresh token is an optional subject input under
+{{exchange-request}}.
 It does not require the optional instance-identification input. Additional
 credential inputs have the status listed in {{actor-inputs}}.
 
@@ -206,7 +208,7 @@ also apply, subject to the explicit narrowings below.
 | Authorization | Current binding, status, assignments, target, and scope policy | {{authorization}} |
 | Delegation | Explicit authorization for the resolved agent to act for the user | {{delegation-approval}} |
 | Attribution | Preserve issuer-qualified agent identity and subject/actor roles | {{agent-correlation}} |
-| Exchange | ID Token subject and direct JWT actor; both actor parameters REQUIRED | {{exchange-request}} |
+| Exchange | ID Token or supported IdP refresh-token subject, with a direct JWT actor; both actor parameters REQUIRED | {{exchange-request}} |
 | Common capabilities | Platform JWT input, `private_key_jwt`, RS256 signatures, and ES256 DPoP | {{flow-configuration}} |
 | Chain scope | One direct user-to-agent relationship; reject pre-existing actor chains on issuance inputs | {{actor-inputs}} |
 | Explicit authority | One `resource` and non-empty `scope` REQUIRED in issuance; both claims REQUIRED in the ID-JAG | {{exchange-request}} |
@@ -637,8 +639,8 @@ parameters are REQUIRED:
 |---|---|
 | `grant_type` | `urn:ietf:params:oauth:grant-type:token-exchange` |
 | `requested_token_type` | `urn:ietf:params:oauth:token-type:id-jag` |
-| `subject_token` | User ID Token issued by this IdP for the authenticated client |
-| `subject_token_type` | `urn:ietf:params:oauth:token-type:id_token` |
+| `subject_token` | User ID Token, or a refresh token when supported, issued by this IdP for the authenticated client |
+| `subject_token_type` | `urn:ietf:params:oauth:token-type:id_token` for an ID Token; `urn:ietf:params:oauth:token-type:refresh_token` for a refresh token |
 | `actor_token` | Direct credential selected under {{actor-inputs}} |
 | `actor_token_type` | `urn:ietf:params:oauth:token-type:jwt` |
 | `audience` | One target RAS issuer identifier |
@@ -650,18 +652,26 @@ resource and scope, and DPoP. `authorization_details`, when present,
 retains ID-JAG's processing rules; it does not replace these required
 parameters. No new request parameter is introduced.
 
-The IdP MUST validate the ID Token according to {{ID-JAG, Section 4.3.3}},
-including its signature, issuer, expiration, audience, and applicable
-client-binding checks. The audience MUST identify the authenticated
-IdP client. Validation of the user's ID Token does not supply approval
-for the actor. The IdP MUST separately apply {{delegation-approval}}.
+The IdP MUST support ID Token subjects and MAY additionally support its
+own refresh tokens. Refresh-token support MUST be agreed in client
+configuration. The IdP MUST validate the selected subject token under
+{{ID-JAG, Section 4.3.3}}:
 
-An IdP MAY additionally accept its own refresh token as `subject_token`
-with `subject_token_type=urn:ietf:params:oauth:token-type:refresh_token`,
-using ID-JAG's refresh-token subject rules. This support MUST be agreed
-in client configuration. The actor credential, client authentication,
-DPoP proof, and current delegation checks remain required on every
-request. It is not an intermediate actor-normalization token.
+* For an ID Token, validate its signature, issuer, expiration, audience,
+  and applicable client-binding checks. The audience MUST identify the
+  authenticated IdP client.
+* For a refresh token, apply the validation used for a `refresh_token`
+  grant, including issuance by this IdP, binding to the authenticated
+  client, validity, revocation status, and applicable proof requirements.
+  Requested scopes and audience MUST remain within the refresh token's
+  retained authorization context.
+
+Neither subject input supplies approval for the actor. The actor
+credential, client authentication, DPoP proof, and current delegation
+checks under {{delegation-approval}} remain required on every request.
+Using a refresh token avoids obtaining a new ID Token solely for this
+exchange; the request still uses the Token Exchange grant type and
+requests an ID-JAG. It does not request a RAS refresh token.
 
 ## Direct Actor Inputs {#actor-inputs}
 
@@ -989,13 +999,21 @@ identity resolution to this profile:
 
 * IdP issuance from validated workload evidence, with the resulting
   subject in the IdP's governed-agent namespace.
+* IdP issuance using its own refresh token as `subject_token`, where
+  retained authorization permits continuing self-acting workload access.
+  Define how that authorization is established, how the governed subject
+  and client are bound, which current workload evidence and proofs are
+  required, and how revocation and authority limits are enforced. A
+  user's refresh token alone does not establish independent agent authority.
 * WAG-owned token-type and JWT-type identifiers and their registrations,
   plus issuance/redemption capability discovery.
 * Sender constraint at issuance and redemption, key relationships,
   audience selection, errors, nonce handling, and any replay policy.
 * Resource and scope ceilings, including absent or unsupported limits.
   Review continuing access and explain or revise the current refresh
-  prohibition in WAG itself.
+  prohibition at WAG redemption. That output prohibition is distinct
+  from accepting an existing IdP refresh token as an issuance input;
+  WAG does not currently specify the latter composition.
 
 This document proposes a RAS-issuer audience and DPoP binding to align
 with the delegated path. These are requests, not WAG requirements
