@@ -1225,7 +1225,13 @@ identified in this document.<a href="#section-abstract-1" class="pilcrow">¶</a>
                 <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-client-attestation" class="internal xref">Client Attestation</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.1">
-                    <p id="section-toc.1-1.5.2.2.2.1.1"><a href="#section-5.2.1" class="auto internal xref">5.2.1</a>.  <a href="#name-instance-to-agent-resolutio" class="internal xref">Instance-to-Agent Resolution</a></p>
+                    <p id="section-toc.1-1.5.2.2.2.1.1"><a href="#section-5.2.1" class="auto internal xref">5.2.1</a>.  <a href="#name-attester-trust" class="internal xref">Attester Trust</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.2">
+                    <p id="section-toc.1-1.5.2.2.2.2.1"><a href="#section-5.2.2" class="auto internal xref">5.2.2</a>.  <a href="#name-agent-resolution-mode" class="internal xref">Agent Resolution Mode</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.3">
+                    <p id="section-toc.1-1.5.2.2.2.3.1"><a href="#section-5.2.3" class="auto internal xref">5.2.3</a>.  <a href="#name-instance-to-agent-resolutio" class="internal xref">Instance-to-Agent Resolution</a></p>
 </li>
                 </ul>
 </li>
@@ -1637,8 +1643,9 @@ multi-agent delegation chains, instance propagation, and enrollment or
 key-replacement protocols are outside core conformance.
 <a href="#continuing-access" class="auto internal xref">Section 8.6</a> identifies ICA as the continuation mechanism;
 <a href="#operational-guidance" class="auto internal xref">Appendix A.2</a> gives deployment guidance.<a href="#section-3.2-3" class="pilcrow">¶</a></p>
-<p id="section-3.2-4">The optional instance input depends on the pinned editor's copy of
-<span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span>, which has not been submitted to the Datatracker.
+<p id="section-3.2-4">The optional instance input and client-endorsement trust profile use
+the editor's copies of <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> and <span>[<a href="#ATTESTER-ENDORSEMENT" class="cite xref">ATTESTER-ENDORSEMENT</a>]</span>,
+respectively. Neither is required for the common platform-JWT path.
 <a href="#upstream-gaps" class="auto internal xref">Appendix A</a> records the remaining dependencies and coordination.<a href="#section-3.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1764,8 +1771,9 @@ these requirements.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
 <p id="section-4-1">The IdP <span class="bcp14">MUST</span> configure:<a href="#section-4-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4-2.1">
-          <p id="section-4-2.1.1">Approved credential authorities, their keys or trusted key sources,
-and the validation rules for each accepted credential class.<a href="#section-4-2.1.1" class="pilcrow">¶</a></p>
+          <p id="section-4-2.1.1">Credential-authority trust policy, approved keys or key-source
+selection rules, and validation rules for each accepted credential
+class. Attester approval follows <a href="#attester-trust" class="auto internal xref">Section 5.2.1</a>.<a href="#section-4-2.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-4-2.2">
           <p id="section-4-2.2.1">Exact external identity selectors and their Source Tenant and
@@ -1779,10 +1787,11 @@ Registered Agent associations.<a href="#section-4-2.2.1" class="pilcrow">¶</a><
 identity and authorization mappings.<a href="#section-4-2.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-4-3">Unsigned request hints, discovered client metadata, and unverified JWT
-claims <span class="bcp14">MUST NOT</span> establish credential-authority trust or change an
-approved Federation Binding. Metadata can locate an already approved key
-source; it does not authorize that source to assert every agent.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<p id="section-4-3">Request hints, discovered client metadata, and unverified JWT claims
+<span class="bcp14">MUST NOT</span> by themselves establish credential-authority trust or change an
+approved Federation Binding. Accepted endorsements can establish an
+attester-to-client association under <a href="#attester-trust" class="auto internal xref">Section 5.2.1</a>; they do not
+authorize that attester to assert a governed agent.<a href="#section-4-3" class="pilcrow">¶</a></p>
 <p id="section-4-4">The IdP <span class="bcp14">MUST</span> authorize binding creation and changes, including imports
 from platform registries. Administrative mechanisms are outside this
 profile (<a href="#operational-guidance" class="auto internal xref">Appendix A.2</a>).<a href="#section-4-4" class="pilcrow">¶</a></p>
@@ -1808,7 +1817,7 @@ profile (<a href="#operational-guidance" class="auto internal xref">Appendix A.2
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Client Attestation, agent has its own client</td>
-              <td class="text-left" rowspan="1" colspan="1">Attester identified by the trusted verification key; client <code>sub</code>
+              <td class="text-left" rowspan="1" colspan="1">Attester selected under <a href="#attester-trust" class="auto internal xref">Section 5.2.1</a>; client <code>sub</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Client-to-agent mapping is explicit</td>
             </tr>
@@ -1816,7 +1825,7 @@ profile (<a href="#operational-guidance" class="auto internal xref">Appendix A.2
               <td class="text-left" rowspan="1" colspan="1">Instance Client Attestation</td>
               <td class="text-left" rowspan="1" colspan="1">Validated (<code>iss</code>, <code>client_instance_id</code>), associated with the authenticated client <code>sub</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Optional input using <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> and <a href="#instance-agent-resolution" class="auto internal xref">Section 5.2.1</a>
+              <td class="text-left" rowspan="1" colspan="1">Optional input using <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> and <a href="#instance-agent-resolution" class="auto internal xref">Section 5.2.3</a>
 </td>
             </tr>
             <tr>
@@ -2078,50 +2087,97 @@ present the identical compact JWT in <code>actor_token</code> and the
 ATTEST method. The IdP <span class="bcp14">MUST</span> validate the attestation and proof before
 resolving the agent. <a href="#actor-inputs" class="auto internal xref">Section 8.2.4</a> defines the proof/key
 relationship.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
-<p id="section-5.2-2">For an agent with its own client, the attester is the configured
-authority associated with the trusted key that verified the attestation.
+<div id="attester-trust">
+<section id="section-5.2.1">
+          <h4 id="name-attester-trust">
+<a href="#section-5.2.1" class="section-number selfRef">5.2.1. </a><a href="#name-attester-trust" class="section-name selfRef">Attester Trust</a>
+          </h4>
+<p id="section-5.2.1-1">Attester trust uses configured associations or <span class="bcp14">OPTIONAL</span> client
+endorsements under <span>[<a href="#ATTESTER-ENDORSEMENT" class="cite xref">ATTESTER-ENDORSEMENT</a>]</span>. Selection is an IdP policy
+decision, independent of own-client or instance-based agent resolution;
+the presence of <code>client_attesters</code> does not select either profile.<a href="#section-5.2.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.2.1-2">When endorsements are selected, participants <span class="bcp14">MUST</span> follow that profile's
+role requirements, including:<a href="#section-5.2.1-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2.1-3.1">
+              <p id="section-5.2.1-3.1.1">Current client endorsement and IdP policy approval, with no fallback
+to an unendorsed attester or another trust mechanism.<a href="#section-5.2.1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.2.1-3.2">
+              <p id="section-5.2.1-3.2.1">Required request <code>client_id</code>, attestation <code>iss</code>, and header <code>kid</code>;
+authoritative metadata validation and policy-bound key selection.<a href="#section-5.2.1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.2.1-3.3">
+              <p id="section-5.2.1-3.3.1">Cache freshness, withdrawal, and error processing.<a href="#section-5.2.1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-5.2.1-4">An accepted endorsement establishes attester authority for the OAuth
+client. The IdP <span class="bcp14">MUST</span> independently enforce the approved Federation
+Binding and client/flow association under <a href="#identity" class="auto internal xref">Section 4</a>. Endorsement
+establishes neither agent identity, instance continuity, nor delegation.<a href="#section-5.2.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="agent-resolution-mode">
+<section id="section-5.2.2">
+          <h4 id="name-agent-resolution-mode">
+<a href="#section-5.2.2" class="section-number selfRef">5.2.2. </a><a href="#name-agent-resolution-mode" class="section-name selfRef">Agent Resolution Mode</a>
+          </h4>
+<p id="section-5.2.2-1">For an agent with its own client, the attester is the configured
+or policy-approved authority associated with the key that verified the
+attestation under <a href="#attester-trust" class="auto internal xref">Section 5.2.1</a>.
 The IdP <span class="bcp14">MUST</span> select that authority unambiguously and resolve the pair of
 its identifier and the validated client <code>sub</code>. An <code>iss</code>, when present,
-<span class="bcp14">MUST</span> match that authority. It is not required in this mode.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
-<p id="section-5.2-3">For instance-based agent resolution, including agents sharing an OAuth
-client, the IdP and client <span class="bcp14">MUST</span> use <a href="#instance-agent-resolution" class="auto internal xref">Section 5.2.1</a>. The
+<span class="bcp14">MUST</span> match that authority. Base ATTEST does not require it;
+<span>[<a href="#ATTESTER-ENDORSEMENT" class="cite xref">ATTESTER-ENDORSEMENT</a>]</span> requires it when that profile applies.<a href="#section-5.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2.2-2">For instance-based agent resolution, including agents sharing an OAuth
+client, the IdP and client <span class="bcp14">MUST</span> use <a href="#instance-agent-resolution" class="auto internal xref">Section 5.2.3</a>. The
 client and IdP <span class="bcp14">MUST</span> select own-client or instance-based resolution
 through trusted client configuration before accepting requests. Claims
 <span class="bcp14">MUST NOT</span> switch modes, and failed instance validation <span class="bcp14">MUST NOT</span> fall back
-to own-client resolution.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
-<p id="section-5.2-4">Both inputs produce the governed actor under <a href="#actor-construction" class="auto internal xref">Section 8.2.5</a>. The
-own-client input uses base ATTEST without requiring Identification.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
+to own-client resolution.<a href="#section-5.2.2-2" class="pilcrow">¶</a></p>
+<p id="section-5.2.2-3">Both inputs produce the governed actor under <a href="#actor-construction" class="auto internal xref">Section 8.2.5</a>.
+Own-client resolution does not require Identification. This revision
+uses attestation as client authentication; ATTEST's additional-signal
+mode is not a separate actor input here.<a href="#section-5.2.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
 <div id="instance-agent-resolution">
-<section id="section-5.2.1">
+<section id="section-5.2.3">
           <h4 id="name-instance-to-agent-resolutio">
-<a href="#section-5.2.1" class="section-number selfRef">5.2.1. </a><a href="#name-instance-to-agent-resolutio" class="section-name selfRef">Instance-to-Agent Resolution</a>
+<a href="#section-5.2.3" class="section-number selfRef">5.2.3. </a><a href="#name-instance-to-agent-resolutio" class="section-name selfRef">Instance-to-Agent Resolution</a>
           </h4>
-<p id="section-5.2.1-1">For <code>instance_attestation</code>, the IdP <span class="bcp14">MUST</span> act as a Receiver under
+<p id="section-5.2.3-1">For <code>instance_attestation</code>, the IdP <span class="bcp14">MUST</span> act as a Receiver under
 <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> and validate the attestation and proof under that
-specification and <a href="#actor-inputs" class="auto internal xref">Section 8.2.4</a>. This profile adds agent resolution:<a href="#section-5.2.1-1" class="pilcrow">¶</a></p>
+specification and <a href="#actor-inputs" class="auto internal xref">Section 8.2.4</a>. Receiver processing in INSTANCE
+Sections 3 through 5 includes exact identifier comparison, the decoded
+identifier-length limit, and configured instance policy. This profile
+adds agent resolution:<a href="#section-5.2.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.2.1-2.1">
-              <p id="section-5.2.1-2.1.1">The validated (<code>iss</code>, <code>client_instance_id</code>) <span class="bcp14">MUST</span> match an enabled
+<li class="normal" id="section-5.2.3-2.1">
+              <p id="section-5.2.3-2.1.1">The validated (<code>iss</code>, <code>client_instance_id</code>) <span class="bcp14">MUST</span> match an enabled
 Federation Binding to one active Registered Agent, with the
-authenticated client, Source Tenant, and receiver scope checked.<a href="#section-5.2.1-2.1.1" class="pilcrow">¶</a></p>
+authenticated client and Source Tenant checked against the configured
+receiver-scope association. Scope is an enrollment or issuance input,
+not an attestation audience or a property inferred from the identifier.<a href="#section-5.2.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5.2.1-2.2">
-              <p id="section-5.2.1-2.2.1">A shared client, proof key, or claimed predecessor <span class="bcp14">MUST NOT</span> establish
+            <li class="normal" id="section-5.2.3-2.2">
+              <p id="section-5.2.3-2.2.1">A shared client, proof key, or claimed predecessor <span class="bcp14">MUST NOT</span> establish
 or transfer that binding. A new instance identifier requires an
-approved binding.<a href="#section-5.2.1-2.2.1" class="pilcrow">¶</a></p>
+approved binding.<a href="#section-5.2.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5.2.1-2.3">
-              <p id="section-5.2.1-2.3.1">The IdP <span class="bcp14">MUST</span> authorize the resolved agent under <a href="#authorization" class="auto internal xref">Section 6</a> and
-construct <code>act</code> under <a href="#actor-construction" class="auto internal xref">Section 8.2.5</a>.<a href="#section-5.2.1-2.3.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-5.2.3-2.3">
+              <p id="section-5.2.3-2.3.1">The IdP <span class="bcp14">MUST</span> authorize the resolved agent under <a href="#authorization" class="auto internal xref">Section 6</a> and
+construct <code>act</code> under <a href="#actor-construction" class="auto internal xref">Section 8.2.5</a>.<a href="#section-5.2.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-5.2.1-3">Several instances can map to one agent. An instance hosting several
+<p id="section-5.2.3-3">Several instances can map to one agent. An instance hosting several
 agents needs evidence that selects one unambiguously. Identification
 validation failures retain <code>invalid_client_attestation</code>; agent-binding
-and delegation failures use <a href="#errors" class="auto internal xref">Section 8.4</a>.<a href="#section-5.2.1-3" class="pilcrow">¶</a></p>
-<p id="section-5.2.1-4">Identification owns continuity, renewal, and key-change requirements.
-This input defines neither those mechanisms nor downstream instance
-propagation (<a href="#instance-identification" class="auto internal xref">Appendix A.10</a>).<a href="#section-5.2.1-4" class="pilcrow">¶</a></p>
+and delegation failures use <a href="#errors" class="auto internal xref">Section 8.4</a>.<a href="#section-5.2.3-3" class="pilcrow">¶</a></p>
+<p id="section-5.2.3-4">Identification owns continuity, renewal, and key-change requirements.
+It defines no enrollment or key-replacement protocol. This input adds
+neither such a protocol nor downstream instance propagation
+(<a href="#instance-identification" class="auto internal xref">Appendix A.10</a>).<a href="#section-5.2.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2528,6 +2584,11 @@ revocation status, and applicable proof requirements.<a href="#section-8.2.3-2.2
                   <p id="section-8.2.3-2.2.2.2.1">Require requested scopes and audience to remain within the token's
 retained authorization context.<a href="#section-8.2.3-2.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
+                <li class="normal" id="section-8.2.3-2.2.2.3">
+                  <p id="section-8.2.3-2.2.2.3.1">Enforce any existing instance binding under <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-client-instance-id-latest#section-5.1" class="relref">Section 5.1</a></span>. A conflicting, otherwise valid attestation produces
+<code>invalid_grant</code>; selecting another actor input <span class="bcp14">MUST NOT</span> bypass the
+grant's required instance evidence or authorized migration checks.<a href="#section-8.2.3-2.2.2.3.1" class="pilcrow">¶</a></p>
+</li>
               </ul>
 </li>
           </ul>
@@ -2589,7 +2650,7 @@ or registered identifiers. All use
                 <td class="text-left" rowspan="1" colspan="1">
                   <span class="bcp14">OPTIONAL</span>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Same presentation as Client Attestation; validate Identification and the instance-to-agent binding under <a href="#instance-agent-resolution" class="auto internal xref">Section 5.2.1</a>
+                <td class="text-left" rowspan="1" colspan="1">Same presentation as Client Attestation; validate Identification and the instance-to-agent binding under <a href="#instance-agent-resolution" class="auto internal xref">Section 5.2.3</a>
 </td>
               </tr>
             </tbody>
@@ -2947,17 +3008,19 @@ before authorization. This profile specifies the following outcomes:<a href="#se
           </tbody>
         </table>
 <p id="section-8.4-3">Actor-credential failures use <code>invalid_grant</code> instead of the default
-<code>invalid_request</code> described by RFC 8693; this narrowing is intentional.
-When the same JWT also authenticates the client, shared validation
-failures use that method's error. ATTEST and Identification retain their
-validation and challenge errors. No failure permits dropping the actor
+<code>invalid_request</code> described by RFC 8693; this narrowing is intentional.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
+<p id="section-8.4-4">When the same JWT also authenticates the client, shared validation
+failures use that method's error. ATTEST, Identification, and Client
+Attester Endorsement retain their validation and challenge errors;
+an instance-bound subject grant conflict uses <code>invalid_grant</code> under
+<a href="#subject-token-validation" class="auto internal xref">Section 8.2.3</a>. No failure permits dropping the actor
 or its proof binding; error details <span class="bcp14">SHOULD NOT</span> reveal user or agent
-existence.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
-<p id="section-8.4-4">At redemption, the nonce challenge above takes precedence over
+existence.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
+<p id="section-8.4-5">At redemption, the nonce challenge above takes precedence over
 <span>[<a href="#JWT-DPOP" class="cite xref">JWT-DPOP</a>]</span>'s generic <code>invalid_grant</code> validation error when the proof
 otherwise validates. This profile explicitly selects RFC 9449 nonce
 recovery. <a href="#bound-grant-coordination" class="auto internal xref">Appendix A.5</a> records the upstream alignment
-needed.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
+needed.<a href="#section-8.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="identity-example">
@@ -3301,6 +3364,11 @@ attester trust, receiver scoping, continuity, and privacy requirements.
 A holder of a shared private key can present attestations issued for
 that key. Agent isolation therefore requires separate key control and
 attester policy; instance mapping alone does not provide it.<a href="#section-11.3-2" class="pilcrow">¶</a></p>
+<p id="section-11.3-3">Accepted endorsement and key updates follow <span>[<a href="#ATTESTER-ENDORSEMENT" class="cite xref">ATTESTER-ENDORSEMENT</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-client-attesters-latest#section-5" class="relref">Section 5</a></span>. Withdrawal prevents subsequent attestation acceptance under
+that trust association once applied; it does not itself revoke existing
+grants or access tokens. Local grant revocation follows the selected
+profile's requirements; downstream enforcement still needs a revocation
+mechanism or token expiration.<a href="#section-11.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="status-changes">
@@ -3406,7 +3474,11 @@ Instance claim registrations belong to <span>[<a href="#INSTANCE" class="cite xr
 <dd class="break"></dd>
 <dt id="INSTANCE">[INSTANCE]</dt>
         <dd>
-<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"Client Instance Identification for Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-client-instance-id-latest</span>, <time datetime="2026-09" class="refDate">September 2026</time>, <span>&lt;<a href="https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/26abba5fb612381331c670f4d6dfc54737f698af/draft-mcguinness-oauth-client-instance-id.md">https://github.com/mcguinness/draft-mcguinness-oauth-client-instance-assertion/blob/26abba5fb612381331c670f4d6dfc54737f698af/draft-mcguinness-oauth-client-instance-id.md</a>&gt;</span>. </dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"Client Instance Identification for Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-client-instance-id-latest</span>, <time datetime="2026-09-15" class="refDate">15 September 2026</time>, <span>&lt;<a href="https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-instance-id.html">https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-instance-id.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ATTESTER-ENDORSEMENT">[ATTESTER-ENDORSEMENT]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth 2.0 Client Attester Endorsement"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-client-attesters-latest</span>, <time datetime="2026-09-15" class="refDate">15 September 2026</time>, <span>&lt;<a href="https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-attesters.html">https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-assertion/draft-mcguinness-oauth-client-attesters.html</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC7523">[RFC7523]</dt>
         <dd>
@@ -3516,7 +3588,9 @@ Instance claim registrations belong to <span>[<a href="#INSTANCE" class="cite xr
 <p id="appendix-A-1">This informative appendix records unresolved contracts and coordination
 requests. It adds no conformance requirements. The assessed revisions
 are WAG-00, ID-JAG-04, ICA-02, Actor Profile-00, SPIFFE OAuth-02,
-ATTEST-11, WIT-02, and JWT DPoP Grant-01.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+ATTEST-11, WIT-02, and JWT DPoP Grant-01. Identification and Client
+Attester Endorsement were assessed against their editor's copies dated
+15 September 2026.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <div id="responsibility-boundaries">
 <section id="appendix-A.1">
         <h3 id="name-responsibility-boundaries">
@@ -3556,6 +3630,11 @@ ATTEST-11, WIT-02, and JWT DPoP Grant-01.<a href="#appendix-A-1" class="pilcrow"
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Base workload authentication and proofs</td>
               <td class="text-left" rowspan="1" colspan="1">SPIFFE OAuth, WIMSE, and ATTEST</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Client endorsement of attesters and AS acceptance</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <span>[<a href="#ATTESTER-ENDORSEMENT" class="cite xref">ATTESTER-ENDORSEMENT</a>]</span>; independent of Federation Bindings and instance-profile selection</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Attested instance identity, continuity, and receiver scoping</td>
@@ -3804,16 +3883,31 @@ evidence, subject to its own key-use restrictions.<a href="#appendix-A.9-2" clas
 nor enrollment or key replacement. Runtime identification does not by
 itself make that runtime an authorization principal.<a href="#appendix-A.10-1" class="pilcrow">¶</a></p>
 <p id="appendix-A.10-2"><span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span> defines instance identity and continuity requirements;
-<a href="#instance-agent-resolution" class="auto internal xref">Section 5.2.1</a> consumes that evidence for agent
+<a href="#instance-agent-resolution" class="auto internal xref">Section 5.2.3</a> consumes that evidence for agent
 resolution. Enrollment and key-replacement protocols remain outside both
 profiles.<a href="#appendix-A.10-2" class="pilcrow">¶</a></p>
-<p id="appendix-A.10-3"><strong>Remaining work for this consuming profile.</strong> Define propagation of
-Identification's optional <code>client_instance</code> context through the ID-JAG
-and access token, including its relationship to the actor, provenance,
-receiver scoping, and retain, replace, or omit rules during exchange.
-Self-acting context would describe the subject's instance; delegated
-context would describe the actor's instance. This revision defines no
-downstream instance-context composition.<a href="#appendix-A.10-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.10-3"><strong>Remaining work for this consuming profile.</strong> Any downstream
+<code>client_instance</code> composition needs to define:<a href="#appendix-A.10-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-A.10-4.1">
+            <p id="appendix-A.10-4.1.1">Whether context describes the authenticated presenting instance or a
+represented upstream instance, and its validated association with the
+WAG subject or ID-JAG actor.<a href="#appendix-A.10-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.10-4.2">
+            <p id="appendix-A.10-4.2.1">Mapping, correlation scope, and replacement or preservation under
+Sections 7.1 through 7.3 of <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span>. Preserving already-forwarded
+context needs authenticated provenance and a finite hop limit.<a href="#appendix-A.10-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.10-4.3">
+            <p id="appendix-A.10-4.3.1">Authorized presenter or key changes, sender-constrained access tokens,
+and context-consumer validation and errors under
+Sections 7.2 through 7.5 of <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span>.<a href="#appendix-A.10-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="appendix-A.10-5">An output proof authenticates its presenter, not necessarily the instance
+named in preserved context. This revision defines no downstream
+instance-context composition.<a href="#appendix-A.10-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="lifecycle-gap">

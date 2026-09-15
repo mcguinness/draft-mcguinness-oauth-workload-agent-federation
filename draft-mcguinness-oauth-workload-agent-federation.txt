@@ -94,7 +94,9 @@ Table of Contents
    5.  Evidence and Client Authentication
      5.1.  Platform-Issued JWT
      5.2.  Client Attestation
-       5.2.1.  Instance-to-Agent Resolution
+       5.2.1.  Attester Trust
+       5.2.2.  Agent Resolution Mode
+       5.2.3.  Instance-to-Agent Resolution
      5.3.  SPIFFE JWT-SVID
      5.4.  SPIFFE X.509-SVID
      5.5.  SPIFFE WIT-SVID
@@ -300,8 +302,9 @@ Table of Contents
    Section 8.6 identifies ICA as the continuation mechanism;
    Appendix A.2 gives deployment guidance.
 
-   The optional instance input depends on the pinned editor's copy of
-   [INSTANCE], which has not been submitted to the Datatracker.
+   The optional instance input and client-endorsement trust profile use
+   the editor's copies of [INSTANCE] and [ATTESTER-ENDORSEMENT],
+   respectively.  Neither is required for the common platform-JWT path.
    Appendix A records the remaining dependencies and coordination.
 
 3.3.  Requirements Added by This Profile
@@ -369,9 +372,9 @@ Table of Contents
 
    The IdP MUST configure:
 
-   *  Approved credential authorities, their keys or trusted key
-      sources, and the validation rules for each accepted credential
-      class.
+   *  Credential-authority trust policy, approved keys or key-source
+      selection rules, and validation rules for each accepted credential
+      class.  Attester approval follows Section 5.2.1.
 
    *  Exact external identity selectors and their Source Tenant and
       Registered Agent associations.
@@ -381,10 +384,11 @@ Table of Contents
    *  Approved RAS issuers, resources, Target Tenants, and applicable
       identity and authorization mappings.
 
-   Unsigned request hints, discovered client metadata, and unverified
-   JWT claims MUST NOT establish credential-authority trust or change an
-   approved Federation Binding.  Metadata can locate an already approved
-   key source; it does not authorize that source to assert every agent.
+   Request hints, discovered client metadata, and unverified JWT claims
+   MUST NOT by themselves establish credential-authority trust or change
+   an approved Federation Binding.  Accepted endorsements can establish
+   an attester-to-client association under Section 5.2.1; they do not
+   authorize that attester to assert a governed agent.
 
    The IdP MUST authorize binding creation and changes, including
    imports from platform registries.  Administrative mechanisms are
@@ -401,14 +405,14 @@ Table of Contents
    |               | configured additional    | OAuth client           |
    |               | selectors                | authentication         |
    +---------------+--------------------------+------------------------+
-   | Client        | Attester identified by   | Client-to-agent        |
-   | Attestation,  | the trusted verification | mapping is explicit    |
-   | agent has its | key; client sub          |                        |
+   | Client        | Attester selected under  | Client-to-agent        |
+   | Attestation,  | Section 5.2.1; client    | mapping is explicit    |
+   | agent has its | sub                      |                        |
    | own client    |                          |                        |
    +---------------+--------------------------+------------------------+
    | Instance      | Validated (iss,          | Optional input         |
    | Client        | client_instance_id),     | using [INSTANCE]       |
-   | Attestation   | associated with the      | and Section 5.2.1      |
+   | Attestation   | associated with the      | and Section 5.2.3      |
    |               | authenticated client sub |                        |
    +---------------+--------------------------+------------------------+
    | SPIFFE JWT-   | Approved trust domain    | OAuth client           |
@@ -641,32 +645,68 @@ Table of Contents
    before resolving the agent.  Section 8.2.4 defines the proof/key
    relationship.
 
-   For an agent with its own client, the attester is the configured
-   authority associated with the trusted key that verified the
-   attestation.  The IdP MUST select that authority unambiguously and
-   resolve the pair of its identifier and the validated client sub.  An
-   iss, when present, MUST match that authority.  It is not required in
-   this mode.
+5.2.1.  Attester Trust
+
+   Attester trust uses configured associations or OPTIONAL client
+   endorsements under [ATTESTER-ENDORSEMENT].  Selection is an IdP
+   policy decision, independent of own-client or instance-based agent
+   resolution; the presence of client_attesters does not select either
+   profile.
+
+   When endorsements are selected, participants MUST follow that
+   profile's role requirements, including:
+
+   *  Current client endorsement and IdP policy approval, with no
+      fallback to an unendorsed attester or another trust mechanism.
+
+   *  Required request client_id, attestation iss, and header kid;
+      authoritative metadata validation and policy-bound key selection.
+
+   *  Cache freshness, withdrawal, and error processing.
+
+   An accepted endorsement establishes attester authority for the OAuth
+   client.  The IdP MUST independently enforce the approved Federation
+   Binding and client/flow association under Section 4.  Endorsement
+   establishes neither agent identity, instance continuity, nor
+   delegation.
+
+5.2.2.  Agent Resolution Mode
+
+   For an agent with its own client, the attester is the configured or
+   policy-approved authority associated with the key that verified the
+   attestation under Section 5.2.1.  The IdP MUST select that authority
+   unambiguously and resolve the pair of its identifier and the
+   validated client sub.  An iss, when present, MUST match that
+   authority.  Base ATTEST does not require it; [ATTESTER-ENDORSEMENT]
+   requires it when that profile applies.
 
    For instance-based agent resolution, including agents sharing an
-   OAuth client, the IdP and client MUST use Section 5.2.1.  The client
+   OAuth client, the IdP and client MUST use Section 5.2.3.  The client
    and IdP MUST select own-client or instance-based resolution through
    trusted client configuration before accepting requests.  Claims MUST
    NOT switch modes, and failed instance validation MUST NOT fall back
    to own-client resolution.
 
-   Both inputs produce the governed actor under Section 8.2.5.  The own-
-   client input uses base ATTEST without requiring Identification.
+   Both inputs produce the governed actor under Section 8.2.5.  Own-
+   client resolution does not require Identification.  This revision
+   uses attestation as client authentication; ATTEST's additional-signal
+   mode is not a separate actor input here.
 
-5.2.1.  Instance-to-Agent Resolution
+5.2.3.  Instance-to-Agent Resolution
 
    For instance_attestation, the IdP MUST act as a Receiver under
    [INSTANCE] and validate the attestation and proof under that
-   specification and Section 8.2.4.  This profile adds agent resolution:
+   specification and Section 8.2.4.  Receiver processing in INSTANCE
+   Sections 3 through 5 includes exact identifier comparison, the
+   decoded identifier-length limit, and configured instance policy.
+   This profile adds agent resolution:
 
    *  The validated (iss, client_instance_id) MUST match an enabled
       Federation Binding to one active Registered Agent, with the
-      authenticated client, Source Tenant, and receiver scope checked.
+      authenticated client and Source Tenant checked against the
+      configured receiver-scope association.  Scope is an enrollment or
+      issuance input, not an attestation audience or a property inferred
+      from the identifier.
 
    *  A shared client, proof key, or claimed predecessor MUST NOT
       establish or transfer that binding.  A new instance identifier
@@ -681,8 +721,9 @@ Table of Contents
    and delegation failures use Section 8.4.
 
    Identification owns continuity, renewal, and key-change requirements.
-   This input defines neither those mechanisms nor downstream instance
-   propagation (Appendix A.10).
+   It defines no enrollment or key-replacement protocol.  This input
+   adds neither such a protocol nor downstream instance propagation
+   (Appendix A.10).
 
 5.3.  SPIFFE JWT-SVID
 
@@ -985,6 +1026,12 @@ Table of Contents
       -  Require requested scopes and audience to remain within the
          token's retained authorization context.
 
+      -  Enforce any existing instance binding under [INSTANCE],
+         Section 5.1.  A conflicting, otherwise valid attestation
+         produces invalid_grant; selecting another actor input MUST NOT
+         bypass the grant's required instance evidence or authorized
+         migration checks.
+
    Both inputs require current actor evidence and delegation approval
    under Section 6.1.  A refresh token replaces the ID Token input; the
    output remains an ID-JAG.
@@ -1019,7 +1066,7 @@ Table of Contents
      |                      |          | Attestation; validate       |
      |                      |          | Identification and the      |
      |                      |          | instance-to-agent binding   |
-     |                      |          | under Section 5.2.1         |
+     |                      |          | under Section 5.2.3         |
      +----------------------+----------+-----------------------------+
 
                                   Table 6
@@ -1266,11 +1313,13 @@ Table of Contents
 
    Actor-credential failures use invalid_grant instead of the default
    invalid_request described by RFC 8693; this narrowing is intentional.
+
    When the same JWT also authenticates the client, shared validation
-   failures use that method's error.  ATTEST and Identification retain
-   their validation and challenge errors.  No failure permits dropping
-   the actor or its proof binding; error details SHOULD NOT reveal user
-   or agent existence.
+   failures use that method's error.  ATTEST, Identification, and Client
+   Attester Endorsement retain their validation and challenge errors; an
+   instance-bound subject grant conflict uses invalid_grant under
+   Section 8.2.3.  No failure permits dropping the actor or its proof
+   binding; error details SHOULD NOT reveal user or agent existence.
 
    At redemption, the nonce challenge above takes precedence over
    [JWT-DPOP]'s generic invalid_grant validation error when the proof
@@ -1477,6 +1526,13 @@ Table of Contents
    separate key control and attester policy; instance mapping alone does
    not provide it.
 
+   Accepted endorsement and key updates follow [ATTESTER-ENDORSEMENT],
+   Section 5.  Withdrawal prevents subsequent attestation acceptance
+   under that trust association once applied; it does not itself revoke
+   existing grants or access tokens.  Local grant revocation follows the
+   selected profile's requirements; downstream enforcement still needs a
+   revocation mechanism or token expiration.
+
 11.4.  Authorization Changes and Revocation
 
    Before issuance, the IdP MUST apply current binding and authorization
@@ -1577,11 +1633,18 @@ Table of Contents
    [INSTANCE] McGuinness, K., "Client Instance Identification for
               Attestation-Based Client Authentication", Work in
               Progress, Internet-Draft, draft-mcguinness-oauth-client-
-              instance-id-latest, September 2026,
-              <https://github.com/mcguinness/draft-mcguinness-oauth-
-              client-instance-
-              assertion/blob/26abba5fb612381331c670f4d6dfc54737f698af/
-              draft-mcguinness-oauth-client-instance-id.md>.
+              instance-id-latest, 15 September 2026,
+              <https://mcguinness.github.io/draft-mcguinness-oauth-
+              client-instance-assertion/draft-mcguinness-oauth-client-
+              instance-id.html>.
+
+   [ATTESTER-ENDORSEMENT]
+              McGuinness, K., "OAuth 2.0 Client Attester Endorsement",
+              Work in Progress, Internet-Draft, draft-mcguinness-oauth-
+              client-attesters-latest, 15 September 2026,
+              <https://mcguinness.github.io/draft-mcguinness-oauth-
+              client-instance-assertion/draft-mcguinness-oauth-client-
+              attesters.html>.
 
    [RFC7523]  Jones, M., Campbell, B., and C. Mortimore, "JSON Web Token
               (JWT) Profile for OAuth 2.0 Client Authentication and
@@ -1703,49 +1766,55 @@ Appendix A.  Remaining Gaps and Coordination
    coordination requests.  It adds no conformance requirements.  The
    assessed revisions are WAG-00, ID-JAG-04, ICA-02, Actor Profile-00,
    SPIFFE OAuth-02, ATTEST-11, WIT-02, and JWT DPoP Grant-01.
+   Identification and Client Attester Endorsement were assessed against
+   their editor's copies dated 15 September 2026.
 
 A.1.  Responsibility Boundaries
 
-      +===========================+================================+
-      | Concern                   | Defined by                     |
-      +===========================+================================+
-      | External identity to      | This profile, using the        |
-      | governed agent; delegated | extension point in [ID-JAG],   |
-      | issuance and redemption   | Section 9.7                    |
-      +---------------------------+--------------------------------+
-      | ID-JAG format and base    | [ID-JAG]                       |
-      | grant processing          |                                |
-      +---------------------------+--------------------------------+
-      | Continuing access,        | [ICA]; federation composition  |
-      | continuation evidence,    | remains separate work under    |
-      | and chain lifecycle       | Appendix A.3                   |
-      +---------------------------+--------------------------------+
-      | Actor object, current     | Selected rules of              |
-      | actor, and actor-aware    | [ACTOR-PROFILE], as specified  |
-      | resource policy           | in Section 8.2.5               |
-      +---------------------------+--------------------------------+
-      | Base workload             | SPIFFE OAuth, WIMSE, and       |
-      | authentication and proofs | ATTEST                         |
-      +---------------------------+--------------------------------+
-      | Attested instance         | [INSTANCE]; this profile       |
-      | identity, continuity, and | defines instance-to-agent      |
-      | receiver scoping          | resolution                     |
-      +---------------------------+--------------------------------+
-      | Self-acting workload      | WAG composition in Section 7;  |
-      | grant                     | upstream grant changes in      |
-      |                           | Appendix A.4                   |
-      +---------------------------+--------------------------------+
-      | Self-acting subject       | This profile, Section 7.1      |
-      | resolution and agent      |                                |
-      | linking                   |                                |
-      +---------------------------+--------------------------------+
-      | Downstream instance       | [INSTANCE] defines the object; |
-      | context                   | propagation through this flow  |
-      |                           | is outside this revision       |
-      +---------------------------+--------------------------------+
-      | Agent provisioning and    | Future provisioning and        |
-      | disablement signals       | lifecycle specifications       |
-      +---------------------------+--------------------------------+
+    +===========================+====================================+
+    | Concern                   | Defined by                         |
+    +===========================+====================================+
+    | External identity to      | This profile, using the extension  |
+    | governed agent; delegated | point in [ID-JAG], Section 9.7     |
+    | issuance and redemption   |                                    |
+    +---------------------------+------------------------------------+
+    | ID-JAG format and base    | [ID-JAG]                           |
+    | grant processing          |                                    |
+    +---------------------------+------------------------------------+
+    | Continuing access,        | [ICA]; federation composition      |
+    | continuation evidence,    | remains separate work under        |
+    | and chain lifecycle       | Appendix A.3                       |
+    +---------------------------+------------------------------------+
+    | Actor object, current     | Selected rules of [ACTOR-PROFILE], |
+    | actor, and actor-aware    | as specified in Section 8.2.5      |
+    | resource policy           |                                    |
+    +---------------------------+------------------------------------+
+    | Base workload             | SPIFFE OAuth, WIMSE, and ATTEST    |
+    | authentication and proofs |                                    |
+    +---------------------------+------------------------------------+
+    | Client endorsement of     | [ATTESTER-ENDORSEMENT];            |
+    | attesters and AS          | independent of Federation Bindings |
+    | acceptance                | and instance-profile selection     |
+    +---------------------------+------------------------------------+
+    | Attested instance         | [INSTANCE]; this profile defines   |
+    | identity, continuity, and | instance-to-agent resolution       |
+    | receiver scoping          |                                    |
+    +---------------------------+------------------------------------+
+    | Self-acting workload      | WAG composition in Section 7;      |
+    | grant                     | upstream grant changes in          |
+    |                           | Appendix A.4                       |
+    +---------------------------+------------------------------------+
+    | Self-acting subject       | This profile, Section 7.1          |
+    | resolution and agent      |                                    |
+    | linking                   |                                    |
+    +---------------------------+------------------------------------+
+    | Downstream instance       | [INSTANCE] defines the object;     |
+    | context                   | propagation through this flow is   |
+    |                           | outside this revision              |
+    +---------------------------+------------------------------------+
+    | Agent provisioning and    | Future provisioning and lifecycle  |
+    | disablement signals       | specifications                     |
+    +---------------------------+------------------------------------+
 
                                  Table 10
 
@@ -1930,17 +1999,29 @@ A.10.  Instance Context
    does not by itself make that runtime an authorization principal.
 
    [INSTANCE] defines instance identity and continuity requirements;
-   Section 5.2.1 consumes that evidence for agent resolution.
+   Section 5.2.3 consumes that evidence for agent resolution.
    Enrollment and key-replacement protocols remain outside both
    profiles.
 
-   *Remaining work for this consuming profile.* Define propagation of
-   Identification's optional client_instance context through the ID-JAG
-   and access token, including its relationship to the actor,
-   provenance, receiver scoping, and retain, replace, or omit rules
-   during exchange.  Self-acting context would describe the subject's
-   instance; delegated context would describe the actor's instance.
-   This revision defines no downstream instance-context composition.
+   *Remaining work for this consuming profile.* Any downstream
+   client_instance composition needs to define:
+
+   *  Whether context describes the authenticated presenting instance or
+      a represented upstream instance, and its validated association
+      with the WAG subject or ID-JAG actor.
+
+   *  Mapping, correlation scope, and replacement or preservation under
+      Sections 7.1 through 7.3 of [INSTANCE].  Preserving already-
+      forwarded context needs authenticated provenance and a finite hop
+      limit.
+
+   *  Authorized presenter or key changes, sender-constrained access
+      tokens, and context-consumer validation and errors under Sections
+      7.2 through 7.5 of [INSTANCE].
+
+   An output proof authenticates its presenter, not necessarily the
+   instance named in preserved context.  This revision defines no
+   downstream instance-context composition.
 
 A.11.  Provisioning and Disablement
 
