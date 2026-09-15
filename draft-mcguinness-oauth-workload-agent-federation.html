@@ -7,15 +7,15 @@
 <title>OAuth 2.0 Profile for Agent Federation</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
-       This document profiles agent federation using Workload Authorization
-Grant (WAG) for self-acting access and Identity Assertion JWT
-Authorization Grant (ID-JAG) for user-delegated access. An identity
-provider resolves workload evidence to a governed agent; a resource
-authorization server preserves that agent as the subject or actor when
-issuing an access token. The document defines subject resolution and
-linking requirements for both paths and a complete sender-constrained
-ID-JAG flow. The WAG wire profile remains pending the upstream changes
-identified in this document. 
+       This document specifies how an agent platform integrates with an
+identity provider to obtain downstream authorization for its agents.
+It defines workload-evidence requirements, governed-agent resolution,
+OAuth client association, and subject linking. The governed agent is
+the subject for self-acting Workload Authorization Grant (WAG) access
+or the actor for user-delegated Identity Assertion JWT Authorization
+Grant (ID-JAG) access. 
+       The document defines a complete sender-constrained ID-JAG flow. The WAG
+wire profile remains pending the upstream changes identified here. 
     " name="description">
 <meta content="xml2rfc 3.34.0" name="generator">
 <meta content="OAuth" name="keyword">
@@ -1088,15 +1088,15 @@ svg {
 <h1 id="title">OAuth 2.0 Profile for Agent Federation</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document profiles agent federation using Workload Authorization
-Grant (WAG) for self-acting access and Identity Assertion JWT
-Authorization Grant (ID-JAG) for user-delegated access. An identity
-provider resolves workload evidence to a governed agent; a resource
-authorization server preserves that agent as the subject or actor when
-issuing an access token. The document defines subject resolution and
-linking requirements for both paths and a complete sender-constrained
-ID-JAG flow. The WAG wire profile remains pending the upstream changes
-identified in this document.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document specifies how an agent platform integrates with an
+identity provider to obtain downstream authorization for its agents.
+It defines workload-evidence requirements, governed-agent resolution,
+OAuth client association, and subject linking. The governed agent is
+the subject for self-acting Workload Authorization Grant (WAG) access
+or the actor for user-delegated Identity Assertion JWT Authorization
+Grant (ID-JAG) access.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">The document defines a complete sender-constrained ID-JAG flow. The WAG
+wire profile remains pending the upstream changes identified here.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1186,7 +1186,7 @@ identified in this document.<a href="#section-abstract-1" class="pilcrow">¶</a>
                 <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-scope-and-conformance" class="internal xref">Scope and Conformance</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
-                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-requirements-added-by-this-" class="internal xref">Requirements Added by This Profile</a></p>
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-integration-contract-and-pr" class="internal xref">Integration Contract and Profile Requirements</a></p>
 </li>
             </ul>
 </li>
@@ -1220,6 +1220,14 @@ identified in this document.<a href="#section-abstract-1" class="pilcrow">¶</a>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
                 <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-platform-issued-jwt" class="internal xref">Platform-Issued JWT</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1.2.1">
+                    <p id="section-toc.1-1.5.2.1.2.1.1"><a href="#section-5.1.1" class="auto internal xref">5.1.1</a>.  <a href="#name-platform-evidence-contract" class="internal xref">Platform Evidence Contract</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1.2.2">
+                    <p id="section-toc.1-1.5.2.1.2.2.1"><a href="#section-5.1.2" class="auto internal xref">5.1.2</a>.  <a href="#name-idp-validation" class="internal xref">IdP Validation</a></p>
+</li>
+                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
                 <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-client-attestation" class="internal xref">Client Attestation</a></p>
@@ -1434,36 +1442,44 @@ identified in this document.<a href="#section-abstract-1" class="pilcrow">¶</a>
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">An agent platform authenticates a workload in its own identity
+<p id="section-1-1">This profile gives agent-platform vendors and IdP implementers a common
+integration contract: which workload evidence to provide, how to bind it
+to a governed agent and OAuth client, and how to request downstream
+authorization. It specifies the protocol behavior and trust decisions
+needed for that integration. Platform-specific credential acquisition
+and administrative interfaces remain deployment choices.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">An agent platform authenticates a workload in its own identity
 namespace. An identity provider (IdP) may govern that workload as a
 separate agent principal, with its own owner, status, groups, and
 assignments. A resource authorization server (RAS) needs to know which
 governed principal has been authorized, without implementing every
-platform's credential validation and identity mapping.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">This document assigns that resolution and policy decision to the IdP.
+platform's credential validation and identity mapping.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This document assigns that resolution and policy decision to the IdP.
 Its core is the Federation Binding: external evidence identifies a
 governed agent, and an approved binding determines which OAuth client
 can use that evidence in the selected flow. The grant preserves the
-governed agent as subject or actor.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">The profile separates three questions:<a href="#section-1-3" class="pilcrow">¶</a></p>
+governed agent as subject or actor.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">The integration divides responsibility as follows:<a href="#section-1-4" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-1-4.1">
-          <p id="section-1-4.1.1"><strong>Agent identity:</strong> which Registered Agent, the principal governed by
-the IdP, does the external evidence identify?<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-1-5.1">
+          <p id="section-1-5.1.1"><strong>Platform and client:</strong> Supply verifiable workload evidence,
+authenticate the OAuth client, and present the requested resource,
+authority, and proofs using the selected grant flow.<a href="#section-1-5.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-4.2">
-          <p id="section-1-4.2.1"><strong>Acting relationship:</strong> is that agent acting for itself or for a
-user, and is the requested delegation authorized?<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-5.2">
+          <p id="section-1-5.2.1"><strong>IdP:</strong> Resolve the evidence to a Registered Agent, the principal it
+governs. Check the permitted client and acting relationship, then
+issue a grant identifying that agent as subject or actor.<a href="#section-1-5.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-4.3">
-          <p id="section-1-4.3.1"><strong>Instance context:</strong> which installation or execution is involved, if
-a separate identification profile establishes that context?<a href="#section-1-4.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-5.3">
+          <p id="section-1-5.3.1"><strong>RAS and API:</strong> Resolve the grant's identities, preserve the acting
+relationship and proof binding, and enforce downstream authorization.<a href="#section-1-5.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-1-5">Authenticating an OAuth client, resolving an agent, and proving
+<p id="section-1-6">Authenticating an OAuth client, resolving an agent, and proving
 possession of a key are distinct operations. None alone establishes
-permission to act for a user. An instance identifier likewise does not
-confer independent authority on a runtime.<a href="#section-1-5" class="pilcrow">¶</a></p>
+permission to act for a user. Optional instance identification adds
+runtime continuity evidence; it does not confer independent authority.<a href="#section-1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-terminology">
@@ -1483,28 +1499,35 @@ Client Attestation and Client Instance follow <span>[<a href="#ATTEST" class="ci
 <a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-roles" class="section-name selfRef">Roles</a>
         </h3>
 <span class="break"></span><dl class="dlParallel" id="section-2.1-1">
-          <dt id="section-2.1-1.1">Client:</dt>
+          <dt id="section-2.1-1.1">Agent Platform:</dt>
           <dd style="margin-left: 1.5em" id="section-2.1-1.2">
-            <p id="section-2.1-1.2.1">Software making OAuth requests for an agent. A client registration can
-serve one or more agents; client authentication does not establish
-which governed agent is acting.<a href="#section-2.1-1.2.1" class="pilcrow">¶</a></p>
+            <p id="section-2.1-1.2.1">The environment that runs agents and supplies workload evidence from
+its own or an approved external credential authority. It can also
+implement the OAuth client that obtains access for an agent.<a href="#section-2.1-1.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.1-1.3">Identity Provider (IdP):</dt>
+<dt id="section-2.1-1.3">Client:</dt>
           <dd style="margin-left: 1.5em" id="section-2.1-1.4">
-            <p id="section-2.1-1.4.1">The OAuth authorization server that resolves external evidence to a
-governed agent and issues the downstream grant.<a href="#section-2.1-1.4.1" class="pilcrow">¶</a></p>
+            <p id="section-2.1-1.4.1">Software making OAuth requests for an agent. A client registration can
+serve one or more agents; client authentication does not establish
+which governed agent is acting.<a href="#section-2.1-1.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.1-1.5">Resource Authorization Server (RAS):</dt>
+<dt id="section-2.1-1.5">Identity Provider (IdP):</dt>
           <dd style="margin-left: 1.5em" id="section-2.1-1.6">
-            <p id="section-2.1-1.6.1">The OAuth authorization server that validates the grant, applies local
-policy, and issues an access token for its resources.<a href="#section-2.1-1.6.1" class="pilcrow">¶</a></p>
+            <p id="section-2.1-1.6.1">The OAuth authorization server that resolves external evidence to a
+governed agent and issues the downstream grant.<a href="#section-2.1-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.1-1.7">API:</dt>
+<dt id="section-2.1-1.7">Resource Authorization Server (RAS):</dt>
           <dd style="margin-left: 1.5em" id="section-2.1-1.8">
-            <p id="section-2.1-1.8.1">The OAuth resource server that accepts the access token.<a href="#section-2.1-1.8.1" class="pilcrow">¶</a></p>
+            <p id="section-2.1-1.8.1">The OAuth authorization server that validates the grant, applies local
+policy, and issues an access token for its resources.<a href="#section-2.1-1.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.1-1.9">API:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-1.10">
+            <p id="section-2.1-1.10.1">The OAuth resource server that accepts the access token.<a href="#section-2.1-1.10.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1611,8 +1634,8 @@ the IdP and RAS. <a href="#identity-example" class="auto internal xref">Section 
         <h3 id="name-scope-and-conformance">
 <a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-scope-and-conformance" class="section-name selfRef">Scope and Conformance</a>
         </h3>
-<p id="section-3.2-1">Conformance applies to the common requirements and each selected grant
-and credential profile:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-1">Conformance applies to each implemented role and selected grant and
+credential profile:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.2-2.1">
             <p id="section-3.2-2.1.1"><strong>ID-JAG:</strong> The IdP, RAS, and client <span class="bcp14">MUST</span> implement their respective
@@ -1620,8 +1643,10 @@ requirements in <a href="#delegated-flow" class="auto internal xref">Section 8</
 implement <a href="#api-processing" class="auto internal xref">Section 9</a>.<a href="#section-3.2-2.1.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.2-2.1.2.1">
-                <p id="section-3.2-2.1.2.1.1">The common path requires an ID Token subject, platform JWT actor,
-<code>private_key_jwt</code> client authentication, and DPoP.<a href="#section-3.2-2.1.2.1.1" class="pilcrow">¶</a></p>
+                <p id="section-3.2-2.1.2.1.1">The common integration path requires an ID Token subject, platform
+JWT actor, <code>private_key_jwt</code> client authentication, and DPoP. A
+platform providing evidence for this path <span class="bcp14">MUST</span> implement
+<a href="#platform-evidence-contract" class="auto internal xref">Section 5.1.1</a>.<a href="#section-3.2-2.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-3.2-2.1.2.2">
                 <p id="section-3.2-2.1.2.2.1">IdP refresh-token subjects and the additional inputs in
@@ -1651,97 +1676,97 @@ respectively. Neither is required for the common platform-JWT path.
 </div>
 <div id="profile-requirements">
 <section id="section-3.3">
-        <h3 id="name-requirements-added-by-this-">
-<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-requirements-added-by-this-" class="section-name selfRef">Requirements Added by This Profile</a>
+        <h3 id="name-integration-contract-and-pr">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-integration-contract-and-pr" class="section-name selfRef">Integration Contract and Profile Requirements</a>
         </h3>
 <p id="section-3.3-1">Common requirements are in <a href="#identity" class="auto internal xref">Section 4</a> and <a href="#authorization" class="auto internal xref">Section 6</a>; WAG
 requirements are in <a href="#wag-flow" class="auto internal xref">Section 7</a>. This non-normative index locates the
-additional ID-JAG requirements. The cited sections define the rules;
-selected base specifications also apply.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+additional ID-JAG requirements by implementer. The cited sections define
+the rules; selected base specifications also apply.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-2">
           <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
 <thead>
             <tr>
-              <th class="text-left" rowspan="1" colspan="1">Area</th>
-              <th class="text-left" rowspan="1" colspan="1">Addition or narrowing</th>
+              <th class="text-left" rowspan="1" colspan="1">Implementer</th>
+              <th class="text-left" rowspan="1" colspan="1">Requirement</th>
               <th class="text-left" rowspan="1" colspan="1">Defined in</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Subject resolution</td>
-              <td class="text-left" rowspan="1" colspan="1">One target-specific user; authorized links; conflict rejection</td>
+              <td class="text-left" rowspan="1" colspan="1">Platform</td>
+              <td class="text-left" rowspan="1" colspan="1">Verifiable workload JWT and agreed evidence contract</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#subject-resolution" class="auto internal xref">Section 4.3</a>
+                <a href="#platform-evidence-contract" class="auto internal xref">Section 5.1.1</a>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Evidence and client</td>
-              <td class="text-left" rowspan="1" colspan="1">Validated input; client permitted for the flow, credential class, and binding</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <a href="#identity" class="auto internal xref">Section 4</a> and <a href="#inputs" class="auto internal xref">Section 5</a>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Exchange</td>
-              <td class="text-left" rowspan="1" colspan="1">ID Token or supported IdP refresh token; direct JWT actor; one user-to-agent relationship</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <a href="#exchange-request" class="auto internal xref">Section 8.2</a>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Common capabilities</td>
-              <td class="text-left" rowspan="1" colspan="1">Platform JWT, <code>private_key_jwt</code>, RS256, and ES256 DPoP</td>
+              <td class="text-left" rowspan="1" colspan="1">Client, IdP, and RAS</td>
+              <td class="text-left" rowspan="1" colspan="1">Platform JWT, <code>private_key_jwt</code>, RS256, and ES256 DPoP common capabilities</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#flow-configuration" class="auto internal xref">Section 8.1</a>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Explicit authority</td>
-              <td class="text-left" rowspan="1" colspan="1">One resource and non-empty scope in the request and grant</td>
+              <td class="text-left" rowspan="1" colspan="1">Client and IdP</td>
+              <td class="text-left" rowspan="1" colspan="1">ID Token or supported IdP refresh-token subject; direct JWT actor; one resource and non-empty scope</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#exchange-request" class="auto internal xref">Section 8.2</a>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Actor mapping</td>
-              <td class="text-left" rowspan="1" colspan="1">Governed <code>act.sub</code> and IdP <code>act.iss</code>
-</td>
+              <td class="text-left" rowspan="1" colspan="1">IdP</td>
+              <td class="text-left" rowspan="1" colspan="1">Validate evidence; enforce the client, flow, credential class, and Federation Binding as one approved combination</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#actor-construction" class="auto internal xref">Section 8.2.5</a>
+                <a href="#identity" class="auto internal xref">Section 4</a> and <a href="#inputs" class="auto internal xref">Section 5</a>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Proof</td>
+              <td class="text-left" rowspan="1" colspan="1">IdP</td>
+              <td class="text-left" rowspan="1" colspan="1">Authorize one user-to-agent relationship; construct governed <code>act.sub</code> and IdP <code>act.iss</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#authorization" class="auto internal xref">Section 6</a> and <a href="#actor-construction" class="auto internal xref">Section 8.2.5</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">IdP and RAS</td>
+              <td class="text-left" rowspan="1" colspan="1">Resolve the user in the target namespace; authorize links and reject conflicts</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#subject-resolution" class="auto internal xref">Section 4.3</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">IdP</td>
+              <td class="text-left" rowspan="1" colspan="1">Bind grant expiry to input expiry and a finite configured limit; five minutes recommended</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#grant-issuance" class="auto internal xref">Section 8.2.6</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Client, IdP, and RAS</td>
               <td class="text-left" rowspan="1" colspan="1">DPoP at both token endpoints; same key in grant and access token</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#issuance-proof" class="auto internal xref">Section 8.2.2</a> and <a href="#redemption" class="auto internal xref">Section 8.3</a>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Grant lifetime</td>
-              <td class="text-left" rowspan="1" colspan="1">Bounded by input expiry; five minutes recommended</td>
+              <td class="text-left" rowspan="1" colspan="1">Client and RAS</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#grant-issuance" class="auto internal xref">Section 8.2.6</a>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Redemption</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>jwt-dpop</code>; matching resource; actor/key preservation; no RAS refresh token</td>
+                <code>jwt-dpop</code> redemption; matching resource; actor/key preservation; no RAS refresh token</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#redemption" class="auto internal xref">Section 8.3</a>
 </td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">API</td>
-              <td class="text-left" rowspan="1" colspan="1">Configured applicability independent of token contents; required actor and proof validation, with resource errors</td>
+              <td class="text-left" rowspan="1" colspan="1">Configured applicability; required actor, proof, and authorization checks</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#api-processing" class="auto internal xref">Section 9</a>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Errors</td>
+              <td class="text-left" rowspan="1" colspan="1">IdP and RAS</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_grant</code> for invalid credentials; <code>actor_unauthorized</code> for delegation denial</td>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1749,7 +1774,7 @@ selected base specifications also apply.<a href="#section-3.3-1" class="pilcrow"
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Discovery</td>
+              <td class="text-left" rowspan="1" colspan="1">Client, IdP, and RAS</td>
               <td class="text-left" rowspan="1" colspan="1">Grant-profile URI at RAS and client; configured IdP issuance and optional inputs</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#metadata" class="auto internal xref">Section 10</a>
@@ -1757,8 +1782,13 @@ selected base specifications also apply.<a href="#section-3.3-1" class="pilcrow"
             </tr>
           </tbody>
         </table>
-<p id="section-3.3-3">Base ID-JAG or generic Token Exchange support does not imply support for
-these requirements.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.3-3">Before exchanging tokens, the platform and IdP establish the evidence
+contract in <a href="#platform-evidence-contract" class="auto internal xref">Section 5.1.1</a> and the client, agent, tenant,
+and target associations in <a href="#flow-configuration" class="auto internal xref">Section 8.1</a>. Configuration supplies
+deployment-specific values; it does not replace the specified validation
+and authorization behavior.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.3-4">Base ID-JAG or generic Token Exchange support does not imply support for
+these requirements.<a href="#section-3.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2023,57 +2053,98 @@ an identity model or establish a Federation Binding.<a href="#section-5-5" class
         <h3 id="name-platform-issued-jwt">
 <a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-platform-issued-jwt" class="section-name selfRef">Platform-Issued JWT</a>
         </h3>
-<p id="section-5.1-1">For an imported workload, the Federation Binding <span class="bcp14">MUST</span> specify an exact
+<div id="platform-evidence-contract">
+<section id="section-5.1.1">
+          <h4 id="name-platform-evidence-contract">
+<a href="#section-5.1.1" class="section-number selfRef">5.1.1. </a><a href="#name-platform-evidence-contract" class="section-name selfRef">Platform Evidence Contract</a>
+          </h4>
+<p id="section-5.1.1-1">For the common integration path, the platform <span class="bcp14">MUST</span> supply a signed JWT
+containing <code>iss</code>, <code>sub</code>, <code>aud</code>, and <code>exp</code> that satisfies the agreed IdP
+validation policy below. The platform's credential authority <span class="bcp14">MUST</span> derive
+the workload identity from authenticated platform evidence; a caller's
+requested subject or agent identifier alone <span class="bcp14">MUST NOT</span> authorize issuance.<a href="#section-5.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1.1-2">Before use, the platform and IdP <span class="bcp14">MUST</span> agree on:<a href="#section-5.1.1-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.1.1-3.1">
+              <p id="section-5.1.1-3.1.1">The credential issuer, verification-key source, and algorithms.<a href="#section-5.1.1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.1.1-3.2">
+              <p id="section-5.1.1-3.2.1">The exact workload identity selectors and their meaning, including
+any platform tenant or agent selector needed to distinguish workloads.<a href="#section-5.1.1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.1.1-3.3">
+              <p id="section-5.1.1-3.3.1">The audience authorizing presentation as workload evidence to the IdP.<a href="#section-5.1.1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.1.1-3.4">
+              <p id="section-5.1.1-3.4.1">Credential classification and time limits, including issuance and
+caching behavior.<a href="#section-5.1.1-3.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-5.1.1-4">The platform <span class="bcp14">MUST</span> provide an authorized workload a way to obtain that
+evidence. This document does not standardize that platform interface.
+The client presents the JWT as <code>actor_token</code> and separately authenticates
+under <a href="#exchange-request" class="auto internal xref">Section 8.2</a>; the JWT need not use the IdP's Registered
+Agent identifier or OAuth <code>client_id</code> as its subject.<a href="#section-5.1.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="idp-validation">
+<section id="section-5.1.2">
+          <h4 id="name-idp-validation">
+<a href="#section-5.1.2" class="section-number selfRef">5.1.2. </a><a href="#name-idp-validation" class="section-name selfRef">IdP Validation</a>
+          </h4>
+<p id="section-5.1.2-1">For an imported workload, the Federation Binding <span class="bcp14">MUST</span> specify an exact
 issuer and <code>sub</code>. It <span class="bcp14">MAY</span> require additional top-level string claims,
 such as tenant or platform agent identifiers. Every configured selector
 <span class="bcp14">MUST</span> be present, have the configured type, and match exactly. These
 selectors are deployment configuration, not new JWT claims registered by
-this document.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1-2">The IdP <span class="bcp14">MUST</span> validate the JWT under <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> and <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>,
+this document.<a href="#section-5.1.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.1.2-2">The IdP <span class="bcp14">MUST</span> validate the JWT under <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> and <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>,
 including signature, credential class, accepted audience, and time
-claims. Its policy <span class="bcp14">MUST</span> specify:<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+claims. Its policy <span class="bcp14">MUST</span> specify:<a href="#section-5.1.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1-3.1">
-            <p id="section-5.1-3.1.1">The approved issuer, key source, and signature algorithms.<a href="#section-5.1-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-5.1.2-3.1">
+              <p id="section-5.1.2-3.1.1">The approved issuer, key source, and signature algorithms.<a href="#section-5.1.2-3.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-3.2">
-            <p id="section-5.1-3.2.1">Audiences authorizing presentation to this IdP for the selected
-workload-evidence purpose.<a href="#section-5.1-3.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-5.1.2-3.2">
+              <p id="section-5.1.2-3.2.1">Audiences authorizing presentation to this IdP for the selected
+workload-evidence purpose.<a href="#section-5.1.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-3.3">
-            <p id="section-5.1-3.3.1">Required expiration and any maximum age, issuance-to-expiration
+            <li class="normal" id="section-5.1.2-3.3">
+              <p id="section-5.1.2-3.3.1">Required expiration and any maximum age, issuance-to-expiration
 lifetime, or remaining-validity limits, accounting for the platform's
-issuance and caching behavior.<a href="#section-5.1-3.3.1" class="pilcrow">¶</a></p>
+issuance and caching behavior.<a href="#section-5.1.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-3.4">
-            <p id="section-5.1-3.4.1">Rules distinguishing accepted workload credentials from user,
-management-API, or other tokens issued by the same authority.<a href="#section-5.1-3.4.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-5.1.2-3.4">
+              <p id="section-5.1.2-3.4.1">Rules distinguishing accepted workload credentials from user,
+management-API, or other tokens issued by the same authority.<a href="#section-5.1.2-3.4.1" class="pilcrow">¶</a></p>
 </li>
-        </ul>
-<p id="section-5.1-4">Classification can use an explicit type, a dedicated issuer, or an
+          </ul>
+<p id="section-5.1.2-4">Classification can use an explicit type, a dedicated issuer, or an
 accepted audience combined with exact workload selectors. Generic
-<code>typ=JWT</code> alone does not distinguish credential classes.<a href="#section-5.1-4" class="pilcrow">¶</a></p>
-<p id="section-5.1-5">When policy limits age or issuance-to-expiration lifetime, the IdP <span class="bcp14">MUST</span>:<a href="#section-5.1-5" class="pilcrow">¶</a></p>
+<code>typ=JWT</code> alone does not distinguish credential classes.<a href="#section-5.1.2-4" class="pilcrow">¶</a></p>
+<p id="section-5.1.2-5">When policy limits age or issuance-to-expiration lifetime, the IdP <span class="bcp14">MUST</span>:<a href="#section-5.1.2-5" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1-6.1">
-            <p id="section-5.1-6.1.1">Obtain a NumericDate <code>iat</code> or another authoritative issuance time
-defined by the configured credential class.<a href="#section-5.1-6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-5.1.2-6.1">
+              <p id="section-5.1.2-6.1.1">Obtain a NumericDate <code>iat</code> or another authoritative issuance time
+defined by the configured credential class.<a href="#section-5.1.2-6.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-6.2">
-            <p id="section-5.1-6.2.1">Reject evidence if the limit cannot be evaluated.<a href="#section-5.1-6.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-5.1.2-6.2">
+              <p id="section-5.1.2-6.2.1">Reject evidence if the limit cannot be evaluated.<a href="#section-5.1.2-6.2.1" class="pilcrow">¶</a></p>
 </li>
-        </ul>
-<p id="section-5.1-7">Expiration alone establishes remaining validity. An input without <code>iat</code>
+          </ul>
+<p id="section-5.1.2-7">Expiration alone establishes remaining validity. An input without <code>iat</code>
 is usable when policy needs no issuance-time check or defines another
-authoritative source for that time.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
-<p id="section-5.1-8">A platform JWT accepted as workload evidence <span class="bcp14">MUST NOT</span> be treated as
+authoritative source for that time.<a href="#section-5.1.2-7" class="pilcrow">¶</a></p>
+<p id="section-5.1.2-8">A platform JWT accepted as workload evidence <span class="bcp14">MUST NOT</span> be treated as
 OAuth client authentication unless it independently satisfies a
 configured client authentication specification. A flow requiring client
 authentication <span class="bcp14">MUST</span> validate that authentication separately and verify
-its association with the permitted client.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
-<p id="section-5.1-9">This document defines no client-authentication method that maps an
-arbitrary platform JWT directly to an IdP-assigned <code>client_id</code>.<a href="#section-5.1-9" class="pilcrow">¶</a></p>
-<p id="section-5.1-10">The JWT is presented as <code>actor_token</code> under <a href="#exchange-request" class="auto internal xref">Section 8.2</a>.<a href="#section-5.1-10" class="pilcrow">¶</a></p>
+its association with the permitted client.<a href="#section-5.1.2-8" class="pilcrow">¶</a></p>
+<p id="section-5.1.2-9">This document defines no client-authentication method that maps an
+arbitrary platform JWT directly to an IdP-assigned <code>client_id</code>.<a href="#section-5.1.2-9" class="pilcrow">¶</a></p>
+<p id="section-5.1.2-10">The JWT is presented as <code>actor_token</code> under <a href="#exchange-request" class="auto internal xref">Section 8.2</a>.<a href="#section-5.1.2-10" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="agent-evidence">
