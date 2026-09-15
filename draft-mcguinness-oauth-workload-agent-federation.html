@@ -1689,7 +1689,7 @@ also apply, subject to the explicit narrowings below.<a href="#section-2.1-1" cl
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Discovery</td>
-              <td class="text-left" rowspan="1" colspan="1">Role-specific <code>agent_federation</code> metadata and configured applicability</td>
+              <td class="text-left" rowspan="1" colspan="1">ID-JAG grant-profile URI for RAS and client support; configured IdP support and optional inputs</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#metadata" class="auto internal xref">Section 6.9</a>
 </td>
@@ -2005,8 +2005,8 @@ this document adds no equality requirement beyond that specification.<a href="#s
 <p id="section-4.3-3">JWT-SVID remains bearer evidence. Adding DPoP can constrain an issued
 token under a consuming profile; it does not convert the JWT-SVID into
 a platform-endorsed proof-of-possession credential. The remaining
-actor presentation is defined in <a href="#actor-inputs" class="auto internal xref">Section 6.3</a> and its capability
-is advertised under <a href="#metadata" class="auto internal xref">Section 6.9</a>.<a href="#section-4.3-3" class="pilcrow">¶</a></p>
+actor presentation is defined in <a href="#actor-inputs" class="auto internal xref">Section 6.3</a> and its use is agreed
+through trusted configuration under <a href="#metadata" class="auto internal xref">Section 6.9</a>.<a href="#section-4.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="spiffe-input">
@@ -2338,15 +2338,15 @@ requests an ID-JAG. It does not request a RAS refresh token.<a href="#section-6.
         <h3 id="name-direct-actor-inputs">
 <a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-direct-actor-inputs" class="section-name selfRef">Direct Actor Inputs</a>
         </h3>
-<p id="section-6.3-1">The following identifiers are used only in the <code>actor_inputs_supported</code>
-metadata member defined in <a href="#metadata" class="auto internal xref">Section 6.9</a>. They are not OAuth token-type
-URIs or authentication-method names. Every actor in this revision is
+<p id="section-6.3-1">The following labels identify the input choices in this document and
+trusted configuration. They are not wire parameters, OAuth token-type
+URIs, or authentication-method names. Every root actor in this revision is
 carried with <code>actor_token_type=urn:ietf:params:oauth:token-type:jwt</code>.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-5">
           <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
 <thead>
             <tr>
-              <th class="text-left" rowspan="1" colspan="1">Input identifier</th>
+              <th class="text-left" rowspan="1" colspan="1">Input</th>
               <th class="text-left" rowspan="1" colspan="1">Support</th>
               <th class="text-left" rowspan="1" colspan="1">Presentation and validation</th>
             </tr>
@@ -2842,47 +2842,14 @@ permits issuance after dropping the actor or its proof binding.<a href="#section
         <h3 id="name-metadata">
 <a href="#section-6.9" class="section-number selfRef">6.9. </a><a href="#name-metadata" class="section-name selfRef">Metadata</a>
         </h3>
-<p id="section-6.9-1">An authorization server implementing this profile <span class="bcp14">MUST</span> publish an
-<code>agent_federation</code> object in its <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> metadata. The members are:<a href="#section-6.9-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-9">
-          <caption><a href="#table-9" class="selfRef">Table 9</a></caption>
-<thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">Member</th>
-              <th class="text-left" rowspan="1" colspan="1">Type and meaning</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>issuance</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Boolean; <code>true</code> advertises the IdP role in this section; omitted means <code>false</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>redemption</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Boolean; <code>true</code> advertises the RAS role in this section; omitted means <code>false</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>actor_inputs_supported</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Array of distinct input identifiers from <a href="#actor-inputs" class="auto internal xref">Section 6.3</a>; <span class="bcp14">REQUIRED</span> when <code>issuance</code> is <code>true</code>, including <code>platform_jwt</code>
-</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-6.9-3">At least one role <span class="bcp14">MUST</span> be <code>true</code>. A server supporting both roles <span class="bcp14">MUST</span>
-implement both. A client <span class="bcp14">MUST</span> treat incorrectly typed defined members or an
-absent object as no usable advertisement for this profile. Unknown
-members and unknown actor input identifiers
-<span class="bcp14">MUST</span> be ignored by clients; they <span class="bcp14">MUST NOT</span> be interpreted as support
-for another known input. This profile defines the listed input values;
-future extensions may define additional values and their processing.<a href="#section-6.9-3" class="pilcrow">¶</a></p>
+<p id="section-6.9-1">This profile is identified by:<a href="#section-6.9-1" class="pilcrow">¶</a></p>
+<p id="section-6.9-2"><code>urn:ietf:params:oauth:grant-profile:id-jag-agent-federation</code><a href="#section-6.9-2" class="pilcrow">¶</a></p>
+<p id="section-6.9-3">The RAS <span class="bcp14">MUST</span> include that URI in <code>authorization_grant_profiles_supported</code>
+in its <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> metadata, using <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-7.2" class="relref">Section 7.2</a></span>. It indicates
+support for this profile's redemption and access-token requirements.
+A client <span class="bcp14">SHOULD</span> include the same URI in its client metadata under
+<span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-8" class="relref">Section 8</a></span> to advertise its corresponding client role.
+These advertisements establish capability, not trust or authorization.<a href="#section-6.9-3" class="pilcrow">¶</a></p>
 <p id="section-6.9-4">The IdP <span class="bcp14">MUST</span> advertise Token Exchange in <code>grant_types_supported</code> and
 ID-JAG in <code>identity_chaining_requested_token_types_supported</code> under
 <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-7.1" class="relref">Section 7.1</a></span>. The RAS <span class="bcp14">MUST</span> advertise
@@ -2891,24 +2858,32 @@ JWT bearer grants and <code>urn:ietf:params:oauth:grant-profile:id-jag</code> in
 Both <span class="bcp14">MUST</span> advertise the supported client authentication methods and
 DPoP algorithms, including the common capabilities in
 <a href="#flow-configuration" class="auto internal xref">Section 6.1</a>.<a href="#section-6.9-4" class="pilcrow">¶</a></p>
-<p id="section-6.9-5">Continuing access additionally uses the metadata and trust configuration
+<p id="section-6.9-5">ID-JAG defines <code>authorization_grant_profiles_supported</code> for the RAS
+and client roles; its presence does not advertise IdP issuance support.
+The client and IdP <span class="bcp14">MUST</span> agree on this profile's issuance support through
+the trusted configuration in <a href="#flow-configuration" class="auto internal xref">Section 6.1</a>. That agreement <span class="bcp14">MUST</span>
+also identify any optional actor inputs and refresh-token subject support
+used by the client. Support for the required platform-JWT input follows
+from IdP conformance. Generic JWT input or client-authentication metadata
+alone does not advertise an optional actor composition.<a href="#section-6.9-5" class="pilcrow">¶</a></p>
+<p id="section-6.9-6">Continuing access additionally uses the metadata and trust configuration
 in <span>[<a href="#ICA" class="cite xref">ICA</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion-02#section-7" class="relref">Section 7</a></span>. For this composition, the IdP <span class="bcp14">MUST</span> advertise
 <code>identity_continuation_supported</code> as <code>true</code>; a continuation-aware RAS
 <span class="bcp14">MUST</span> advertise ICA's continuation grant profile and required grant types.
-The <code>agent_federation</code> object alone does not advertise ICA support or
-authorize establishment of a continuation chain.<a href="#section-6.9-5" class="pilcrow">¶</a></p>
-<p id="section-6.9-6">The <code>agent_federation</code> object, not generic JWT actor support, identifies
-this mapped-actor composition. Actor Profile metadata <span class="bcp14">MAY</span> describe
-other implemented paths; this profile alone <span class="bcp14">MUST NOT</span> cause a server to
+This profile's URI alone does not advertise ICA support or
+authorize establishment of a continuation chain.<a href="#section-6.9-6" class="pilcrow">¶</a></p>
+<p id="section-6.9-7">Actor Profile metadata <span class="bcp14">MAY</span> describe other implemented paths; this
+profile alone <span class="bcp14">MUST NOT</span> cause a server to
 advertise conformance to Actor Profile's entire Token Exchange
 algorithm. If <code>actor_profile_token_exchange</code> is also published, its
 arrays describe those paths independently and <span class="bcp14">MUST NOT</span> contradict
-shared ID-JAG capabilities.<a href="#section-6.9-6" class="pilcrow">¶</a></p>
-<p id="section-6.9-7">Clients <span class="bcp14">MUST</span> verify the relevant role and chosen actor input before
-using this flow. The IdP <span class="bcp14">MUST</span> verify the RAS's redemption support as
-part of establishing the trusted relationship. The configured profile
-requirement remains in force if a parameter or claim is omitted;
-advertisement is not a downgrade switch.<a href="#section-6.9-7" class="pilcrow">¶</a></p>
+shared ID-JAG capabilities.<a href="#section-6.9-7" class="pilcrow">¶</a></p>
+<p id="section-6.9-8">Clients <span class="bcp14">MUST</span> verify the RAS's profile advertisement and the configured
+IdP support and chosen input before using this flow. The IdP <span class="bcp14">MUST</span> verify
+the RAS's profile advertisement as part of establishing the trusted
+relationship. The configured profile requirement remains in force if
+a parameter or claim is omitted;
+advertisement is not a downgrade switch.<a href="#section-6.9-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3164,27 +3139,26 @@ clear rules about whose activity it describes.<a href="#section-9-3" class="pilc
       <h2 id="name-iana-considerations">
 <a href="#section-10" class="section-number selfRef">10. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-10-1">This document requests registration in the "OAuth Authorization Server
-Metadata" registry established by <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>], <a href="https://rfc-editor.org/rfc/rfc8414#section-7.1" class="relref">Section 7.1</a></span>:<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-10-1">This document requests registration in the "OAuth URI" registry
+established by <span>[<a href="#RFC6755" class="cite xref">RFC6755</a>]</span>:<a href="#section-10-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-10-2.1">
-          <p id="section-10-2.1.1">Metadata Name: <code>agent_federation</code><a href="#section-10-2.1.1" class="pilcrow">¶</a></p>
+          <p id="section-10-2.1.1">URN: <code>urn:ietf:params:oauth:grant-profile:id-jag-agent-federation</code><a href="#section-10-2.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-10-2.2">
-          <p id="section-10-2.2.1">Metadata Description: Object identifying delegated agent-federation
-issuance and redemption capabilities, including supported actor inputs.<a href="#section-10-2.2.1" class="pilcrow">¶</a></p>
+          <p id="section-10-2.2.1">Common Name: ID-JAG Agent Federation grant profile<a href="#section-10-2.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-10-2.3">
           <p id="section-10-2.3.1">Change Controller: IETF<a href="#section-10-2.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-10-2.4">
-          <p id="section-10-2.4.1">Specification Document(s): <a href="#metadata" class="auto internal xref">Section 6.9</a> of this document.<a href="#section-10-2.4.1" class="pilcrow">¶</a></p>
+          <p id="section-10-2.4.1">Specification Document: <a href="#metadata" class="auto internal xref">Section 6.9</a> of this document.<a href="#section-10-2.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-10-3">The member names and values of this object are defined in <a href="#metadata" class="auto internal xref">Section 6.9</a>;
-no new registry is created. Instance claim registrations belong to
-<span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span>. This document requests no JWT claim, grant type,
-JWT type, or OAuth token-type URI registration.<a href="#section-10-3" class="pilcrow">¶</a></p>
+<p id="section-10-3">The profile URI uses ID-JAG's existing authorization server and client
+metadata parameter. This document requests no new metadata parameter,
+JWT claim, grant type, JWT type, or OAuth token-type URI registration.
+Instance claim registrations belong to <span>[<a href="#INSTANCE" class="cite xref">INSTANCE</a>]</span>.<a href="#section-10-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-combined-references">
@@ -3285,6 +3259,10 @@ JWT type, or OAuth token-type URI registration.<a href="#section-10-3" class="pi
 <a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="RFC6755">[RFC6755]</dt>
+        <dd>
+<span class="refAuthor">Campbell, B.</span> and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"An IETF URN Sub-Namespace for OAuth"</span>, <span class="seriesInfo">RFC 6755</span>, <span class="seriesInfo">DOI 10.17487/RFC6755</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6755">https://www.rfc-editor.org/rfc/rfc6755</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="WAG">[WAG]</dt>
         <dd>
 <span class="refAuthor">Carleton, P.</span>, <span class="refTitle">"Workload Authorization Grant"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-carleton-workload-authz-grant-00</span>, <time datetime="2026-08-03" class="refDate">3 August 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00">https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00</a>&gt;</span>. </dd>
