@@ -974,8 +974,7 @@ advertisement is not a downgrade switch.
 This section is informative. It records problems and specific requests
 that remain outside the complete delegated path. The assessed revisions
 are WAG-00, ID-JAG-04, Actor Profile-00, SPIFFE OAuth-02, ATTEST-11,
-and WIT-02. Interoperability and closure criteria are maintained in the
-repository's interoperability cases, not repeated here.
+and WIT-02.
 
 ## Self-Acting WAG {#wag-gaps}
 
@@ -1181,19 +1180,6 @@ no new registry is created. Instance claim registrations belong to
 JWT type, or OAuth token-type URI registration.
 
 --- back
-
-# Supporting Material {#supporting-material}
-
-Protocol requirements and the remaining gap summaries are in this
-document. The repository holds informative examples and test criteria:
-[deployment scenarios](https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/deployment-examples.md),
-[interoperability cases](https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/interoperability.md), and
-[a coordination index](https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-federation/blob/main/docs/coordination.md).
-The criteria have one home in the repository; they add no normative
-requirements. The complete delegated protocol is specified above.
-
-RFC Editor: Remove this appendix and repository links before RFC
-publication, or replace them with stable informative references.
 
 # Document History
 

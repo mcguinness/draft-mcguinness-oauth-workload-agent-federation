@@ -39,21 +39,3 @@ $ make
 
 Command line usage requires that you have the necessary software installed.  See
 [the instructions](https://github.com/martinthomson/i-d-template/blob/main/doc/SETUP.md).
-
-## Supporting material
-
-* [Deployment scenarios](docs/deployment-examples.md)
-* [Federation checks and upstream closure cases](docs/interoperability.md)
-* [Coordination and design decisions](docs/coordination.md)
-* [Review disposition](docs/review-disposition.md)
-
-The [signed delegated example](docs/delegated-example.json) includes public
-keys, token requests, responses, and an API request. Check its signatures
-and cross-hop consistency with Python 3 and OpenSSL:
-
-```sh
-python3 scripts/check-delegated-example.py
-```
-
-This verifies example fixtures; it is not an interoperability test between
-independent server implementations.
