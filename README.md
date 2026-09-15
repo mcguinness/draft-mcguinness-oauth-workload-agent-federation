@@ -4,11 +4,13 @@
 
 This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Agent Federation".
 
-The main draft defines delegated ID-JAG issuance from direct workload evidence,
-governed-actor mapping, redemption, and DPoP-bound API access. Self-acting WAG
-access remains deferred.
+The draft retains both self-acting WAG and user-delegated ID-JAG, including
+subject resolution and linking for each path. The ID-JAG flow defines issuance
+from direct workload evidence, governed-actor mapping, redemption, and DPoP-bound
+API access. WAG keeps its name and federation requirements in the main profile;
+its complete wire contract remains pending upstream coordination.
 
-Optional continuing access uses
+Optional continuing access for the delegated path uses
 [Identity Continuation Assertion](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion)
 for the same governed agent, with fresh IdP authorization and ICA's
 chain lifecycle. RAS refresh tokens are not issued in this profile;
