@@ -74,19 +74,27 @@ informative:
   RFC7644:
 --- abstract
 
-This document profiles agent federation using Workload Authorization
-Grant (WAG) for self-acting access and Identity Assertion JWT
-Authorization Grant (ID-JAG) for user-delegated access. An identity
-provider resolves workload evidence to a governed agent; a resource
-authorization server preserves that agent as the subject or actor when
-issuing an access token. The document defines subject resolution and
-linking requirements for both paths and a complete sender-constrained
-ID-JAG flow. The WAG wire profile remains pending the upstream changes
-identified in this document.
+This document specifies how an agent platform integrates with an
+identity provider to obtain downstream authorization for its agents.
+It defines workload-evidence requirements, governed-agent resolution,
+OAuth client association, and subject linking. The governed agent is
+the subject for self-acting Workload Authorization Grant (WAG) access
+or the actor for user-delegated Identity Assertion JWT Authorization
+Grant (ID-JAG) access.
+
+The document defines a complete sender-constrained ID-JAG flow. The WAG
+wire profile remains pending the upstream changes identified here.
 
 --- middle
 
 # Introduction
+
+This profile gives agent-platform vendors and IdP implementers a common
+integration contract: which workload evidence to provide, how to bind it
+to a governed agent and OAuth client, and how to request downstream
+authorization. It specifies the protocol behavior and trust decisions
+needed for that integration. Platform-specific credential acquisition
+and administrative interfaces remain deployment choices.
 
 An agent platform authenticates a workload in its own identity
 namespace. An identity provider (IdP) may govern that workload as a
@@ -101,19 +109,21 @@ governed agent, and an approved binding determines which OAuth client
 can use that evidence in the selected flow. The grant preserves the
 governed agent as subject or actor.
 
-The profile separates three questions:
+The integration divides responsibility as follows:
 
-* **Agent identity:** which Registered Agent, the principal governed by
-  the IdP, does the external evidence identify?
-* **Acting relationship:** is that agent acting for itself or for a
-  user, and is the requested delegation authorized?
-* **Instance context:** which installation or execution is involved, if
-  a separate identification profile establishes that context?
+* **Platform and client:** Supply verifiable workload evidence,
+  authenticate the OAuth client, and present the requested resource,
+  authority, and proofs using the selected grant flow.
+* **IdP:** Resolve the evidence to a Registered Agent, the principal it
+  governs. Check the permitted client and acting relationship, then
+  issue a grant identifying that agent as subject or actor.
+* **RAS and API:** Resolve the grant's identities, preserve the acting
+  relationship and proof binding, and enforce downstream authorization.
 
 Authenticating an OAuth client, resolving an agent, and proving
 possession of a key are distinct operations. None alone establishes
-permission to act for a user. An instance identifier likewise does not
-confer independent authority on a runtime.
+permission to act for a user. Optional instance identification adds
+runtime continuity evidence; it does not confer independent authority.
 
 # Conventions and Terminology
 
@@ -123,6 +133,11 @@ OAuth and Token Exchange terms follow {{RFC6749}} and {{RFC8693}}.
 Client Attestation and Client Instance follow {{ATTEST}}.
 
 ## Roles
+
+Agent Platform:
+: The environment that runs agents and supplies workload evidence from
+  its own or an approved external credential authority. It can also
+  implement the OAuth client that obtains access for an agent.
 
 Client:
 : Software making OAuth requests for an agent. A client registration can
@@ -195,14 +210,16 @@ the IdP and RAS. {{identity-example}} illustrates the identity mappings.
 
 ## Scope and Conformance {#scope}
 
-Conformance applies to the common requirements and each selected grant
-and credential profile:
+Conformance applies to each implemented role and selected grant and
+credential profile:
 
 * **ID-JAG:** The IdP, RAS, and client MUST implement their respective
   requirements in {{delegated-flow}} and {{metadata}}. The API MUST
   implement {{api-processing}}.
-  * The common path requires an ID Token subject, platform JWT actor,
-    `private_key_jwt` client authentication, and DPoP.
+  * The common integration path requires an ID Token subject, platform
+    JWT actor, `private_key_jwt` client authentication, and DPoP. A
+    platform providing evidence for this path MUST implement
+    {{platform-evidence-contract}}.
   * IdP refresh-token subjects and the additional inputs in
     {{actor-inputs}} are OPTIONAL.
 * **WAG:** {{wag-flow}} defines the federation requirements. Complete
@@ -223,27 +240,33 @@ the editor's copies of {{INSTANCE}} and {{ATTESTER-ENDORSEMENT}},
 respectively. Neither is required for the common platform-JWT path.
 {{upstream-gaps}} records the remaining dependencies and coordination.
 
-## Requirements Added by This Profile {#profile-requirements}
+## Integration Contract and Profile Requirements {#profile-requirements}
 
 Common requirements are in {{identity}} and {{authorization}}; WAG
 requirements are in {{wag-flow}}. This non-normative index locates the
-additional ID-JAG requirements. The cited sections define the rules;
-selected base specifications also apply.
+additional ID-JAG requirements by implementer. The cited sections define
+the rules; selected base specifications also apply.
 
-| Area | Addition or narrowing | Defined in |
+| Implementer | Requirement | Defined in |
 |---|---|---|
-| Subject resolution | One target-specific user; authorized links; conflict rejection | {{subject-resolution}} |
-| Evidence and client | Validated input; client permitted for the flow, credential class, and binding | {{identity}} and {{inputs}} |
-| Exchange | ID Token or supported IdP refresh token; direct JWT actor; one user-to-agent relationship | {{exchange-request}} |
-| Common capabilities | Platform JWT, `private_key_jwt`, RS256, and ES256 DPoP | {{flow-configuration}} |
-| Explicit authority | One resource and non-empty scope in the request and grant | {{exchange-request}} |
-| Actor mapping | Governed `act.sub` and IdP `act.iss` | {{actor-construction}} |
-| Proof | DPoP at both token endpoints; same key in grant and access token | {{issuance-proof}} and {{redemption}} |
-| Grant lifetime | Bounded by input expiry; five minutes recommended | {{grant-issuance}} |
-| Redemption | `jwt-dpop`; matching resource; actor/key preservation; no RAS refresh token | {{redemption}} |
-| API | Configured applicability independent of token contents; required actor and proof validation, with resource errors | {{api-processing}} |
-| Errors | `invalid_grant` for invalid credentials; `actor_unauthorized` for delegation denial | {{errors}} |
-| Discovery | Grant-profile URI at RAS and client; configured IdP issuance and optional inputs | {{metadata}} |
+| Platform | Verifiable workload JWT and agreed evidence contract | {{platform-evidence-contract}} |
+| Client, IdP, and RAS | Platform JWT, `private_key_jwt`, RS256, and ES256 DPoP common capabilities | {{flow-configuration}} |
+| Client and IdP | ID Token or supported IdP refresh-token subject; direct JWT actor; one resource and non-empty scope | {{exchange-request}} |
+| IdP | Validate evidence; enforce the client, flow, credential class, and Federation Binding as one approved combination | {{identity}} and {{inputs}} |
+| IdP | Authorize one user-to-agent relationship; construct governed `act.sub` and IdP `act.iss` | {{authorization}} and {{actor-construction}} |
+| IdP and RAS | Resolve the user in the target namespace; authorize links and reject conflicts | {{subject-resolution}} |
+| IdP | Bind grant expiry to input expiry and a finite configured limit; five minutes recommended | {{grant-issuance}} |
+| Client, IdP, and RAS | DPoP at both token endpoints; same key in grant and access token | {{issuance-proof}} and {{redemption}} |
+| Client and RAS | `jwt-dpop` redemption; matching resource; actor/key preservation; no RAS refresh token | {{redemption}} |
+| API | Configured applicability; required actor, proof, and authorization checks | {{api-processing}} |
+| IdP and RAS | `invalid_grant` for invalid credentials; `actor_unauthorized` for delegation denial | {{errors}} |
+| Client, IdP, and RAS | Grant-profile URI at RAS and client; configured IdP issuance and optional inputs | {{metadata}} |
+
+Before exchanging tokens, the platform and IdP establish the evidence
+contract in {{platform-evidence-contract}} and the client, agent, tenant,
+and target associations in {{flow-configuration}}. Configuration supplies
+deployment-specific values; it does not replace the specified validation
+and authorization behavior.
 
 Base ID-JAG or generic Token Exchange support does not imply support for
 these requirements.
@@ -418,6 +441,31 @@ Unrecognized request parameters and JWT claims follow {{RFC6749, Section
 an identity model or establish a Federation Binding.
 
 ## Platform-Issued JWT {#platform-jwt-input}
+
+### Platform Evidence Contract {#platform-evidence-contract}
+
+For the common integration path, the platform MUST supply a signed JWT
+containing `iss`, `sub`, `aud`, and `exp` that satisfies the agreed IdP
+validation policy below. The platform's credential authority MUST derive
+the workload identity from authenticated platform evidence; a caller's
+requested subject or agent identifier alone MUST NOT authorize issuance.
+
+Before use, the platform and IdP MUST agree on:
+
+* The credential issuer, verification-key source, and algorithms.
+* The exact workload identity selectors and their meaning, including
+  any platform tenant or agent selector needed to distinguish workloads.
+* The audience authorizing presentation as workload evidence to the IdP.
+* Credential classification and time limits, including issuance and
+  caching behavior.
+
+The platform MUST provide an authorized workload a way to obtain that
+evidence. This document does not standardize that platform interface.
+The client presents the JWT as `actor_token` and separately authenticates
+under {{exchange-request}}; the JWT need not use the IdP's Registered
+Agent identifier or OAuth `client_id` as its subject.
+
+### IdP Validation
 
 For an imported workload, the Federation Binding MUST specify an exact
 issuer and `sub`. It MAY require additional top-level string claims,

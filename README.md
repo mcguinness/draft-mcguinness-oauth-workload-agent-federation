@@ -4,6 +4,12 @@
 
 This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Agent Federation".
 
+The goal is a prescriptive integration contract for agent-platform vendors
+and IdPs: supply workload evidence, bind it to a governed agent and permitted
+OAuth client, and obtain downstream authorization. The draft identifies what
+the platform, client, IdP, RAS, and API each implement. Its common delegated
+path uses a platform JWT, user ID Token, `private_key_jwt`, and DPoP.
+
 The draft retains both self-acting WAG and user-delegated ID-JAG, including
 subject resolution and linking for each path. The ID-JAG flow defines issuance
 from direct workload evidence, governed-actor mapping, `jwt-dpop` redemption,
