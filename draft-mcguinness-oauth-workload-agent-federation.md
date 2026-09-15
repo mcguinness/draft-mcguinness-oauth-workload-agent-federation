@@ -137,8 +137,9 @@ Registered Agent:
 
 Federation Binding:
 : An approved association between an external credential authority,
-  identity, Source Tenant, and Registered Agent. It also identifies
-  permitted OAuth clients when the selected flow requires them.
+  identity, Source Tenant, and Registered Agent. For flows requiring
+  client authentication, it identifies permitted combinations of flow,
+  credential class, and OAuth client.
 
 Source Tenant:
 : The IdP tenant that governs the Registered Agent.
@@ -283,9 +284,11 @@ one Registered Agent.
 
 Evidence used only for client authentication identifies the OAuth
 client; it does not require a Registered Agent mapping. The IdP MUST
-check that the authenticated client is permitted to use the selected
-actor evidence and its Federation Binding under {{flow-configuration}}.
-It MUST NOT substitute that client's identity for the resolved actor.
+verify that the authenticated client is authorized for the selected
+flow, actor credential class, and Federation Binding as one approved
+combination under {{flow-configuration}}. Permission through another
+binding for the same Registered Agent MUST NOT satisfy this check. The
+IdP MUST NOT substitute the client's identity for the resolved actor.
 
 ## Canonical Identity and Tenant Boundaries
 
@@ -463,6 +466,9 @@ OAuth client authentication unless it independently satisfies a
 configured client authentication specification. A flow requiring client
 authentication MUST validate that authentication separately and verify
 its association with the permitted client.
+
+This document defines no client-authentication method that maps an
+arbitrary platform JWT directly to an IdP-assigned `client_id`.
 
 The JWT is presented as `actor_token` under {{exchange-request}}.
 
@@ -750,8 +756,8 @@ encoding and cache-control requirements. Error responses follow
 
 Before issuance, the IdP MUST have a trusted association between:
 
-* Its authenticated OAuth client and the client's permitted actor
-  evidence classes and Federation Bindings.
+* Its authenticated OAuth client and the approved combination of flow,
+  actor credential class, and Federation Binding.
 * That client and its client registration at the target RAS.
 * The user and the subject namespace used for that RAS, following
   {{subject-resolution}}.
