@@ -112,6 +112,7 @@ Table of Contents
      6.9.  Metadata
    7.  Remaining Gaps and Coordination
      7.1.  Self-Acting WAG
+       7.1.1.  Self-Acting Subject Resolution and Linking
      7.2.  Reusable Actor Mapping
      7.3.  X.509-SVID as the Sole Actor Evidence
      7.4.  Additional Credential Compositions
@@ -227,6 +228,10 @@ Table of Contents
       +---------------------------+--------------------------------+
       | Self-acting workload      | WAG; requested changes in      |
       | grant                     | Section 7.1                    |
+      +---------------------------+--------------------------------+
+      | Self-acting subject       | Proposed composition in        |
+      | resolution and agent      | Section 7.1.1; dependent on    |
+      | linking                   | the WAG grant contract         |
       +---------------------------+--------------------------------+
       | Downstream instance       | [INSTANCE] defines the object; |
       | context                   | propagation through this flow  |
@@ -495,7 +500,9 @@ Table of Contents
    external identity and a local account.  Neither operation authorizes
    the agent to act for the user.  This section profiles ID-JAG's
    subject resolution rules; it defines no new identifier claim or
-   linking protocol.
+   linking protocol.  For self-acting access, the corresponding subject
+   is the governed agent; Section 7.1.1 identifies the required WAG
+   composition.
 
 3.3.1.  Resolution at the IdP
 
@@ -887,7 +894,8 @@ Table of Contents
    Registered Agent identifier.  In self-acting access it identifies the
    subject; in user-delegated access it identifies the agent actor.  The
    delegated output mapping is defined in Section 6.4.  Self-acting WAG
-   access remains deferred under Section 7.1.
+   access remains deferred under Section 7.1.  Its proposed subject-
+   resolution and linking contract is described in Section 7.1.1.
 
    A RAS using provisioned agent records MUST correlate the asserted
    issuer-qualified agent identity to the appropriate record.  Bare
@@ -1506,7 +1514,7 @@ Table of Contents
    is therefore deferred.
 
    *Request to WAG.* Complete these contracts in WAG, leaving external
-   identity resolution to this profile:
+   identity resolution and governed-agent linking to this profile:
 
    *  IdP issuance from validated workload evidence, with the resulting
       subject in the IdP's governed-agent namespace.
@@ -1520,7 +1528,10 @@ Table of Contents
       establish independent agent authority.
 
    *  WAG-owned token-type and JWT-type identifiers and their
-      registrations, plus issuance/redemption capability discovery.
+      registrations, plus issuance/redemption capability discovery.  A
+      self-acting grant profile can use
+      authorization_grant_profiles_supported; the ID-JAG agent-
+      federation URI does not advertise WAG support.
 
    *  Sender constraint at issuance and redemption, key relationships,
       audience selection, errors, nonce handling, and any replay policy.
@@ -1536,6 +1547,81 @@ Table of Contents
    align with the delegated path.  These are requests, not WAG
    requirements introduced here.  It defines no replacement grant or
    local refresh exception.
+
+7.1.1.  Self-Acting Subject Resolution and Linking
+
+   The WAG composition needs an explicit subject-resolution contract,
+   parallel to Section 3.3.  The subject is the governed agent, not a
+   user on whose behalf it acts.  The following are proposed profile
+   requirements, not a claim that this revision defines a complete WAG
+   flow:
+
+      +=================+===========================================+
+      | Stage           | Required identity relationship            |
+      +=================+===========================================+
+      | Workload        | Validated external identity resolves      |
+      | evidence to IdP | through an approved Federation Binding to |
+      |                 | one active Registered Agent               |
+      +-----------------+-------------------------------------------+
+      | IdP-issued WAG  | Issuer-qualified sub identifies that      |
+      |                 | governed agent; no act is needed solely   |
+      |                 | to identify its executing instance        |
+      +-----------------+-------------------------------------------+
+      | WAG to local    | The RAS resolves the governed identity to |
+      | authorization   | one local agent principal in the          |
+      |                 | authorized Target Tenant                  |
+      +-----------------+-------------------------------------------+
+      | Access token to | The token identifies the same agent in    |
+      | API             | the RAS's subject namespace;              |
+      |                 | authorization uses that agent's authority |
+      +-----------------+-------------------------------------------+
+
+                                  Table 9
+
+   The consuming profile needs to apply these linking rules:
+
+   *  Scope identity lookup to the trusted grant issuer, its subject
+      namespace, and the established tenant relationship.  An external
+      workload subject, OAuth client identifier, or instance identifier
+      is not automatically the governed or local agent identifier.
+
+   *  Authorize creation and changes of local agent links for that
+      issuer and Target Tenant.  Several approved workload bindings can
+      identify one governed agent, but a selected binding or local link
+      cannot resolve ambiguously to several principals.
+
+   *  Resolve the same governed agent to the same local agent whether it
+      appears as a self-acting WAG subject or an ID-JAG actor.  Keep the
+      acting relationship and authorization decision separate: a
+      matching agent link does not make self-acting and user-delegated
+      authority interchangeable.
+
+   *  Permit just-in-time agent creation under explicit issuer and
+      tenant policy.  A name, owner, group, or client match alone cannot
+      merge it with an existing principal, reactivate a disabled agent,
+      or attach it to a human account.  Ownership is not identity
+      equivalence.
+
+   *  Reject missing, conflicting, ambiguous, or disabled resolution
+      when a required link cannot be established.  Binding or link
+      replacement cannot transfer outstanding grants or continuing
+      authority to a different agent.  Workload retirement and resource
+      ownership transfer remain separate lifecycle decisions.
+
+   [WAG], Section 7 requires acceptance of previously unseen agent
+   identifiers under trusted issuers and permits just-in-time projection
+   into an IdP.  WAG should distinguish accepting a new asserted
+   identity from linking it to an existing governed or local principal
+   and granting that principal authority.  This profile can define the
+   governed mapping and linking checks once WAG defines the IdP-issued
+   grant composition.
+
+   ID-JAG's user-resolution claims do not automatically become WAG
+   claims.  If the composition needs an additional target-local subject
+   identifier on the wire, its issuer authority, tenant scope, and
+   consistency with sub need to be specified with WAG.  ICA's user-
+   anchored continuation model likewise does not establish independent
+   self-acting authority.
 
 7.2.  Reusable Actor Mapping
 
