@@ -1191,6 +1191,20 @@ pending the grant changes identified in this document.<a href="#section-abstract
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
                 <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-canonical-identity-and-tena" class="internal xref">Canonical Identity and Tenant Boundaries</a></p>
 </li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-subject-resolution-and-link" class="internal xref">Subject Resolution and Linking</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.1">
+                    <p id="section-toc.1-1.3.2.3.2.1.1"><a href="#section-3.3.1" class="auto internal xref">3.3.1</a>.  <a href="#name-resolution-at-the-idp" class="internal xref">Resolution at the IdP</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.2">
+                    <p id="section-toc.1-1.3.2.3.2.2.1"><a href="#section-3.3.2" class="auto internal xref">3.3.2</a>.  <a href="#name-resolution-at-the-ras" class="internal xref">Resolution at the RAS</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.3">
+                    <p id="section-toc.1-1.3.2.3.2.3.1"><a href="#section-3.3.3" class="auto internal xref">3.3.3</a>.  <a href="#name-account-links-and-their-lif" class="internal xref">Account Links and Their Lifecycle</a></p>
+</li>
+                </ul>
+</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
@@ -1566,6 +1580,13 @@ also apply, subject to the explicit narrowings below.<a href="#section-2.1-1" cl
 </td>
             </tr>
             <tr>
+              <td class="text-left" rowspan="1" colspan="1">Subject resolution</td>
+              <td class="text-left" rowspan="1" colspan="1">Target-specific user identifier; one local subject; authorized account linking and fail-closed conflict handling</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#subject-resolution" class="auto internal xref">Section 3.3</a>
+</td>
+            </tr>
+            <tr>
               <td class="text-left" rowspan="1" colspan="1">Evidence</td>
               <td class="text-left" rowspan="1" colspan="1">Validate the selected credential; distinguish client, agent, and key evidence</td>
               <td class="text-left" rowspan="1" colspan="1">
@@ -1824,6 +1845,134 @@ shared keys do not remove issuer-specific authorization checks.<a href="#section
 <p id="section-3.2-4">Restarting an execution, replacing a replica, or rotating a key does
 not by itself create a new authorization principal. Credential renewal
 still follows the credential's own validation and proof rules.<a href="#section-3.2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="subject-resolution">
+<section id="section-3.3">
+        <h3 id="name-subject-resolution-and-link">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-subject-resolution-and-link" class="section-name selfRef">Subject Resolution and Linking</a>
+        </h3>
+<p id="section-3.3-1">Subject resolution determines which user an authenticated identifier
+represents. Linking establishes an approved association between that
+external identity and a local account. Neither operation authorizes the
+agent to act for the user. This section profiles ID-JAG's subject
+resolution rules; it defines no new identifier claim or linking protocol.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<div id="idp-subject-resolution">
+<section id="section-3.3.1">
+          <h4 id="name-resolution-at-the-idp">
+<a href="#section-3.3.1" class="section-number selfRef">3.3.1. </a><a href="#name-resolution-at-the-idp" class="section-name selfRef">Resolution at the IdP</a>
+          </h4>
+<p id="section-3.3.1-1">After validating the subject credential under <a href="#exchange-request" class="auto internal xref">Section 6.2</a>,
+the IdP <span class="bcp14">MUST</span>:<a href="#section-3.3.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3.3.1-2">
+<li id="section-3.3.1-2.1">
+              <p id="section-3.3.1-2.1.1">Resolve exactly one user from the ID Token's issuer-qualified subject
+and applicable tenant context, or from the validated refresh token's
+authorization context. The actor credential and authenticated client
+<span class="bcp14">MUST NOT</span> substitute for that user identity.<a href="#section-3.3.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.3.1-2.2">
+              <p id="section-3.3.1-2.2.1">Select the subject namespace associated with the target RAS's SSO
+relationship under <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-5" class="relref">Section 5</a></span>. A client-specific pairwise
+subject <span class="bcp14">MUST NOT</span> be copied into another relying party's namespace
+without resolving the same user in that namespace.<a href="#section-3.3.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.3.1-2.3">
+              <p id="section-3.3.1-2.3.1">Issue <code>sub</code> and any additional subject identifiers for that same
+user under Sections <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">3.1</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-6" class="relref">6</a> of <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>. The IdP <span class="bcp14">MUST</span> derive
+<code>aud_sub</code>, <code>aud_tenant</code>, or <code>sub_id</code>, when used, from an authoritative
+association for the target; a client-supplied account hint does not
+establish that association.<a href="#section-3.3.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+<p id="section-3.3.1-3">The resulting ID-JAG <code>sub</code> remains in the IdP's namespace for the RAS;
+<code>aud_sub</code>, when present, identifies the RAS's local user. Equal strings
+in different namespaces do not establish a link.<a href="#section-3.3.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="ras-subject-resolution">
+<section id="section-3.3.2">
+          <h4 id="name-resolution-at-the-ras">
+<a href="#section-3.3.2" class="section-number selfRef">3.3.2. </a><a href="#name-resolution-at-the-ras" class="section-name selfRef">Resolution at the RAS</a>
+          </h4>
+<p id="section-3.3.2-1">After validating the ID-JAG and its client and proof bindings, the RAS
+<span class="bcp14">MUST</span> resolve exactly one local user in the authorized Target Tenant
+before issuing an access token. Its configured resolution rules <span class="bcp14">MUST</span>:<a href="#section-3.3.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.3.2-2.1">
+              <p id="section-3.3.2-2.1.1">Qualify <code>sub</code> by the validated IdP issuer and the tenant context
+required by <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-6" class="relref">Section 6</a></span>. The RAS <span class="bcp14">MUST NOT</span> assume that an IdP
+tenant identifier is its own local tenant identifier.<a href="#section-3.3.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.2-2.2">
+              <p id="section-3.3.2-2.2.1">Use <code>aud_sub</code> only when the trusted IdP is authorized to assert local
+account identifiers for the selected Target Tenant. An asserted local
+identifier <span class="bcp14">MUST NOT</span> override a conflicting approved link.<a href="#section-3.3.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.2-2.3">
+              <p id="section-3.3.2-2.3.1">Use <code>sub_id</code> only under ID-JAG's format-specific and issuer-association
+rules (Sections <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.2.2" class="relref">3.2.2</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-9.5" class="relref">9.5</a> of <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>). A SAML NameID retains its
+issuer, format, and applicable qualifiers; its value alone is not a
+cross-namespace identifier.<a href="#section-3.3.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.2-2.4">
+              <p id="section-3.3.2-2.4.1">Reject conflicting identifiers used for resolution or multiple local
+matches. The RAS <span class="bcp14">MUST NOT</span> retry with a weaker selector or another
+tenant after such a conflict.<a href="#section-3.3.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.3.2-3">The access token's <code>sub</code> identifies that resolved user in the RAS's
+access-token namespace. The RAS resolves <code>act.iss</code> and <code>act.sub</code>
+separately under <a href="#agent-correlation" class="auto internal xref">Section 5.2</a> and <span class="bcp14">MUST NOT</span> link the agent to
+the user's account merely because it acts for that user.<a href="#section-3.3.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="subject-linking">
+<section id="section-3.3.3">
+          <h4 id="name-account-links-and-their-lif">
+<a href="#section-3.3.3" class="section-number selfRef">3.3.3. </a><a href="#name-account-links-and-their-lif" class="section-name selfRef">Account Links and Their Lifecycle</a>
+          </h4>
+<p id="section-3.3.3-1">The RAS <span class="bcp14">MAY</span> use pre-provisioned links, an authorized account-linking
+flow, or just-in-time account creation. These are deployment choices,
+subject to the following requirements:<a href="#section-3.3.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.3.3-2.1">
+              <p id="section-3.3.3-2.1.1">Creating or changing a link to an existing account <span class="bcp14">MUST</span> require an
+authenticated administrative or provisioning authority authorized for
+that account, or a user flow that verifies control of both identities.
+A valid ID-JAG alone does not authorize linking to an arbitrary account.<a href="#section-3.3.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.3-2.2">
+              <p id="section-3.3.3-2.2.1">Matching email, username, or display-name attributes alone <span class="bcp14">MUST NOT</span>
+create or change a link. This narrows ID-JAG's flexible claim-based
+resolution. A configured, issuer-qualified SAML NameID remains usable
+under <a href="#ras-subject-resolution" class="auto internal xref">Section 3.3.2</a>, including an email-format NameID.<a href="#section-3.3.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.3-2.3">
+              <p id="section-3.3.3-2.3.1">Just-in-time creation <span class="bcp14">MUST</span> be authorized for the issuer and Target
+Tenant. A collision with an existing account <span class="bcp14">MUST NOT</span> silently merge
+accounts or reactivate a disabled account. Creating a record does not
+itself grant memberships, entitlements, or delegation approval.<a href="#section-3.3.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.3-2.4">
+              <p id="section-3.3.3-2.4.1">Each qualified external identity <span class="bcp14">MUST</span> resolve to at most one local
+account within a Target Tenant. Multiple external identities <span class="bcp14">MAY</span> link
+to the same account when each link is independently authorized.<a href="#section-3.3.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.3.3-2.5">
+              <p id="section-3.3.3-2.5.1">A removed, disabled, or reassigned link <span class="bcp14">MUST NOT</span> let a previously
+issued grant authorize a different account. Link changes <span class="bcp14">MUST NOT</span>
+transfer existing delegation approval or ICA continuation authority
+to another user. Implementations <span class="bcp14">MUST</span> reject further use when they
+cannot establish continuity with the originally authorized user.<a href="#section-3.3.3-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.3.3-3">If the user or a required link is disabled, or resolution is missing,
+ambiguous, or conflicting, token issuance <span class="bcp14">MUST</span> fail under <a href="#errors" class="auto internal xref">Section 6.8</a>. Operators
+<span class="bcp14">SHOULD</span> audit link creation, changes, and removal. This document does
+not require a particular mapping database or provisioning protocol.<a href="#section-3.3.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 </section>
@@ -2092,7 +2241,8 @@ Binding and verify any required client association.<a href="#section-5-2.2.1" cl
 </li>
         <li id="section-5-2.3">
           <p id="section-5-2.3.1">Resolve the RAS, resource, and Target Tenant through trusted
-configuration and check the requested acting relationship.<a href="#section-5-2.3.1" class="pilcrow">¶</a></p>
+configuration, resolve the user under <a href="#idp-subject-resolution" class="auto internal xref">Section 3.3.1</a>,
+and check the requested acting relationship.<a href="#section-5-2.3.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-5-2.4">
           <p id="section-5-2.4.1">Apply current assignments and scope policy. Issued authority
@@ -2157,11 +2307,15 @@ subjects, display names, or OAuth client identifiers <span class="bcp14">MUST NO
 that correlation. A missing record <span class="bcp14">MUST</span> prevent authorization that
 depends on that record; it does not prove that the upstream identity
 assertion is invalid.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
-<p id="section-5.2-3">Ownership, groups, and assignments belong to the principal they
+<p id="section-5.2-3">Creating or changing that agent correlation <span class="bcp14">MUST</span> be authorized for the
+governed agent and Target Tenant. User-account links and agent-record
+links <span class="bcp14">MUST</span> remain distinct. A changed Federation Binding or local agent
+link <span class="bcp14">MUST NOT</span> transfer an existing delegation to a different agent.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+<p id="section-5.2-4">Ownership, groups, and assignments belong to the principal they
 describe. User memberships <span class="bcp14">MUST NOT</span> be interpreted as the agent
 actor's memberships, or agent memberships as the user's. Where SCIM
 <code>externalId</code> <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span> is used, its provisioning association <span class="bcp14">MUST</span>
-retain the issuer and tenant context.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+retain the issuer and tenant context.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2190,7 +2344,8 @@ evidence classes and Federation Bindings.<a href="#section-6.1-2.1.1" class="pil
             <p id="section-6.1-2.2.1">That client and its client registration at the target RAS.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.1-2.3">
-            <p id="section-6.1-2.3.1">The user and the subject namespace used for that RAS.<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-2.3.1">The user and the subject namespace used for that RAS, following
+<a href="#subject-resolution" class="auto internal xref">Section 3.3</a>.<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.1-2.4">
             <p id="section-6.1-2.4.1">The Source Tenant, Target Tenant, RAS issuer, and permitted resource.<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
@@ -2518,8 +2673,8 @@ In addition to its base required claims, this profile requires:<a href="#section
           </tbody>
         </table>
 <p id="section-6.5-4">The <code>aud</code> retains ID-JAG's RAS-issuer semantics. User and target tenant
-claims and any subject translation <span class="bcp14">MUST</span> follow ID-JAG's tenant and
-subject rules; the agent identifier remains unique within <code>act.iss</code>.
+claims and any subject translation <span class="bcp14">MUST</span> follow <a href="#subject-resolution" class="auto internal xref">Section 3.3</a>;
+the agent identifier remains unique within <code>act.iss</code>.
 The IdP <span class="bcp14">MUST NOT</span> issue a grant if it cannot determine an unambiguous
 user, actor, downstream client, or tenant relationship.<a href="#section-6.5-4" class="pilcrow">¶</a></p>
 <p id="section-6.5-5">The grant lifetime <span class="bcp14">SHOULD</span> be no more than five minutes. The IdP <span class="bcp14">MUST</span>
@@ -2580,8 +2735,9 @@ requested resource and any scope reduction, and apply ID-JAG's
 processing for any <code>authorization_details</code> present.<a href="#section-6.6-5.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.6-5.4">
-            <p id="section-6.6-5.4.1">Resolve the user and governed actor separately. Apply current RAS
-policy to the user/actor relationship, client, tenant, and resource.
+            <p id="section-6.6-5.4.1">Resolve the user under <a href="#ras-subject-resolution" class="auto internal xref">Section 3.3.2</a> and the governed
+actor under <a href="#agent-correlation" class="auto internal xref">Section 5.2</a>. Apply current RAS policy to the
+user/actor relationship, client, tenant, and resource.
 A valid grant sets an authority ceiling; it does not require issuance.<a href="#section-6.6-5.4.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.6-5.5">
@@ -2664,17 +2820,23 @@ delegation policy as well as ICA's chain authorization. Continuation
 involving a different actor is outside this profile.<a href="#section-6.6.1.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-6.6.1.2-2.3">
-                <p id="section-6.6.1.2-2.3.1">The request <span class="bcp14">MUST</span> identify one resource and a non-empty scope. The
+                <p id="section-6.6.1.2-2.3.1">The IdP <span class="bcp14">MUST</span> resolve the chain's original user for each target under
+<a href="#subject-resolution" class="auto internal xref">Section 3.3</a>. A continuation handle or prior target's local
+account identifier <span class="bcp14">MUST NOT</span> substitute for the new target's subject
+resolution or authorize a new account link.<a href="#section-6.6.1.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.6.1.2-2.4">
+                <p id="section-6.6.1.2-2.4.1">The request <span class="bcp14">MUST</span> identify one resource and a non-empty scope. The
 onward grant follows <span>[<a href="#ICA" class="cite xref">ICA</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion-02#section-5.5.5" class="relref">Section 5.5.5</a></span> and retains this profile's
 governed actor, resource, scope, and downstream client requirements.
 Its lifetime and key binding follow ICA rather than the root input
-credential limits in <a href="#grant-issuance" class="auto internal xref">Section 6.5</a>.<a href="#section-6.6.1.2-2.3.1" class="pilcrow">¶</a></p>
+credential limits in <a href="#grant-issuance" class="auto internal xref">Section 6.5</a>.<a href="#section-6.6.1.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-6.6.1.2-2.4">
-                <p id="section-6.6.1.2-2.4.1">Redemption uses ICA's DPoP-bound JWT grant,
+              <li class="normal" id="section-6.6.1.2-2.5">
+                <p id="section-6.6.1.2-2.5.1">Redemption uses ICA's DPoP-bound JWT grant,
 <code>urn:ietf:params:oauth:grant-type:jwt-dpop</code>, instead of the root flow's
 JWT bearer grant. The additional RAS checks and access-token requirements
-in <a href="#redemption" class="auto internal xref">Section 6.6</a>, and API processing in <a href="#api-processing" class="auto internal xref">Section 6.7</a>, still apply.<a href="#section-6.6.1.2-2.4.1" class="pilcrow">¶</a></p>
+in <a href="#redemption" class="auto internal xref">Section 6.6</a>, and API processing in <a href="#api-processing" class="auto internal xref">Section 6.7</a>, still apply.<a href="#section-6.6.1.2-2.5.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 <p id="section-6.6.1.2-3">ICA governs chain lifetime and termination; this document defines no
@@ -2800,6 +2962,11 @@ whether a particular user or agent exists.<a href="#section-6.8-1" class="pilcro
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_grant</code>
 </td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">User cannot be resolved, user or required link is disabled, or subject identifiers conflict</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_grant</code>; no token or automatic linking fallback</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Valid identity evidence but absent, disabled, or ambiguous agent binding, or unauthorized delegation</td>
@@ -3113,6 +3280,12 @@ access under <a href="#continuing-access" class="auto internal xref">Section 6.6
 under ICA's active chain and anchor checks. Chain termination does not
 make upstream status immediately visible to a resource or revoke tokens
 already issued by a RAS.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
+<p id="section-8.3-5">Account-linking errors can turn valid identity evidence into access to
+another user's account. The issuer, namespace, tenant, and link-change
+checks in <a href="#subject-resolution" class="auto internal xref">Section 3.3</a> apply before authorization; proof of
+key possession does not establish account ownership. Removing a link
+prevents further issuance through that link but does not itself revoke
+an outstanding access token.<a href="#section-8.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
