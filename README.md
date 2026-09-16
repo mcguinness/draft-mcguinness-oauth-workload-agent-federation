@@ -8,8 +8,10 @@ The goal is a prescriptive integration contract for agent-platform vendors
 and IdPs: supply workload evidence, bind it to a governed agent and permitted
 OAuth client, and obtain downstream authorization. The draft identifies what
 the platform, client, IdP, RAS, and API each implement. Its common delegated
-path uses the workload-evidence JWT defined here, a user ID Token,
-`private_key_jwt`, and DPoP at the token endpoints.
+path uses an existing SPIFFE JWT-SVID, a user ID Token, native SPIFFE
+client authentication at the IdP, `private_key_jwt` at the RAS, and DPoP
+at both token endpoints. The client and IdP implement JWT-SVID as the
+common input; deployments can select another supported credential profile.
 
 The draft retains both self-acting WAG and user-delegated ID-JAG, including
 subject resolution and linking for each path. ID-JAG uses direct workload
@@ -18,19 +20,25 @@ mandatory grant confirmation checks. WAG keeps its name and federation
 requirements; its complete wire contract remains pending upstream coordination.
 
 DPoP remains required at the IdP and RAS token endpoints. Access-token sender
-constraint is recommended: the resource policy can select DPoP, mutual TLS,
+constraint is the default: resource policy can select DPoP, mutual TLS,
 or explicitly permitted bearer access. The actor authorization gate is
 required; independent agent permissions on every data object are local policy.
 
-The common path supports a shared platform SSO client, with registration or
-CIMD where supported, and includes complete parameter-level HTTP examples.
-The common `platform_jwt` input uses `typ=oauth-workload-evidence+jwt` and
-requires `iss`, `sub`, `aud`, `iat`, and `exp`. Its audience is the IdP issuer;
-the issuer/subject pair identifies the platform workload across replicas.
-The draft requests the media-type registration and introduces no new claims.
-Existing formats remain an optional `imported_jwt` compatibility input.
-Key sources use trusted configuration or an existing issuer-discovery
-mechanism; no per-replica IdP registration or new discovery protocol is required.
+The common-path example uses a shared registered platform SSO client and its
+corresponding RAS registration, with complete parameter-level HTTP examples.
+The identical JWT-SVID is presented as `client_assertion` and `actor_token`.
+The IdP validates its audience and trust-domain signature, then resolves its
+exact SPIFFE ID to the governed agent. Client Association separately permits
+the authenticated client to use that binding. CIMD remains available where
+supported, subject to SPIFFE OAuth's client matching rules.
+
+The draft defines no new workload credential format or media type. Existing
+platform JWTs and Client Attestation are optional actor inputs. X.509-SVID and
+WIT-SVID can authenticate clients; their direct actor-evidence compositions
+remain deferred. JWT-SVID retains its bearer semantics: DPoP protects the
+issued grant, but does not bind the input credential to its presenter.
+Deployments requiring issuer-bound presenter proof must select a supported
+input that provides it. No per-replica IdP registration is required.
 
 RAS refresh tokens retain ID-JAG's default recommendation against issuance,
 with a constrained exception for authorized long-running work. Refresh tokens
