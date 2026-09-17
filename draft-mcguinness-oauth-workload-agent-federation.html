@@ -7,11 +7,12 @@
 <title>OAuth 2.0 Profile for Governed Agent Federation</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
-       This document defines how an identity provider resolves external
-workload identities to stable Governed Agent principals and separately
-authorizes client use and user delegation. Resource systems consume
-the issuer-qualified agent identity without interpreting the original
-workload credential. No new workload credential format is defined. 
+       This document defines how an identity provider resolves a dedicated
+OAuth client identity or an independently validated workload identity
+to a stable Governed Agent principal. Client authority and user
+delegation are authorized separately. Resource systems consume the
+issuer-qualified agent identity without interpreting the original
+credential. No new credential format is defined. 
        The federation model covers self-acting access, with the Governed Agent
 as subject, and delegated access, with the user as subject and the
 agent as actor. This revision defines a complete delegated profile of
@@ -1092,11 +1093,12 @@ svg {
 <h1 id="title">OAuth 2.0 Profile for Governed Agent Federation</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines how an identity provider resolves external
-workload identities to stable Governed Agent principals and separately
-authorizes client use and user delegation. Resource systems consume
-the issuer-qualified agent identity without interpreting the original
-workload credential. No new workload credential format is defined.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines how an identity provider resolves a dedicated
+OAuth client identity or an independently validated workload identity
+to a stable Governed Agent principal. Client authority and user
+delegation are authorized separately. Resource systems consume the
+issuer-qualified agent identity without interpreting the original
+credential. No new credential format is defined.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <p id="section-abstract-2">The federation model covers self-acting access, with the Governed Agent
 as subject, and delegated access, with the user as subject and the
 agent as actor. This revision defines a complete delegated profile of
@@ -1191,7 +1193,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-core-invariants" class="internal xref">Core Invariants</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
-                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-evidence-roles" class="internal xref">Evidence Roles</a></p>
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-authentication-resolution-a" class="internal xref">Authentication, Resolution, and Proof</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
                 <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-canonical-identity-and-tena" class="internal xref">Canonical Identity and Tenant Boundaries</a></p>
@@ -1219,10 +1221,10 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-workload-evidence" class="internal xref">Workload Evidence</a></p>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-agent-resolution-inputs" class="internal xref">Agent Resolution Inputs</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
-                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-rfc-7523-client-assertion" class="internal xref">RFC 7523 Client Assertion</a></p>
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-dedicated-client-identity" class="internal xref">Dedicated Client Identity</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
                 <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-spiffe-jwt-svid" class="internal xref">SPIFFE JWT-SVID</a></p>
@@ -1239,7 +1241,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-subject-resolution-and-link" class="internal xref">Subject Resolution and Linking</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
-                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-governed-agent-attribution" class="internal xref">Governed Agent Attribution</a></p>
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-governed-agent-correlation" class="internal xref">Governed Agent Correlation</a></p>
 </li>
             </ul>
 </li>
@@ -1335,7 +1337,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-optional-evidence-inputs" class="internal xref">Optional Evidence Inputs</a></p>
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-optional-agent-resolution-i" class="internal xref">Optional Agent Resolution Inputs</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
                 <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-existing-platform-jwt" class="internal xref">Existing Platform JWT</a></p>
@@ -1344,7 +1346,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-client-attestation" class="internal xref">Client Attestation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
-                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-spiffe-x509-svid-and-wit-sv" class="internal xref">SPIFFE X.509-SVID and WIT-SVID</a></p>
+                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-spiffe-x509-svid-and-wit-sv" class="internal xref">SPIFFE X.509-SVID and WIT-SVID Client Authentication</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
                 <p id="section-toc.1-1.9.2.4.1"><a href="#section-9.4" class="auto internal xref">9.4</a>.  <a href="#name-bearer-evidence-limits" class="internal xref">Bearer Evidence Limits</a></p>
@@ -1425,6 +1427,9 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.1.2.2">
                     <p id="section-toc.1-1.16.2.1.2.2.1"><a href="#appendix-A.1.2" class="auto internal xref">A.1.2</a>.  <a href="#name-id-jag-bound-grants" class="internal xref">ID-JAG Bound Grants</a></p>
 </li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.1.2.3">
+                    <p id="section-toc.1-1.16.2.1.2.3.1"><a href="#appendix-A.1.3" class="auto internal xref">A.1.3</a>.  <a href="#name-dedicated-client-actor-para" class="internal xref">Dedicated-Client Actor Parameters</a></p>
+</li>
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.2">
@@ -1475,7 +1480,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
-            <p id="section-toc.1-1.18.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-example-client-assertion-wi" class="internal xref">Example: Client Assertion Without SPIFFE</a></p>
+            <p id="section-toc.1-1.18.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-example-dedicated-client-wi" class="internal xref">Example: Dedicated Client Without SPIFFE</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19">
             <p id="section-toc.1-1.19.1"><a href="#appendix-D" class="auto internal xref">Appendix D</a>.  <a href="#name-example-aws-workload-identi" class="internal xref">Example: AWS Workload Identity Binding</a></p>
@@ -1498,11 +1503,15 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 <p id="section-1-1">Agent platforms establish workload identities. Enterprises govern
 stable authorization principals. Resource systems need to recognize
 those principals without understanding every platform's credentials.
-This document defines how an identity provider (IdP) resolves external
+This document defines how an identity provider (IdP) resolves client or
 workload identity to a Governed Agent, separately authorizes OAuth
 client use and user delegation, and carries the governed identity into
 the resource domain.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">Four independent relationships establish that contract:<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-2">A dedicated OAuth client resolves through an explicit client-to-agent
+binding. A shared client uses independently validated workload identity
+to distinguish the agents it serves. Both deployments retain separate
+identity, client-authority, delegation, and resource-policy decisions.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">Four independent relationships establish that contract:<a href="#section-1-3" class="pilcrow">¶</a></p>
 <table class="center" id="table-1">
         <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
 <thead>
@@ -1513,7 +1522,7 @@ the resource domain.<a href="#section-1-1" class="pilcrow">¶</a></p>
         </thead>
         <tbody>
           <tr>
-            <td class="text-left" rowspan="1" colspan="1">What enterprise agent does this workload represent?</td>
+            <td class="text-left" rowspan="1" colspan="1">What enterprise agent does this client or workload identity represent?</td>
             <td class="text-left" rowspan="1" colspan="1">Identity Binding</td>
           </tr>
           <tr>
@@ -1526,28 +1535,28 @@ the resource domain.<a href="#section-1-1" class="pilcrow">¶</a></p>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">What resource-local principal represents the IdP-qualified agent?</td>
-            <td class="text-left" rowspan="1" colspan="1">Governed Agent Attribution</td>
+            <td class="text-left" rowspan="1" colspan="1">Governed Agent Correlation</td>
           </tr>
         </tbody>
       </table>
-<p id="section-1-4">Workload credentials are federation inputs; downstream authorization
+<p id="section-1-5">Workload credentials are federation inputs; downstream authorization
 identifies the IdP-governed principal. The resource authorization server
 (RAS) translates the user identity into its local namespace, preserves
 the issuer-qualified agent identity, and correlates that agent with a
 local authorization record. External credentials, execution environments,
-and OAuth clients can change without changing the governed identity.<a href="#section-1-4" class="pilcrow">¶</a></p>
-<p id="section-1-5">Existing specifications leave that mapping open. <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines
+and OAuth clients can change without changing the governed identity.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">Existing specifications leave that mapping open. <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines
 <code>act</code>, while <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-9.7" class="relref">Section 9.7</a></span> leaves actor-token validation,
 authorization, and representation to extensions. <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span> and
 <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>]</span> authenticate OAuth clients, not the agents a shared
-client serves.<a href="#section-1-5" class="pilcrow">¶</a></p>
-<p id="section-1-6">Self-acting WAG and delegated ID-JAG are two applications of the same
+client serves.<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-7">Self-acting WAG and delegated ID-JAG are two applications of the same
 federation model (<a href="#model" class="auto internal xref">Section 3</a>). Their implementation status differs:
 <a href="#delegated-flow" class="auto internal xref">Section 8</a> defines the ID-JAG wire profile; <a href="#wag-flow" class="auto internal xref">Section 11</a>
 describes the WAG composition and <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a> identifies its unresolved
 wire requirements. RFC 7523 client assertions, SPIFFE JWT-SVIDs, and the
 other supported credentials supply evidence to the same identity model
-(<a href="#evidence" class="auto internal xref">Section 5</a>, <a href="#optional-inputs" class="auto internal xref">Section 9</a>).<a href="#section-1-6" class="pilcrow">¶</a></p>
+(<a href="#evidence" class="auto internal xref">Section 5</a>, <a href="#optional-inputs" class="auto internal xref">Section 9</a>).<a href="#section-1-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-terminology">
@@ -1578,14 +1587,14 @@ can implement the OAuth client that obtains access for an agent.<a href="#sectio
           <dd style="margin-left: 1.5em" id="section-2.1-1.4">
             <p id="section-2.1-1.4.1">Software making OAuth requests for an agent. It authenticates as an
 OAuth client and presents the evidence, target, and proofs for the
-selected grant flow. One client registration can serve several agents;
-client authentication does not establish which Governed Agent is
-acting.<a href="#section-2.1-1.4.1" class="pilcrow">¶</a></p>
+selected grant flow. One client registration can serve several agents.
+Client authentication identifies the client; agent resolution requires
+an explicit Identity Binding.<a href="#section-2.1-1.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.1-1.5">Identity Provider (IdP):</dt>
           <dd style="margin-left: 1.5em" id="section-2.1-1.6">
-            <p id="section-2.1-1.6.1">The OAuth authorization server that resolves external evidence to a
+            <p id="section-2.1-1.6.1">The OAuth authorization server that resolves validated inputs to a
 Governed Agent, checks the permitted client and acting relationship,
 and issues a grant naming that agent as subject or actor.<a href="#section-2.1-1.6.1" class="pilcrow">¶</a></p>
 </dd>
@@ -1629,62 +1638,78 @@ not necessarily distinguish executions. An Identity Binding resolves
 that external identity to a Governed Agent.<a href="#section-2.2-1.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.5">Identity Binding:</dt>
+<dt id="section-2.2-1.5">Dedicated client:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.6">
-            <p id="section-2.2-1.6.1">An approved association from an external credential authority and
-exact external workload identity to one Governed Agent, administered
-in a Governance Tenant. It is the identity-federation relationship.<a href="#section-2.2-1.6.1" class="pilcrow">¶</a></p>
+            <p id="section-2.2-1.6.1">An OAuth client whose authenticated identity maps explicitly to one
+Governed Agent in the IdP's client-registration context. Dedicated
+refers to identity resolution, not to one process, replica, or
+installation.<a href="#section-2.2-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.7">Client Association:</dt>
+<dt id="section-2.2-1.7">Shared client:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.8">
-            <p id="section-2.2-1.8.1">An approved permission for an authenticated OAuth client to use a
+            <p id="section-2.2-1.8.1">An OAuth client serving multiple Governed Agents. Its authenticated
+client identity alone cannot distinguish those agents; resolution
+requires independently validated workload identity.<a href="#section-2.2-1.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.2-1.9">Identity Binding:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.10">
+            <p id="section-2.2-1.10.1">An approved association from an exact client or workload identity,
+qualified by its registration context or credential authority, to one
+Governed Agent. It is administered in a Governance Tenant and
+establishes identity resolution, not permission to exercise the agent.<a href="#section-2.2-1.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.2-1.11">Client Association:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.12">
+            <p id="section-2.2-1.12.1">An approved permission for an authenticated OAuth client to use a
 Governed Agent through the selected Identity Binding, flow, and actor
 credential class. The permission can cover one binding or an explicitly
 authorized set of bindings under <a href="#identity-binding" class="auto internal xref">Section 6.1</a>. It is an
-authorization-policy relationship, independent of identity resolution.<a href="#section-2.2-1.8.1" class="pilcrow">¶</a></p>
+authorization-policy relationship, independent of identity resolution.<a href="#section-2.2-1.12.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.9">Issuer-bound presenter key:</dt>
-          <dd style="margin-left: 1.5em" id="section-2.2-1.10">
-            <p id="section-2.2-1.10.1">A key the credential issuer has attested belongs to the workload,
-such as a Client Attestation's confirmation key. It shows that the
-credential authority authorized the key.<a href="#section-2.2-1.10.1" class="pilcrow">¶</a></p>
-</dd>
-          <dd class="break"></dd>
-<dt id="section-2.2-1.11">Request proof key:</dt>
-          <dd style="margin-left: 1.5em" id="section-2.2-1.12">
-            <p id="section-2.2-1.12.1">A key the presenter proves in the request without issuer attestation,
-as with DPoP accompanying bearer evidence. It shows possession alone
-(<a href="#credential-requirements" class="auto internal xref">Section 9.4</a>).<a href="#section-2.2-1.12.1" class="pilcrow">¶</a></p>
-</dd>
-          <dd class="break"></dd>
-<dt id="section-2.2-1.13">Grant proof key:</dt>
+<dt id="section-2.2-1.13">Issuer-bound presenter key:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.14">
-            <p id="section-2.2-1.14.1">The DPoP key proven when requesting an ID-JAG and bound into that
+            <p id="section-2.2-1.14.1">A key the credential issuer has attested belongs to the workload,
+such as a Client Attestation's confirmation key. It shows that the
+credential authority authorized the key.<a href="#section-2.2-1.14.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.2-1.15">Request proof key:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.16">
+            <p id="section-2.2-1.16.1">A key the presenter proves in the request without issuer attestation,
+as with DPoP accompanying bearer evidence. It shows possession alone
+(<a href="#credential-requirements" class="auto internal xref">Section 9.4</a>).<a href="#section-2.2-1.16.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.2-1.17">Grant proof key:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.18">
+            <p id="section-2.2-1.18.1">The DPoP key proven when requesting an ID-JAG and bound into that
 grant for redemption. A bearer JWT-SVID does not authorize this key;
 any association with an issuer-bound presenter key follows the
-selected input profile.<a href="#section-2.2-1.14.1" class="pilcrow">¶</a></p>
+selected input profile.<a href="#section-2.2-1.18.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.15">Governance Tenant:</dt>
-          <dd style="margin-left: 1.5em" id="section-2.2-1.16">
-            <p id="section-2.2-1.16.1">The IdP tenant within whose governance domain the Governed Agent
+<dt id="section-2.2-1.19">Governance Tenant:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.20">
+            <p id="section-2.2-1.20.1">The IdP tenant within whose governance domain the Governed Agent
 exists and is administered. The Governed Agent identifier remains
 qualified by the IdP issuer (<a href="#canonical-identity" class="auto internal xref">Section 3.3</a>), not by the
-tenant.<a href="#section-2.2-1.16.1" class="pilcrow">¶</a></p>
+tenant.<a href="#section-2.2-1.20.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.17">External Tenant:</dt>
-          <dd style="margin-left: 1.5em" id="section-2.2-1.18">
-            <p id="section-2.2-1.18.1">The platform tenant, if any, that qualifies the external workload
+<dt id="section-2.2-1.21">External Tenant:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.22">
+            <p id="section-2.2-1.22.1">The platform tenant, if any, that qualifies the external workload
 identity. It is expressed in the credential's issuer or subject
-namespace and never substitutes for the Governance Tenant.<a href="#section-2.2-1.18.1" class="pilcrow">¶</a></p>
+namespace and never substitutes for the Governance Tenant.<a href="#section-2.2-1.22.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.19">Target Tenant:</dt>
-          <dd style="margin-left: 1.5em" id="section-2.2-1.20">
-            <p id="section-2.2-1.20.1">The tenant at the RAS in which the agent or user is authorized.<a href="#section-2.2-1.20.1" class="pilcrow">¶</a></p>
+<dt id="section-2.2-1.23">Target Tenant:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.24">
+            <p id="section-2.2-1.24.1">The tenant at the RAS in which the agent or user is authorized.<a href="#section-2.2-1.24.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1700,7 +1725,7 @@ Agent.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-federation-model" class="section-name selfRef">Federation Model</a>
       </h2>
 <p id="section-3-1">The IdP controls Identity Bindings, Client Associations, and delegation
-authorization. The RAS controls local principal attribution and
+authorization. The RAS controls local principal correlation and
 authorization, using trusted provisioning from the IdP or an authorized
 directory connector where applicable.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <p id="section-3-2">Establishing one relationship <span class="bcp14">MUST NOT</span> be treated as establishing
@@ -1708,17 +1733,19 @@ another. A local principal link identifies the agent; resource policy
 still determines whether to accept its delegated access.<a href="#section-3-2" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3-3">
 <pre>
- Platform namespace     IdP namespace        Resource namespace
+ Resolution source        IdP namespace       Resource namespace
 
- workload-7 ----------&gt; agent-42 ----------&gt; service-principal-42
-         Identity Binding      Governed Agent Attribution
+ dedicated client --\
+                     &gt;--&gt; agent-42 ----------&gt; local agent principal
+ workload identity -/
+            Identity Binding         Agent Correlation
 
  OAuth client -- Client Association --&gt; permission to use binding
  agent-42 -- Delegation Authorization --&gt; authority to act for user
 </pre><a href="#section-3-3" class="pilcrow">¶</a>
 </div>
 <p id="section-3-4">External workload identity, Governed Agent identity, and OAuth client
-identity are distinct. Identity Binding establishes the agent identity;
+identity are distinct. Identity Binding resolves the agent identity;
 Client Association authorizes client use through the binding, flow,
 and credential class. Its coverage is explicit under <a href="#identity-binding" class="auto internal xref">Section 6.1</a>.<a href="#section-3-4" class="pilcrow">¶</a></p>
 <p id="section-3-5">The IdP is the authority for the Governed Agent: the ID-JAG's <code>act.iss</code>
@@ -1750,7 +1777,7 @@ define their processing rules.<a href="#section-3.1-1" class="pilcrow">¶</a></p
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Identity</td>
-              <td class="text-left" rowspan="1" colspan="1">Validated external evidence resolves through an enabled exact Identity Binding to one active Governed Agent</td>
+              <td class="text-left" rowspan="1" colspan="1">Authenticated dedicated-client identity or independently validated workload identity resolves through an enabled exact Identity Binding to one active Governed Agent</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#identity-binding" class="auto internal xref">Section 6.1</a>
 </td>
@@ -1792,8 +1819,8 @@ with the agent as subject exercising its own authority (<a href="#wag-flow" clas
 </div>
 <div id="inputs">
 <section id="section-3.2">
-        <h3 id="name-evidence-roles">
-<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-evidence-roles" class="section-name selfRef">Evidence Roles</a>
+        <h3 id="name-authentication-resolution-a">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-authentication-resolution-a" class="section-name selfRef">Authentication, Resolution, and Proof</a>
         </h3>
 <p id="section-3.2-1">The IdP <span class="bcp14">MUST</span> validate a credential according to its configured type
 before using it for identity resolution; a generic JWT token-type URI,
@@ -1801,15 +1828,16 @@ an unverified header, or a caller-supplied claim <span class="bcp14">MUST NOT</s
 weaker validation path or establish an Identity Binding. Unrecognized
 request parameters and JWT claims follow <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-3.2" class="relref">Section 3.2</a></span> and
 <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-4" class="relref">Section 4</a></span>.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.2-2">The IdP <span class="bcp14">MUST</span> distinguish three roles of evidence and <span class="bcp14">MUST NOT</span> substitute
-one for another:<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">The IdP <span class="bcp14">MUST</span> distinguish three functions and <span class="bcp14">MUST NOT</span> substitute one
+for another:<a href="#section-3.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.2-3.1">
             <p id="section-3.2-3.1.1"><strong>Client authentication:</strong> evidence authenticating the OAuth client.<a href="#section-3.2-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.2-3.2">
-            <p id="section-3.2-3.2.1"><strong>Agent resolution:</strong> resolution of validated external workload
-evidence through an Identity Binding to exactly one Governed Agent.<a href="#section-3.2-3.2.1" class="pilcrow">¶</a></p>
+            <p id="section-3.2-3.2.1"><strong>Agent resolution:</strong> resolution of the authenticated dedicated-client
+identity or independently validated workload identity through an
+Identity Binding to exactly one Governed Agent.<a href="#section-3.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.2-3.3">
             <p id="section-3.2-3.3.1"><strong>Key possession:</strong> proof that the presenter controls a key, with the
@@ -1844,10 +1872,10 @@ agent from one customer's governance domain to another customer's
 domain creates a new identity; changing its administrator within the
 same customer does not by itself do so. This revision defines no
 cross-tenant identity migration protocol.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
-<p id="section-3.3-3">Multiple Identity Bindings <span class="bcp14">MAY</span> resolve distinct external workload
+<p id="section-3.3-3">Multiple Identity Bindings <span class="bcp14">MAY</span> resolve distinct client or workload
 identities to the same Governed Agent when the IdP approves them as
-representing the same logical principal. Those workloads share the
-governed authorization identity downstream. Workloads that require
+representing the same logical principal. They share the governed
+authorization identity downstream. Clients or workloads that require
 independent authorization or attribution as principals need separate
 Governed Agent identities.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
 <p id="section-3.3-4">The IdP <span class="bcp14">MUST</span> establish an unambiguous Governance Tenant and, before
@@ -1902,10 +1930,13 @@ relationship does not imply authorization for the other.<a href="#section-4.1-3"
 authority at two authorization servers, followed by API enforcement:<a href="#section-4.1-4" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-4.1-5">
 <pre>
- External evidence         Enterprise IdP
+ Resolution inputs         Enterprise IdP
  -----------------         --------------
- Workload credential ----&gt; Validate and resolve Governed Agent
- Client authentication --&gt; Authenticate client; Client Association
+ Dedicated client -------&gt; Authenticate; resolve client binding
+           OR
+ Workload + client ------&gt; Validate both; resolve workload binding
+                                      |
+                           Client Association
  User credential --------&gt; Resolve user
                                       |
                            Delegation Authorization
@@ -1928,7 +1959,7 @@ authority at two authorization servers, followed by API enforcement:<a href="#se
                            tenant, token limits, and proof binding
 </pre><a href="#section-4.1-5" class="pilcrow">¶</a>
 </div>
-<p id="section-4.1-6">The client presents a supported user credential and workload evidence,
+<p id="section-4.1-6">The client presents a supported user credential and agent-resolution input,
 and authenticates at each authorization server. The two token requests
 are ID-JAG issuance at the IdP and redemption at the RAS. Proof processing
 follows the applicable grant and access-token protection; each decision
@@ -1988,7 +2019,8 @@ requirements in <a href="#model" class="auto internal xref">Section 3</a>, <a hr
 <ul class="normal">
 <li class="normal" id="section-4.2-5.1.2.1">
                 <p id="section-4.2-5.1.2.1.1">The IdP <span class="bcp14">MUST</span> implement ID Token subjects and RFC 7523 client-assertion
-actor evidence using <code>private_key_jwt</code> (<a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>).<a href="#section-4.2-5.1.2.1.1" class="pilcrow">¶</a></p>
+dedicated-client resolution using <code>private_key_jwt</code>
+(<a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>).<a href="#section-4.2-5.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-4.2-5.1.2.2">
                 <p id="section-4.2-5.1.2.2.1">A client <span class="bcp14">MUST</span> implement at least one supported subject input and
@@ -2059,7 +2091,7 @@ particular storage representation or administrative interface:<a href="#section-
               <td class="text-left" rowspan="1" colspan="1">Per credential specification; discovery <span class="bcp14">MUST NOT</span> establish trust</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Identity Binding: authority, exact workload identity, Governed Agent, Governance Tenant</td>
+              <td class="text-left" rowspan="1" colspan="1">Identity Binding: qualified client or workload identity, Governed Agent, Governance Tenant</td>
               <td class="text-left" rowspan="1" colspan="1">IdP administrator or approved platform-registry import</td>
               <td class="text-left" rowspan="1" colspan="1">IdP</td>
               <td class="text-left" rowspan="1" colspan="1">No</td>
@@ -2226,8 +2258,8 @@ from the underlying protocols are summarized in <a href="#profile-additions" cla
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Platform</td>
-              <td class="text-left" rowspan="1" colspan="1">Supply an existing credential accepted by the selected input profile</td>
+              <td class="text-left" rowspan="1" colspan="1">Client or platform</td>
+              <td class="text-left" rowspan="1" colspan="1">Supply credentials accepted by the configured agent-resolution input</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#evidence" class="auto internal xref">Section 5</a>
 </td>
@@ -2289,55 +2321,60 @@ from the underlying protocols are summarized in <a href="#profile-additions" cla
 </div>
 <div id="evidence">
 <section id="section-5">
-      <h2 id="name-workload-evidence">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-workload-evidence" class="section-name selfRef">Workload Evidence</a>
+      <h2 id="name-agent-resolution-inputs">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-agent-resolution-inputs" class="section-name selfRef">Agent Resolution Inputs</a>
       </h2>
-<p id="section-5-1">This profile accepts existing workload credentials under the input
-profiles below. Each profile defines credential validation, identity
-extraction, its relationship to client authentication, and any proof
-requirements. The resulting external identity is resolved through an
-Identity Binding; no new workload credential format is defined.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-1">The inputs below resolve either an authenticated dedicated-client
+identity or an independently validated workload identity. Each defines
+credential validation, the identity used for binding, and any proof
+requirements. Neither credential possession nor client authentication
+replaces the configured Identity Binding and Client Association.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <p id="section-5-2">Input support follows <a href="#scope" class="auto internal xref">Section 4.2</a>; alternatives are in <a href="#optional-inputs" class="auto internal xref">Section 9</a>.
 Support does not establish trust in a credential authority or permission
 to use a binding.<a href="#section-5-2" class="pilcrow">¶</a></p>
-<p id="section-5-3">The client or platform supplies credentials using its existing client
-authentication or workload-identity mechanisms. Those mechanisms <span class="bcp14">MUST</span> authorize
-issuance for the workload identity; a caller-supplied subject or agent
-identifier alone <span class="bcp14">MUST NOT</span> establish that identity. Evidence acquisition
-is outside this profile. The IdP approves credential authorities and
-exact external identities through configured Identity Bindings.<a href="#section-5-3" class="pilcrow">¶</a></p>
+<p id="section-5-3">Clients and platforms use existing credential mechanisms. For workload
+evidence, those mechanisms <span class="bcp14">MUST</span> authorize issuance for the asserted
+workload identity; a caller-supplied subject or agent identifier alone
+<span class="bcp14">MUST NOT</span> establish that identity. For dedicated clients, the IdP relies
+on the configured client-authentication method and approved binding.
+Credential acquisition is outside this profile.<a href="#section-5-3" class="pilcrow">¶</a></p>
 <div id="client-assertion-input">
 <section id="section-5.1">
-        <h3 id="name-rfc-7523-client-assertion">
-<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-rfc-7523-client-assertion" class="section-name selfRef">RFC 7523 Client Assertion</a>
+        <h3 id="name-dedicated-client-identity">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-dedicated-client-identity" class="section-name selfRef">Dedicated Client Identity</a>
         </h3>
-<p id="section-5.1-1">This input uses an asymmetrically signed client-authentication assertion
-under <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> when the validated client identity maps explicitly
-to one Governed Agent. The common method is <code>private_key_jwt</code>;
+<p id="section-5.1-1">This mode resolves an authenticated OAuth client identity to its
+explicitly bound Governed Agent. Client authentication uses an
+asymmetrically signed assertion under <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>. The common method is <code>private_key_jwt</code>;
 other configured asymmetric RFC 7523 methods <span class="bcp14">MAY</span> be supported.
 It requires no separate platform-issued credential.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1-2">The client <span class="bcp14">MUST</span> present the identical compact JWT in <code>client_assertion</code>
+<p id="section-5.1-2">The assertion supplies no identity beyond the authenticated client.
+This profile retains it in <code>actor_token</code> to identify explicitly the
+credential used for actor resolution; it is not independent workload
+evidence. The duplication is this profile's convention, not an ID-JAG
+requirement (<a href="#dedicated-client-coordination" class="auto internal xref">Appendix A.1.3</a>).<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+<p id="section-5.1-3">The client <span class="bcp14">MUST</span> present the identical compact JWT in <code>client_assertion</code>
 and <code>actor_token</code>, with <code>client_assertion_type</code> set to
 <code>urn:ietf:params:oauth:client-assertion-type:jwt-bearer</code>.
-The IdP <span class="bcp14">MUST</span>:<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+The IdP <span class="bcp14">MUST</span>:<a href="#section-5.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1-3.1">
-            <p id="section-5.1-3.1.1">Authenticate the client under Sections <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">3</a> and <a href="https://rfc-editor.org/rfc/rfc7523#section-3.2" class="relref">3.2</a> of <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> and
+<li class="normal" id="section-5.1-4.1">
+            <p id="section-5.1-4.1.1">Authenticate the client under Sections <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">3</a> and <a href="https://rfc-editor.org/rfc/rfc7523#section-3.2" class="relref">3.2</a> of <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> and
 its configured authentication method, including issuer trust,
 signature, audience, expiration, and replay checks. The assertion's
-<code>sub</code> <span class="bcp14">MUST</span> equal the authenticated IdP <code>client_id</code>.<a href="#section-5.1-3.1.1" class="pilcrow">¶</a></p>
+<code>sub</code> <span class="bcp14">MUST</span> equal the authenticated IdP <code>client_id</code>.<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-3.2">
-            <p id="section-5.1-3.2.1">Use verification keys authorized for that client and assertion issuer.
-Assertion-supplied keys or issuer claims <span class="bcp14">MUST NOT</span> establish trust.<a href="#section-5.1-3.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-5.1-4.2">
+            <p id="section-5.1-4.2.1">Use verification keys authorized for that client and assertion issuer.
+Assertion-supplied keys or issuer claims <span class="bcp14">MUST NOT</span> establish trust.<a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-3.3">
-            <p id="section-5.1-3.3.1">Resolve the exact validated (<code>iss</code>, <code>sub</code>) in the IdP's client-registration
+          <li class="normal" id="section-5.1-4.3">
+            <p id="section-5.1-4.3.1">Resolve the exact validated (<code>iss</code>, <code>sub</code>) in the IdP's client-registration
 context through an enabled Identity Binding to one Governed Agent.
-Then enforce Client Association and delegation authorization separately.<a href="#section-5.1-3.3.1" class="pilcrow">¶</a></p>
+Then enforce Client Association and delegation authorization separately.<a href="#section-5.1-4.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-5.1-4">For <code>private_key_jwt</code>, apply Section 9 of <span>[<a href="#OPENID" class="cite xref">OPENID</a>]</span>: the assertion issuer
+<p id="section-5.1-5">For <code>private_key_jwt</code>, apply Section 9 of <span>[<a href="#OPENID" class="cite xref">OPENID</a>]</span>: the assertion issuer
 and subject are the client's registered identifier. This profile
 requires the IdP token endpoint URL as audience and prohibits negotiated
 assertion reuse. The assertion <span class="bcp14">MUST</span> contain a <code>jti</code>; the IdP <span class="bcp14">MUST</span> reject
@@ -2346,19 +2383,19 @@ Replay identifiers <span class="bcp14">MUST</span> be qualified by the validated
 These audience and replay requirements narrow the base specifications.
 Using the assertion in both
 parameters of one request is one presentation, not a replay: the IdP
-<span class="bcp14">MUST</span> reuse the successful authentication result for actor processing.<a href="#section-5.1-4" class="pilcrow">¶</a></p>
-<p id="section-5.1-5">The client and agent remain distinct principals. This input does not
+<span class="bcp14">MUST</span> reuse the successful authentication result for actor processing.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
+<p id="section-5.1-6">The client and agent remain distinct principals. This mode does not
 distinguish agents behind one shared client identity; such a client
 <span class="bcp14">MUST</span> present separate supported actor evidence for those agents. An
 additional agent claim in a self-signed client assertion <span class="bcp14">MUST NOT</span> select
-another Governed Agent under this input.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
-<p id="section-5.1-6">Assertion signing authenticates the client; it does not bind the ID-JAG
+another Governed Agent under this input.<a href="#section-5.1-6" class="pilcrow">¶</a></p>
+<p id="section-5.1-7">Assertion signing authenticates the client; it does not bind the ID-JAG
 to that signing key or establish an attested runtime identity. Grant
 proof processing follows <a href="#grant-protection" class="auto internal xref">Section 8.3</a> independently, and the
 DPoP key <span class="bcp14">MAY</span> differ from the client-authentication key. An assertion
 carrying <code>cnf</code> <span class="bcp14">MUST NOT</span> be accepted unless its configured authentication
-method defines and validates the corresponding proof.<a href="#section-5.1-6" class="pilcrow">¶</a></p>
-<p id="section-5.1-7"><a href="#client-assertion-example" class="auto internal xref">Appendix C</a> illustrates this input without SPIFFE.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
+method defines and validates the corresponding proof.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
+<p id="section-5.1-8"><a href="#client-assertion-example" class="auto internal xref">Appendix C</a> illustrates this input without SPIFFE.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="jwt-svid-input">
@@ -2407,8 +2444,8 @@ input rather than treat DPoP as that proof (<a href="#credential-requirements" c
       <h2 id="name-governed-agent-resolution">
 <a href="#section-6" class="section-number selfRef">6. </a><a href="#name-governed-agent-resolution" class="section-name selfRef">Governed Agent Resolution</a>
       </h2>
-<p id="section-6-1">Resolution turns validated evidence into principals: the Identity
-Binding resolves the external workload identity to one Governed Agent,
+<p id="section-6-1">Resolution turns validated inputs into principals: the Identity
+Binding resolves a qualified client or workload identity to one Governed Agent,
 subject resolution identifies the user for delegated access, and the
 RAS correlates both to its local principals.<a href="#section-6-1" class="pilcrow">¶</a></p>
 <div id="identity-binding">
@@ -2420,16 +2457,16 @@ RAS correlates both to its local principals.<a href="#section-6-1" class="pilcro
           <caption><a href="#table-8" class="selfRef">Table 8</a></caption>
 <thead>
             <tr>
-              <th class="text-left" rowspan="1" colspan="1">Evidence</th>
+              <th class="text-left" rowspan="1" colspan="1">Input</th>
               <th class="text-left" rowspan="1" colspan="1">Identity used for resolution</th>
               <th class="text-left" rowspan="1" colspan="1">Qualification</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">RFC 7523 client assertion</td>
+              <td class="text-left" rowspan="1" colspan="1">Dedicated client identity</td>
               <td class="text-left" rowspan="1" colspan="1">Trusted assertion issuer and exact client <code>sub</code>, qualified by the IdP client-registration context</td>
-              <td class="text-left" rowspan="1" colspan="1">Common input under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>; explicit client-to-agent binding</td>
+              <td class="text-left" rowspan="1" colspan="1">Common mode under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>; explicit client-to-agent binding</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">SPIFFE JWT-SVID</td>
@@ -2462,12 +2499,12 @@ RAS correlates both to its local principals.<a href="#section-6-1" class="pilcro
             </tr>
           </tbody>
         </table>
-<p id="section-6.1-2">After validating actor evidence, the IdP <span class="bcp14">MUST</span>:<a href="#section-6.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.1-2">After validating the configured resolution input, the IdP <span class="bcp14">MUST</span>:<a href="#section-6.1-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.1-3.1">
-            <p id="section-6.1-3.1.1">Resolve the exact workload identity to one active Governed Agent
-through an enabled Identity Binding; reject missing, ambiguous, or
-disabled mappings.<a href="#section-6.1-3.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-3.1.1">Resolve the exact qualified client or workload identity to one active
+Governed Agent through an enabled Identity Binding; reject missing,
+ambiguous, or disabled mappings.<a href="#section-6.1-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.1-3.2">
             <p id="section-6.1-3.2.1">Apply exact resolution even when client authentication permits a
@@ -2476,7 +2513,7 @@ identifies the client, not the agent.<a href="#section-6.1-3.2.1" class="pilcrow
 </li>
         </ul>
 <p id="section-6.1-4">Similar names, unqualified identifiers, or a shared signing key <span class="bcp14">MUST NOT</span> establish identity equivalence. The table above defines the
-external identity for each input.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
+qualified identity for each input.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
 <p id="section-6.1-5">The IdP <span class="bcp14">MUST</span> support disabling an individual Identity Binding without
 requiring the Governed Agent or its other bindings to be disabled.
 Once the change is applied, the disabled binding <span class="bcp14">MUST NOT</span> authorize new
@@ -2493,6 +2530,12 @@ authority, a credential class, or the Governed Agent itself <span class="bcp14">
 imply authorization of another binding unless the association's policy
 explicitly includes it. No association overrides a disabled binding.
 Policy representation and evaluation mechanisms are outside this profile.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
+<p id="section-6.1-8">For a dedicated client, Identity Binding determines which Governed
+Agent the client represents. Client Association independently determines
+whether that client may exercise the binding in the requested flow.
+Deployments <span class="bcp14">MAY</span> administer both in one registration or policy object;
+their identity and authorization semantics remain distinct. A binding
+can remain valid while permission to use it is withdrawn.<a href="#section-6.1-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subject-resolution">
@@ -2559,8 +2602,8 @@ deployment choices (<a href="#operational-guidance" class="auto internal xref">A
 </div>
 <div id="agent-correlation">
 <section id="section-6.3">
-        <h3 id="name-governed-agent-attribution">
-<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-governed-agent-attribution" class="section-name selfRef">Governed Agent Attribution</a>
+        <h3 id="name-governed-agent-correlation">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-governed-agent-correlation" class="section-name selfRef">Governed Agent Correlation</a>
         </h3>
 <p id="section-6.3-1">The Governed Agent identity is the pair of IdP issuer and agent
 identifier, carried in ID-JAG as (<code>act.iss</code>, <code>act.sub</code>).
@@ -2766,7 +2809,7 @@ referenced sections define the requirements.<a href="#section-8.1-1" class="pilc
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Actor extension</td>
-              <td class="text-left" rowspan="1" colspan="1">Resolve external evidence through an Identity Binding; authorize client use through a separate Client Association</td>
+              <td class="text-left" rowspan="1" colspan="1">Resolve dedicated-client or workload identity through an Identity Binding; authorize client use through a separate Client Association</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#identity-binding" class="auto internal xref">Section 6.1</a>
 </td>
@@ -3087,7 +3130,7 @@ selects protected-resource authority at that RAS. The request <span class="bcp14
 contain exactly one <code>resource</code> parameter. A client requiring access to
 multiple resources <span class="bcp14">MUST</span> obtain a separate ID-JAG for each resource.
 The IdP <span class="bcp14">MUST</span> reject multiple <code>resource</code> parameters with <code>invalid_target</code>.<a href="#section-8.4.1-3" class="pilcrow">¶</a></p>
-<p id="section-8.4.1-4">This profile narrows ID-JAG by requiring actor evidence, exactly one
+<p id="section-8.4.1-4">This profile narrows ID-JAG by requiring <code>actor_token</code>, exactly one
 resource, and a non-empty scope; <code>authorization_details</code> <span class="bcp14">MAY</span>
 accompany <code>scope</code> and is processed under ID-JAG. Requiring scope gives
 this revision a common authorization mechanism through grant issuance,
@@ -3135,7 +3178,7 @@ enforced rather than bypassed by selecting another actor input, with
 conflicts rejected as <code>invalid_grant</code>.<a href="#section-8.4.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-8.4.2-3">All subject inputs require current actor evidence and delegation
+<p id="section-8.4.2-3">All subject inputs require a current validated agent-resolution input and delegation
 authorization under <a href="#delegation-authorization" class="auto internal xref">Section 7.1</a>; the output remains an
 ID-JAG. User access tokens are not subject inputs in this revision
 (<a href="#access-token-subject-gap" class="auto internal xref">Appendix A.2.2</a>); JWT encoding alone does not make an
@@ -3153,8 +3196,9 @@ access token an ID Token.<a href="#section-8.4.2-3" class="pilcrow">¶</a></p>
 it does not select a credential's validation policy. Native inputs
 reuse the configured client authentication method and its assertion
 type, under <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-2.2" class="relref">Section 2.2</a></span> or <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02#section-3.1" class="relref">Section 3.1</a></span>.
-The equality check below ensures that actor evidence is the credential
-validated under that method. Platform JWTs instead use a configured
+The equality check below identifies the credential already validated
+under that method. In dedicated-client resolution it adds no independent
+identity evidence. Platform JWTs instead use a configured
 credential class. These paths <span class="bcp14">MUST</span> have mutually exclusive validation
 rules; the IdP <span class="bcp14">MUST NOT</span> try validators until one accepts the credential.<a href="#section-8.4.3-2" class="pilcrow">¶</a></p>
 <table class="center" id="table-13">
@@ -3168,7 +3212,7 @@ rules; the IdP <span class="bcp14">MUST NOT</span> try validators until one acce
             </thead>
             <tbody>
               <tr>
-                <td class="text-left" rowspan="1" colspan="1">RFC 7523 client assertion</td>
+                <td class="text-left" rowspan="1" colspan="1">Dedicated client identity</td>
                 <td class="text-left" rowspan="1" colspan="1">
                   <span class="bcp14">REQUIRED</span> at the IdP for <code>private_key_jwt</code>; selectable by the client</td>
                 <td class="text-left" rowspan="1" colspan="1">Identical compact JWT in <code>actor_token</code> and <code>client_assertion</code>; explicit client-to-agent binding under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>
@@ -3777,7 +3821,7 @@ When DPoP is used, proof and nonce errors follow <span>[<a href="#RFC9449" class
 endpoints; unsupported DPoP and missing required issuance proof follow
 <a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#section-8.6-3" class="pilcrow">¶</a></p>
 <p id="section-8.6-4">Client authentication failures use the authentication method's error,
-including when the same JWT supplies actor evidence. Error descriptions
+including when the same JWT is supplied in <code>actor_token</code>. Error descriptions
 <span class="bcp14">SHOULD NOT</span> reveal user or agent
 existence or binding and policy details. Distinguishing <code>invalid_grant</code>
 from <code>actor_unauthorized</code> reveals that an actor was resolved but denied
@@ -3807,7 +3851,7 @@ distinguish the individual binding-resolution failures.<a href="#section-8.6-4" 
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Obtain a new ID-JAG</td>
-              <td class="text-left" rowspan="1" colspan="1">Valid subject credential, current actor evidence, and a fresh IdP authorization decision (<a href="#exchange-request" class="auto internal xref">Section 8.4</a>)</td>
+              <td class="text-left" rowspan="1" colspan="1">Valid subject credential, current agent-resolution input, and a fresh IdP authorization decision (<a href="#exchange-request" class="auto internal xref">Section 8.4</a>)</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">RAS refresh</td>
@@ -3930,8 +3974,8 @@ actor-specific rejection details outside the trust domain.<a href="#section-8.9.
 </div>
 <div id="optional-inputs">
 <section id="section-9">
-      <h2 id="name-optional-evidence-inputs">
-<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-optional-evidence-inputs" class="section-name selfRef">Optional Evidence Inputs</a>
+      <h2 id="name-optional-agent-resolution-i">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-optional-agent-resolution-i" class="section-name selfRef">Optional Agent Resolution Inputs</a>
       </h2>
 <p id="section-9-1">The inputs in this section are <span class="bcp14">OPTIONAL</span>. Existing platform JWTs and
 Client Attestations can supply actor evidence instead of the inputs
@@ -4043,7 +4087,7 @@ and attester endorsement are deferred (<a href="#excluded-compositions" class="a
 <div id="spiffe-input">
 <section id="section-9.3">
         <h3 id="name-spiffe-x509-svid-and-wit-sv">
-<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-spiffe-x509-svid-and-wit-sv" class="section-name selfRef">SPIFFE X.509-SVID and WIT-SVID</a>
+<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-spiffe-x509-svid-and-wit-sv" class="section-name selfRef">SPIFFE X.509-SVID and WIT-SVID Client Authentication</a>
         </h3>
 <p id="section-9.3-1">X.509-SVID <span class="bcp14">MAY</span> authenticate the client under <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02#section-3.2" class="relref">Section 3.2</a></span>, and WIT-SVID under <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02#section-3.3" class="relref">Section 3.3</a></span> and <span>[<a href="#WIT" class="cite xref">WIT</a>]</span>,
 including their proof and key-use requirements. Either request still
@@ -4221,7 +4265,7 @@ previously issued grants or refresh tokens.<a href="#section-10.3-3" class="pilc
               <td class="text-left" rowspan="1" colspan="1">SAML 2.0 assertion or IdP refresh-token subject</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">RFC 7523 client assertion as actor and IdP client authentication</td>
+              <td class="text-left" rowspan="1" colspan="1">Dedicated-client resolution using RFC 7523 authentication</td>
               <td class="text-left" rowspan="1" colspan="1">JWT-SVID, existing platform JWT with separate client authentication, or Client Attestation actor</td>
             </tr>
             <tr>
@@ -4282,8 +4326,8 @@ WAG wire profile or implementation conformance target.<a href="#section-11-1" cl
         </thead>
         <tbody>
           <tr>
-            <td class="text-left" rowspan="1" colspan="1">Workload evidence to IdP</td>
-            <td class="text-left" rowspan="1" colspan="1">Validated external identity resolves through an approved Identity Binding to one active Governed Agent</td>
+            <td class="text-left" rowspan="1" colspan="1">Agent resolution at IdP</td>
+            <td class="text-left" rowspan="1" colspan="1">Validated dedicated-client or workload identity resolves through an approved Identity Binding to one active Governed Agent</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Client authorization</td>
@@ -4334,7 +4378,7 @@ specifications, <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span>,
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">RFC 7523 client assertion as the common input</td>
+              <td class="text-left" rowspan="1" colspan="1">Dedicated-client resolution as the common mode</td>
               <td class="text-left" rowspan="1" colspan="1">Reuses deployed client authentication and registered keys</td>
               <td class="text-left" rowspan="1" colspan="1">Requires a client identity specific to one Governed Agent; shared clients need distinct workload evidence</td>
             </tr>
@@ -4810,8 +4854,8 @@ editor's copies of Identification and Client Attester Endorsement dated
 without specifying it. Coordination is needed on:<a href="#appendix-A.1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.1.1-2.1">
-              <p id="appendix-A.1.1-2.1.1"><strong>Issuance:</strong> External workload evidence as input; the resolved
-Governed Agent in the IdP's namespace as the issued WAG's subject.<a href="#appendix-A.1.1-2.1.1" class="pilcrow">¶</a></p>
+              <p id="appendix-A.1.1-2.1.1"><strong>Issuance:</strong> Dedicated-client or workload-identity resolution at
+the IdP; the Governed Agent in its namespace as the issued WAG's subject.<a href="#appendix-A.1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="appendix-A.1.1-2.2">
               <p id="appendix-A.1.1-2.2.1"><strong>Identifiers:</strong> WAG-owned token-type and JWT-type registrations
@@ -4843,6 +4887,21 @@ distinct from local principal linking and authorization (<a href="#wag-flow" cla
 uses <code>jwt-dpop</code>. This profile follows the normative grant type with
 explicit confirmation processing (<a href="#redemption" class="auto internal xref">Section 8.5</a>) and takes no
 dependency on JWT DPoP Grant.<a href="#appendix-A.1.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="dedicated-client-coordination">
+<section id="appendix-A.1.3">
+          <h4 id="name-dedicated-client-actor-para">
+<a href="#appendix-A.1.3" class="section-number selfRef">A.1.3. </a><a href="#name-dedicated-client-actor-para" class="section-name selfRef">Dedicated-Client Actor Parameters</a>
+          </h4>
+<p id="appendix-A.1.3-1">ID-JAG makes <code>actor_token</code> optional, but <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#appendix-A.1" class="relref">Appendix A.1</a></span>
+describes subject-only exchange as impersonation. Omitting actor
+parameters while deriving a governed actor from client authentication
+needs an explicit composition agreed with ID-JAG and Actor Profile.
+It must define configured mode selection, client-to-agent resolution,
+and delegation authorization without allowing missing workload evidence
+to trigger fallback. This revision retains the explicit actor parameter
+under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>; duplication adds no independent proof.<a href="#appendix-A.1.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -5363,10 +5422,10 @@ errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API 
 </div>
 <div id="client-assertion-example">
 <section id="appendix-C">
-      <h2 id="name-example-client-assertion-wi">
-<a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-example-client-assertion-wi" class="section-name selfRef">Example: Client Assertion Without SPIFFE</a>
+      <h2 id="name-example-dedicated-client-wi">
+<a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-example-dedicated-client-wi" class="section-name selfRef">Example: Dedicated Client Without SPIFFE</a>
       </h2>
-<p id="appendix-C-1">This non-normative example uses <code>analysis-client</code> at the IdP and
+<p id="appendix-C-1">This non-normative example uses a dedicated <code>analysis-client</code> at the IdP and
 <code>analysis-api</code> at the RAS. The IdP has an Identity Binding from
 (<code>analysis-client</code>, <code>analysis-client</code>) in its client-registration
 context to <code>agent-42</code>, a separate Client Association, and permission
@@ -5389,7 +5448,9 @@ key identifier:<a href="#appendix-C-2" class="pilcrow">¶</a></p>
 </pre><a href="#appendix-C-3" class="pilcrow">¶</a>
 </div>
 <p id="appendix-C-4"><code>CLIENT_ASSERTION</code> denotes the same signed compact JWT in both
-parameters. The form body is wrapped for display as in <a href="#walkthrough" class="auto internal xref">Appendix B</a>.
+parameters. This is the explicit actor-parameter convention in
+<a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>, not a second source of workload identity.
+The form body is wrapped for display as in <a href="#walkthrough" class="auto internal xref">Appendix B</a>.
 For bound governed agent access, <code>IDP_DPOP_PROOF</code> proves a separate
 grant key K; it does not use the client-authentication key.<a href="#appendix-C-4" class="pilcrow">¶</a></p>
 <div class="lang-http-message sourcecode" id="appendix-C-5">
