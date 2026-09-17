@@ -123,8 +123,9 @@ Table of Contents
        8.5.2.  Grant Validation
        8.5.3.  Access Token Issuance and Response
        8.5.4.  Access-Token Protection
-       8.5.5.  Opaque Access Tokens and Introspection
-       8.5.6.  RAS Refresh Tokens
+       8.5.5.  Distributed Platforms and Key Use
+       8.5.6.  Opaque Access Tokens and Introspection
+       8.5.7.  RAS Refresh Tokens
      8.6.  Token Endpoint Error Responses
      8.7.  Continuing Access
      8.8.  Client Token Reuse
@@ -624,7 +625,7 @@ Table of Contents
 
       -  Access tokens are JWTs under [RFC9068] or opaque tokens whose
          introspection response carries the same context under
-         Section 8.5.5.
+         Section 8.5.6.
 
       -  SPIFFE JWT-SVIDs, existing platform JWTs, Client Attestation,
          SAML subjects, and IdP refresh-token subjects are OPTIONAL
@@ -647,6 +648,14 @@ Table of Contents
    governed profile.  Support alone does not establish the required
    trust or authorization configuration.  Deployments MAY use mutually
    supported optional inputs instead of the mandatory-to-implement path.
+
+   Under Section 8.4.2, the ID Token's audience identifies the dedicated
+   client.  A token issued only to a shared platform-sso client cannot
+   accompany authentication as a separate analysis-client.  Dedicated
+   deployments therefore need a user authorization flow for each agent's
+   client registration, though an existing IdP session may avoid another
+   login prompt.  A platform retaining its shared SSO client instead
+   uses an agreed independent workload input (Section 9 or Section 5.2).
 
    Credential-class validation follows Section 8.4.3; profile
    applicability and downgrade prevention follow Section 10.3.
@@ -1010,6 +1019,15 @@ Table of Contents
    authentication result, then apply this profile's separate identity
    mapping and authorization checks.
 
+   When retrying a dedicated-client exchange, including after a
+   use_dpop_nonce challenge under [RFC9449], Section 8, the client MUST
+   generate a new client assertion with a fresh jti and use it in both
+   client_assertion and actor_token.  The IdP may already have consumed
+   the previous assertion during authentication.  For a nonce retry, the
+   client MUST also generate a fresh DPoP proof containing the supplied
+   nonce while retaining the grant proof key.  Changing only the DPoP
+   proof does not satisfy the assertion replay rule.
+
    The client and agent remain distinct principals.  This mode does not
    distinguish agents behind one shared client identity; such a client
    MUST present separate supported workload evidence in actor_token.  An
@@ -1289,7 +1307,7 @@ Table of Contents
    refresh authorization already issued.
 
    The RAS MUST limit access-token and refresh-authorization lifetimes
-   under its local policy (Section 8.5.6).  The ID-JAG's exp limits
+   under its local policy (Section 8.5.7).  The ID-JAG's exp limits
    redemption, not subsequent access.  This profile defines no portable
    IdP-imposed deadline on downstream authorization (Appendix A.2.2); it
    requires no shared approval record or correlated lifetime lookup.
@@ -1413,7 +1431,7 @@ Table of Contents
    |                  | protection                          | 8.9     |
    +------------------+-------------------------------------+---------+
    | Refresh          | Explicit policy, client binding,    | Section |
-   | narrowing        | preservation of proof binding and   | 8.5.6   |
+   | narrowing        | preservation of proof binding and   | 8.5.7   |
    |                  | profile, and a finite absolute      |         |
    |                  | authorization expiration            |         |
    +------------------+-------------------------------------+---------+
@@ -1434,19 +1452,10 @@ Table of Contents
 
 8.2.  Prerequisites and Common Capabilities
 
-   Before issuance, the IdP MUST have trusted configuration for:
-
-   *  The Client Association: authenticated client, selected Identity
-      Binding, flow, and credential class.
-
-   *  That client's registration and the user's subject namespace at the
-      target RAS (Section 6.2).
-
-   *  The Governance Tenant, Target Tenant, RAS issuer, and permitted
-      resource.
-
-   *  The applicable governed profile and minimum requirements under
-      Section 10.3.
+   Before issuance, the IdP MUST establish the applicable identity,
+   client, delegation, and target relationships in Section 4.3.  Input
+   and role capabilities are defined in Section 4.2; profile
+   applicability follows Section 10.3.
 
    The IdP MUST derive the ID-JAG client_id from an authoritative
    association between the authenticated IdP client and that client's
@@ -1456,24 +1465,18 @@ Table of Contents
    of an Identity Binding.
 
    Each authorization server establishes authoritative client metadata
-   through registration or, when supported, [CIMD].  The IdP MUST
-   support private_key_jwt under Section 5.1.  Clients selecting JWT-
-   SVID use native authentication under Section 5.2.  The client and RAS
-   MUST support private_key_jwt under [RFC7523], Section 2.2, with
-   client-assertion audience processing under Section 5.1.  Other
-   configured methods MAY be used, and client identifiers and keys MAY
-   differ between servers.
+   through registration or, when supported, [CIMD].  RFC 7523 client
+   authentication at either server follows Section 5.1; JWT-SVID
+   authentication follows Section 5.2.  Other configured methods MAY be
+   used, and client identifiers and keys MAY differ between servers.
 
    private_key_jwt provides a common client-based input and redemption
    method across independent implementations without provisioning a
    shared client secret.  It is mandatory to implement, not mandatory to
    use; governed identity resolution does not depend on that method.
 
-   One platform client, including an existing SSO client authorized for
-   Token Exchange, MAY serve many agents when distinct workload evidence
-   resolves them.  The client-assertion input instead needs a client
-   identity specific to one Governed Agent.  Neither path requires per-
-   replica registration.  With CIMD and SPIFFE authentication, client
+   Neither the dedicated nor shared client model requires per-replica
+   registration.  With CIMD and SPIFFE authentication, client
    association follows [SPIFFE-OAUTH], Section 5.1, including its
    spiffe_id matching rules.  A client-metadata prefix match does not
    replace exact Identity Binding resolution.
@@ -1518,15 +1521,12 @@ Table of Contents
    the IdP follows the selected method's algorithm requirements.
 
    An ID-JAG containing cnf.jkt is bound to the DPoP key proven at
-   issuance and MUST be redeemed with that key.  This revision defines
-   no key transition for bound grants; a distributed platform MUST route
-   their issuance and redemption through the same key holder.  A broker
-   obtaining bound grants for workers therefore also redeems those
-   grants.  Key transition is deferred under Appendix A.2.1.
+   issuance and redeemed under Section 8.3.  The key-holder arrangements
+   through API use are described in Section 8.5.5; independent key
+   transition is deferred under Appendix A.2.1.
 
-   Section 4.3 summarizes deployment configuration by responsible party.
-   Deployments also choose a renewal strategy for unattended work and
-   recovery when fresh user authorization is required (Section 8.7).
+   Deployments choose a renewal strategy and recovery when fresh user
+   authorization is required under Section 8.7.
 
 8.3.  Grant Protection
 
@@ -1678,6 +1678,26 @@ Table of Contents
    ID-JAG.  User access tokens are not subject inputs in this revision
    (Appendix A.2.3); JWT encoding alone does not make an access token an
    ID Token.
+
+   Refresh-token eligibility includes cross-domain authorization, not
+   merely an SSO session:
+
+   *  The IdP MUST establish that the token's retained authorization
+      permits the requested target and authority under [ID-JAG],
+      Section 4.3.3.  Possession of a refresh token or an offline_access
+      grant alone MUST NOT establish that permission.
+
+   *  The retained context may include an explicitly associated cross-
+      domain delegation authorization.  Its representation and
+      provisioning are local to the IdP; OIDC scope names do not
+      themselves map to resource-specific permissions.
+
+   *  For example, a token issued with openid offline_access is eligible
+      for files.read at https://ras.example/ only if its authorization
+      context also permits that target and authority.  Current agent and
+      delegation checks still apply.  Without that authorization, the
+      deployment needs an authorization flow that establishes it before
+      unattended exchange can proceed.
 
 8.4.3.  Actor Token Validation
 
@@ -1925,7 +1945,7 @@ Table of Contents
 
    After validation and authorization, the RAS MUST issue an access
    token with these claims under [RFC9068], or equivalent context
-   through Section 8.5.5:
+   through Section 8.5.6:
 
    *  *Identity:* RAS as issuer, resolved user as subject, and validated
       act unchanged under Section 6.3.  Neither the authenticated client
@@ -1956,7 +1976,7 @@ Table of Contents
 
    The response follows [ID-JAG], Section 4.4.2; the client MUST reject
    an output that does not satisfy its configured protection
-   requirement.  Refresh-token issuance follows Section 8.5.6.  An
+   requirement.  Refresh-token issuance follows Section 8.5.7.  An
    unexpired ID-JAG remains reusable under ID-JAG, each redemption
    requiring validation of any required proof and current RAS policy.
 
@@ -2009,7 +2029,40 @@ Table of Contents
    as an unconstrained bearer token or bypass an unrecognized
    confirmation method.
 
-8.5.5.  Opaque Access Tokens and Introspection
+8.5.5.  Distributed Platforms and Key Use
+
+   Bound-grant issuance and redemption require the same key holder.  For
+   a DPoP access token, API use also requires proofs from that key;
+   handing only the token to a worker with an independent key is
+   insufficient.
+
+     +================+=============================================+
+     | Arrangement    | Requirement through API use                 |
+     +================+=============================================+
+     | Broker obtains | Broker holds the grant proof key and calls  |
+     | and uses the   | the API, including when proxying an         |
+     | token          | authorized worker request                   |
+     +----------------+---------------------------------------------+
+     | Worker uses a  | Worker holds the same key or obtains        |
+     | DPoP token     | request-specific proofs from its authorized |
+     |                | key holder; a remote signing interface and  |
+     |                | its authorization are outside this profile  |
+     +----------------+---------------------------------------------+
+     | Another        | Explicitly configured bearer use needs no   |
+     | access-token   | API proof key; mutual TLS requires the      |
+     | protection     | certificate key to which the RAS bound the  |
+     | mode           | access token at redemption                  |
+     +----------------+---------------------------------------------+
+
+                                 Table 19
+
+   Remote signing or shared key custody does not establish an
+   independent worker binding and expands the trusted computing base.
+   This revision defines no handoff to a worker's independent DPoP key
+   (Appendix A.2.1).  Access-token and refresh-token bindings remain
+   subject to Section 8.5.4 and Section 8.5.7.
+
+8.5.6.  Opaque Access Tokens and Introspection
 
    The RAS MAY issue an opaque access token instead of a JWT when the
    API obtains equivalent context through token introspection [RFC7662].
@@ -2040,7 +2093,7 @@ Table of Contents
    The processing in Section 8.9 applies to the introspected context
    exactly as to JWT claims.
 
-8.5.6.  RAS Refresh Tokens
+8.5.7.  RAS Refresh Tokens
 
    The RAS SHOULD NOT issue refresh tokens, retaining [ID-JAG],
    Section 4.4.3, but MAY do so for authorized long-running work under
@@ -2068,7 +2121,7 @@ Table of Contents
    |                   | use rotation under [RFC9700], Section 4.14   |
    +-------------------+----------------------------------------------+
 
-                                 Table 19
+                                 Table 20
 
    A refresh request MAY include one resource parameter under [RFC8707],
    Section 2.2 solely to identify the retained resource.  If omitted,
@@ -2099,23 +2152,15 @@ Table of Contents
    *  Issue access tokens under Section 8.5.3 and Section 8.5.4,
       expiring no later than the absolute authorization expiration.
 
-   This is RAS-local authorization context; no refresh-token format,
-   storage representation, or cross-domain refresh exchange is defined.
-   Because RAS refresh proceeds without a fresh IdP decision, absolute
-   expiration prevents authorization derived from one ID-JAG from
-   becoming indefinitely renewable solely through RAS-local refresh.
-
-   The absolute expiration bounds authorization derived from one ID-JAG,
-   not the entire delegated session.  Continued access beyond that
-   period requires a new ID-JAG, a new IdP authorization decision, and a
-   new RAS authorization decision.  If permitted, those decisions
-   establish a new authorization period; they do not extend the previous
-   one.  Repeated issuance using an IdP refresh token therefore relies
-   on IdP refresh-token and delegation policy, and any cumulative RAS
-   limits, to bound overall unattended access.
-
-   Refresh is not evidence of a fresh IdP decision.  IdP-side revocation
-   reaches the RAS only through a signal or online check (Section 12.6).
+   This is RAS-local authorization context; no refresh-token format or
+   storage representation is defined.  Absolute expiration prevents
+   indefinite renewal from one ID-JAG without a fresh IdP decision.
+   Continued access beyond that expiration requires a new ID-JAG and new
+   IdP and RAS authorization decisions, establishing a new period rather
+   than extending the old one.  IdP refresh-token and delegation policy,
+   together with any cumulative RAS limits, bound overall unattended
+   access.  IdP revocation reaches existing RAS authorization only
+   through a signal or online check (Section 12.6).
 
 8.6.  Token Endpoint Error Responses
 
@@ -2211,7 +2256,7 @@ Table of Contents
     | from the grant's client_id      |                               |
     +---------------------------------+-------------------------------+
 
-                                  Table 20
+                                  Table 21
 
    Agent-resolution credential failures use invalid_grant instead of the
    default invalid_request described by RFC 8693; this narrowing is
@@ -2245,15 +2290,15 @@ Table of Contents
      +-----------------+--------------------------------------------+
      | RAS refresh     | Preserves authorization at the same RAS    |
      |                 | within its lifetime and policy limits      |
-     |                 | (Section 8.5.6)                            |
+     |                 | (Section 8.5.7)                            |
      +-----------------+--------------------------------------------+
 
-                                 Table 21
+                                 Table 22
 
    An IdP refresh token can supply the subject credential for a new
-   exchange when permitted; otherwise renewal may require user
-   interaction.  The five-minute ID-JAG recommendation bounds
-   redemption, not task duration.  Cross-domain continuity using
+   exchange only when eligible under Section 8.4.2; otherwise renewal
+   may require user interaction.  The five-minute ID-JAG recommendation
+   bounds redemption, not task duration.  Cross-domain continuity using
    Identity Continuation Assertion [ICA] is a separate, deferred
    composition (Appendix A.2.4).
 
@@ -2292,7 +2337,7 @@ Table of Contents
 
    For tokens subject to this profile, the API MUST validate access
    tokens under [RFC9068], or obtain the same context under
-   Section 8.5.5, and MUST enforce the following requirements:
+   Section 8.5.6, and MUST enforce the following requirements:
 
    *  *Identity:* Require one act object with non-empty iss and sub and
       no nested act.  Trust configuration MUST authorize the RAS to
@@ -2402,7 +2447,7 @@ Table of Contents
    |            | accepted audience combined with exact selectors      |
    +------------+------------------------------------------------------+
 
-                                  Table 22
+                                  Table 23
 
    The IdP MUST validate the JWT under [RFC7519] and [RFC8725] and the
    configured credential profile.  Keys or URLs in the JWT MUST NOT
@@ -2463,7 +2508,7 @@ Table of Contents
       |                           | exact SPIFFE ID in sub         |
       +---------------------------+--------------------------------+
 
-                                 Table 23
+                                 Table 24
 
    Either request still requires a separate supported agent-resolution
    input.  These authentication identities alone do not produce an
@@ -2591,39 +2636,6 @@ Table of Contents
    after the participating roles implement its requirements; it does not
    relabel previously issued grants or refresh tokens.
 
-   Conformance follows Section 4.2; other deployment choices are
-   summarized below.
-
-   +=======================+===========================================+
-   | Common capability     | Configured alternatives                   |
-   +=======================+===========================================+
-   | ID Token subject      | SAML 2.0 assertion or IdP refresh-        |
-   |                       | token subject                             |
-   +-----------------------+-------------------------------------------+
-   | Dedicated-client      | JWT-SVID, existing platform JWT           |
-   | resolution using RFC  | with separate client                      |
-   | 7523 authentication   | authentication, or Client                 |
-   |                       | Attestation agent-resolution input        |
-   +-----------------------+-------------------------------------------+
-   | private_key_jwt at    | Native spiffe_jwt or other methods        |
-   | the IdP and RAS       | where supported by the selected           |
-   |                       | input                                     |
-   +-----------------------+-------------------------------------------+
-   | DPoP-protected access | Mutual-TLS-bound access token             |
-   | token, or bearer      |                                           |
-   | where the resource    |                                           |
-   | explicitly permits it |                                           |
-   +-----------------------+-------------------------------------------+
-   | JWT access token      | Opaque access token with                  |
-   | under [RFC9068]       | introspection under Section 8.5.5         |
-   +-----------------------+-------------------------------------------+
-   | No RAS refresh token; | RAS refresh tokens under                  |
-   | renewal by new        | Section 8.5.6                             |
-   | exchange              |                                           |
-   +-----------------------+-------------------------------------------+
-
-                                  Table 24
-
    Before using the delegated path, the client and IdP MUST agree
    through trusted configuration on issuance support and any options;
    generic JWT or authentication-method support is insufficient.  The
@@ -2726,7 +2738,7 @@ Table of Contents
    |                    | authenticated       | policy                 |
    |                    | introspection       |                        |
    |                    | response            |                        |
-   |                    | (Section 8.5.5)     |                        |
+   |                    | (Section 8.5.6)     |                        |
    +--------------------+---------------------+------------------------+
    | Actor-aware API    | The actor gate      | APIs parse act and     |
    | processing         | is enforced         | consult the gate on    |
@@ -3383,6 +3395,12 @@ B.2.  Exchange Request and Response
    server nonce is included if challenged.  The same key is proven at
    redemption; JKT_K denotes its public key thumbprint.
 
+   After use_dpop_nonce, retry with a new client assertion in both
+   assertion parameters and a fresh DPoP proof containing the nonce,
+   still signed by K (Section 5.1).  For example, replace assertion
+   jti=analysis-auth-1 with analysis-auth-2; resending analysis-auth-1
+   with only a new proof is a replay.
+
    POST /token HTTP/1.1
    Host: idp.example
    Content-Type: application/x-www-form-urlencoded
@@ -3587,7 +3605,7 @@ B.5.  Intermediate Adoption Variant
    An unbound grant may instead obtain a DPoP-bound access token by
    presenting a valid proof at redemption; this does not establish bound
    governed agent access.  Refresh, if enabled, follows the applicable
-   binding rules in Section 8.5.6.
+   binding rules in Section 8.5.7.
 
 B.6.  Renewal and Rejection Examples
 
@@ -3601,7 +3619,7 @@ B.6.  Renewal and Rejection Examples
    access token expires no later than its end.  Continued access beyond
    that period requires a new ID-JAG, a new IdP authorization decision,
    and a new RAS authorization decision.  These establish a new period
-   under Section 8.5.6; the previous period's expiration remains
+   under Section 8.5.7; the previous period's expiration remains
    unchanged.
 
    Each rejection below changes one condition in the walkthrough; all
@@ -3628,6 +3646,13 @@ B.6.  Renewal and Rejection Examples
    | Exchange repeats    | IdP       | HTTP 400, invalid_client; dual |
    | analysis-auth-1     |           | presentation within one        |
    |                     |           | request is not a replay        |
+   +---------------------+-----------+--------------------------------+
+   | After a nonce       | IdP       | HTTP 400, invalid_client;      |
+   | challenge, retry    |           | regenerate the assertion in    |
+   | uses a fresh proof  |           | both parameters                |
+   | but reuses the      |           |                                |
+   | consumed analysis-  |           |                                |
+   | auth-1 assertion    |           |                                |
    +---------------------+-----------+--------------------------------+
    | Exchange contains a | IdP       | HTTP 400, invalid_target;      |
    | second resource     |           | obtain separate grants for the |
