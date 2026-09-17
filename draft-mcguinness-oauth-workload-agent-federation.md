@@ -582,41 +582,56 @@ administrative act outside this profile ({{operational-guidance}}).
 
 ## Identity Mapping Example {#identity-example}
 
-This non-normative example uses a shared platform SSO client and a
-corresponding RAS client. The IdP associates approved SPIFFE IDs with
-the shared client for authentication; tenant trust, Identity Bindings,
-and Client Associations remain separate. Replicas obtain evidence for
-the same platform agent without per-replica registration.
+Alice asks a data-analysis agent to read a file. The platform uses one
+shared OAuth client for many agents, so its client identifier alone
+cannot identify which agent is acting. This non-normative example uses
+the optional SPIFFE input to make that distinction.
 
-| Association | Configured value |
-|---|---|
-| Shared OAuth client at IdP; corresponding client at RAS | `platform-sso`; `platform-api` |
-| Approved SPIFFE trust domain and bundle endpoint | `platform.example`; `https://platform.example/spiffe/bundle` |
-| Exact external workload identity | `spiffe://platform.example/accounts/acme/agents/workload-7` |
-| Client authentication | JWT-SVID associated with `platform-sso` at IdP; `private_key_jwt` for `platform-api` at RAS |
-| Governed Agent and Governance Tenant | `agent-42` at `https://idp.example/`; `acme` |
-| Target RAS, tenant, and resource | `https://ras.example/`; `acme-data`; `https://api.example/tenants/acme-data/` |
-| RAS agent principal | `service-principal-42`, linked to `(https://idp.example/, agent-42)` |
-| Delegation | Agent may act for Alice on `files.read` in `acme-data` |
+The request passes four separate decisions:
 
-Alice's ID Token has `sub=alice-app` and `aud=platform-sso`.
-The IdP translates her subject to `alice-ras` for the RAS, which links
-it to local user `user-108`. Alice holds the file permission; the local
-agent principal passes the actor gate without an independent file ACL.
+1. **Resolve the agent.** The IdP validates the
+   workload's JWT-SVID. An Identity Binding maps its exact SPIFFE ID,
+   `spiffe://platform.example/accounts/acme/agents/workload-7`, to
+   `agent-42` in the namespace of `https://idp.example/`. The agent
+   belongs to Governance Tenant `acme`.
+2. **Authorize the client.** The IdP's configured SPIFFE
+   association authenticates the caller as `platform-sso`. A separate
+   Client Association permits that client to use this Identity Binding
+   for delegated ID-JAG issuance. Authenticating the client does not
+   grant that permission.
+3. **Authorize delegation.** Alice's ID Token identifies her as
+   `alice-app` and was issued for `platform-sso`. The IdP authorizes
+   `agent-42` to act for her with `files.read` at the requested resource
+   in Target Tenant `acme-data`, and issues an ID-JAG for the RAS.
+4. **Apply resource policy.** The RAS resolves
+   Alice to its local user `user-108` and correlates the IdP-qualified
+   agent with local principal `service-principal-42`. Alice has the
+   file permission, and resource policy permits this agent to act for
+   her. In this example, the agent needs no separate file ACL.
 
-The same agent can run in Kubernetes with SPIFFE ID
-`spiffe://platform.example/accounts/acme/agents/workload-7-k8s`.
-A second Identity Binding resolves it to `agent-42`. The Client
-Association permits the shared client to use either approved binding.
-Either binding produces the same IdP-qualified actor and RAS principal.
-Disabling one leaves the other available, subject to policy.
+The resulting tokens show which identities change across the boundary:
 
-Under the intended WAG composition, `agent-42` would be the subject
-for self-acting work ({{wag-gaps}}). The execution environment changes
-neither the governed identity nor its downstream correlation.
+| Claim | ID-JAG issued by IdP | Access token issued by RAS |
+|---|---|---|
+| `sub` (Alice) | `alice-ras` | `user-108` |
+| `act.iss` (agent namespace) | `https://idp.example/` | `https://idp.example/` |
+| `act.sub` (Governed Agent) | `agent-42` | `agent-42` |
+| `client_id` (client at RAS) | `platform-api` | `platform-api` |
+| `scope` | `files.read` | `files.read` |
 
-{{shared-client-example}} applies this configuration to the complete
-message sequence in {{walkthrough}}.
+`alice-ras` is Alice's identifier in the target SSO namespace;
+`platform-api` is the registration corresponding to `platform-sso` at
+the RAS. The RAS translates the user and preserves the agent. Its local
+agent record supports authorization; `service-principal-42` does not
+replace `act.sub`.
+
+If the agent later runs under another approved workload identity, a
+second Identity Binding can resolve it to the same `agent-42`. Client
+Association must permit that binding too. The downstream agent identity
+then stays unchanged, and either binding can be disabled independently.
+
+{{shared-client-example}} supplies the credential and request details
+for this scenario, using the complete message sequence in {{walkthrough}}.
 
 ## Requirements by Implementer {#profile-requirements}
 
