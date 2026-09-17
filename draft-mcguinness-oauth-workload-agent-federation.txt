@@ -2171,7 +2171,11 @@ Table of Contents
       API.
 
    The processing in Section 8.9 applies to the introspected context
-   exactly as to JWT claims.
+   exactly as to JWT claims.  Deployments also applying
+   [AGENT-LIFECYCLE] use that companion's configured enforcement mode:
+   online introspection forbids active-response reuse, while bounded
+   introspection caching imposes an explicit cache interval in addition
+   to the limits above.
 
 8.5.7.  RAS Refresh Tokens
 
@@ -2461,6 +2465,12 @@ Table of Contents
       Section 8.5.3 and verify that it matches the tenant of the
       requested operation.  Missing, ambiguous, or conflicting tenant
       context MUST result in denial.
+
+   [AGENT-LIFECYCLE] adds lifecycle enforcement when that companion is
+   configured.  Its expiring-JWT mode retains offline validation with an
+   explicit token-lifetime ceiling; its introspection modes bound the
+   time an active response can be relied upon.  This document alone does
+   not impose those additional modes or their disablement guarantees.
 
    If the API delegates authorization evaluation to a policy decision
    service, it MUST preserve the distinction between the user, the
@@ -2981,6 +2991,12 @@ Table of Contents
    Appendix A.3.1; without a signal or online check, issued tokens
    remain usable until expiration.
 
+   For deployments applying [AGENT-LIFECYCLE], that companion defines
+   ordered state propagation, reactivation cutoffs, and mode-specific
+   denial bounds.  Its RAS enforcement stops issuance and refresh;
+   cached introspection results or offline JWTs may remain usable within
+   the configured mode's explicit bound.
+
    The following table summarizes the effect after a change is applied
    at the enforcing server; it defines no new propagation mechanism:
 
@@ -3224,6 +3240,14 @@ Table of Contents
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
 15.2.  Informative References
+
+   [AGENT-LIFECYCLE]
+              McGuinness, K., "A SCIM and Shared Signals Profile for
+              Governed Agent Lifecycle", Work in Progress, Internet-
+              Draft, draft-mcguinness-oauth-governed-agent-lifecycle,
+              n.d., <https://mcguinness.github.io/draft-mcguinness-
+              oauth-workload-agent-federation/draft-mcguinness-oauth-
+              governed-agent-lifecycle.html>.
 
    [EMA]      Model Context Protocol, "Enterprise-Managed
               Authorization", n.d.,
@@ -3494,8 +3518,11 @@ A.3.1.  Provisioning and Disablement
    Consistent record correlation and disablement across IdP and RAS need
    a lifecycle specification defining issuer-qualified correlation,
    authoritative properties, update ordering, freshness bounds, missed-
-   event recovery, and the effect on outstanding tokens.  Until then,
-   Section 6.3 and Section 12.6 state what this profile guarantees.
+   event recovery, and the effect on outstanding tokens.  The companion
+   [AGENT-LIFECYCLE] defines a proposed SCIM and Shared Signals
+   composition for those requirements.  It is not required for
+   conformance to this federation profile; Section 6.3 and Section 12.6
+   state the guarantees of this document alone.
 
 Appendix B.  Walkthrough: Dedicated Client
 

@@ -1,0 +1,1529 @@
+
+
+
+
+Web Authorization Protocol                                 K. McGuinness
+Internet-Draft                                               Independent
+Intended status: Standards Track                       17 September 2026
+Expires: 21 March 2027
+
+
+     A SCIM and Shared Signals Profile for Governed Agent Lifecycle
+         draft-mcguinness-oauth-governed-agent-lifecycle-latest
+
+Abstract
+
+   This document defines provisioning and lifecycle management for the
+   stable, issuer-qualified principals established by Governed Agent
+   Federation.  It profiles SCIM Agent resources for correlation with
+   resource-local principals and defines a Shared Signals event carrying
+   the same authoritative lifecycle state.
+
+   The profile specifies disablement, reactivation, retirement, update
+   ordering, recovery, and enforcement against new and existing OAuth
+   authorization.  Lifecycle changes do not establish client authority,
+   user delegation, or resource permissions.  No new workload credential
+   or event-delivery protocol is defined.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   The latest revision of this draft can be found at
+   https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-
+   federation/draft-mcguinness-oauth-governed-agent-lifecycle.html.
+   Status information for this document may be found at
+   https://datatracker.ietf.org/doc/draft-mcguinness-oauth-governed-
+   agent-lifecycle/.
+
+   Discussion of this document takes place on the Web Authorization
+   Protocol Working Group mailing list (mailto:oauth@ietf.org), which is
+   archived at https://mailarchive.ietf.org/arch/browse/oauth/.
+   Subscribe at https://www.ietf.org/mailman/listinfo/oauth/.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-
+   federation.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 21 March 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction
+     1.1.  Scope and Relationship to Other Specifications
+   2.  Conventions and Terminology
+   3.  Conformance and Trust Configuration
+   4.  Identity, Correlation, and Administrative Authority
+     4.1.  Ownership, Groups, and Entitlements
+   5.  Lifecycle State
+     5.1.  SCIM Extension Attributes
+     5.2.  States and Transitions
+     5.3.  Authorization Cutoff and Issuance
+   6.  SCIM Provisioning
+     6.1.  Creation and Existing Records
+     6.2.  Updates and Common Processing
+     6.3.  Retirement and Deletion
+   7.  Lifecycle Signals
+     7.1.  Target Tenant and Stream Binding
+     7.2.  Event Definition
+     7.3.  Delivery and Acceptance
+   8.  Enforcement and Freshness
+     8.1.  Eligibility and Existing Authorization
+     8.2.  Grant Validation and Retained Provenance
+       8.2.1.  Migration of Existing Authorization
+     8.3.  API Enforcement Modes
+       8.3.1.  Online Introspection
+       8.3.2.  Bounded Introspection Cache
+       8.3.3.  Expiring JWT
+       8.3.4.  Common Resource Requirements
+     8.4.  State Freshness and Loss of Delivery
+   9.  Reconciliation and Recovery
+   10. Relationship-Specific Changes
+     10.1.  Self-Acting Access
+   11. Security Considerations
+     11.1.  Lifecycle Writers and Token Confusion
+     11.2.  Rollback, Reactivation, and Compromised Authorities
+     11.3.  Availability and Administrative Evidence
+   12. Privacy Considerations
+   13. IANA Considerations
+     13.1.  SCIM Schema Registration
+     13.2.  OAuth URI Registration
+   14. SCIM Schema Registration Template
+   15. References
+     15.1.  Normative References
+     15.2.  Informative References
+   Appendix A.  Provisioning and Disablement Example
+     A.1.  Provision the Agent
+     A.2.  Activate and Issue Authorization
+     A.3.  Disable Through a Signal
+     A.4.  Delayed Delivery and Reactivation
+   Appendix B.  Relationship to Existing Work
+   Appendix C.  Document History
+   Author's Address
+
+1.  Introduction
+
+   Governed Agent Federation [FEDERATION] separates agent identity,
+   client authority, user delegation, and resource authorization.  It
+   identifies an agent by the pair (IdP issuer, Governed Agent
+   identifier), independently of the workload credentials used to
+   establish it.
+
+   For delegated access, the governed identity is the actor in an
+   Identity Assertion JWT Authorization Grant (ID-JAG) [ID-JAG].  This
+   companion uses Security Event Tokens (SETs) [RFC8417] and the Shared
+   Signals Framework (SSF) [SSF] to convey lifecycle changes to the
+   resource domain.
+
+   Resource domains also need to provision that principal and respond to
+   changes in its eligibility.  Creating a directory record does not
+   grant access.  Disabling a record does not, by itself, invalidate
+   issued tokens.  Delivering a security event does not demonstrate that
+   an API enforced it.
+
+   This profile connects those operations:
+
+    Enterprise IdP                         Resource domain
+    +----------------------+               +--------------------+
+    | Governed Agent       | -- SCIM ----> | Correlated local   |
+    | Lifecycle Authority  | -- SET/SSF -> | agent + lifecycle  |
+    +----------------------+               +---------+----------+
+                                                     |
+                                             +-------v-------+
+                                             | RAS issuance, |
+                                             | refresh, and  |
+                                             | introspection |
+                                             +-------+-------+
+                                                     |
+                                             +-------v-------+
+                                             | API request   |
+                                             | authorization |
+                                             +---------------+
+
+              Figure 1: Provisioning and lifecycle enforcement
+
+   SCIM supplies the durable resource interface.  Shared Signals
+   supplies timely notification.  Both carry one versioned state, so
+   delayed delivery cannot reverse a newer change.  A finite validity
+   interval bounds reliance on active state when neither channel
+   delivers an update.
+
+1.1.  Scope and Relationship to Other Specifications
+
+   This revision defines a complete IdP-to-resource-domain path:
+
+   *  Provision or explicitly correlate a Governed Agent with a local
+      record.
+
+   *  Synchronize active, disabled, and retired state.
+
+   *  Apply changes to grant redemption, access-token issuance, refresh,
+      and API authorization.
+
+   *  Recover from duplicate, delayed, or missed delivery.
+
+   It reuses the Agent resource in [SCIM-AGENT].  The extension defined
+   here adds federation identity and synchronization semantics.  It does
+   not replace the Agent resource or define a general agent inventory.
+
+   [SCIM-GOVERNANCE] describes broader administrative lifecycle states.
+   [WISE] describes changes to workloads, credentials, and trust
+   material.  [CAEP] describes continuous-access events.  Those
+   mechanisms can supply inputs to an authority's decision.  The state
+   defined here expresses the result for a Governed Agent and the
+   receiver obligations that follow.
+
+   Platform-to-IdP enrollment, Identity Binding administration,
+   individual delegation revocation, task cancellation, runtime instance
+   lifecycle, and risk scoring are outside this revision.  Their
+   boundaries are stated in Section 10.
+
+2.  Conventions and Terminology
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   [BCP14] (RFC2119) (RFC8174) when, and only when, they appear in all
+   capitals, as shown here.
+
+   OAuth terms follow [RFC6749].  Governed Agent, Identity Binding,
+   Client Association, Governance Tenant, and resource authorization
+   server (RAS) follow [FEDERATION].  SCIM terms follow [RFC7643] and
+   [RFC7644]; Transmitter, Receiver, and stream follow [SSF].
+
+   Lifecycle Authority:  The IdP responsible for the Governed Agent's
+      enterprise lifecycle state.  An authorized connector can deliver
+      that state on its behalf.
+
+   Lifecycle Receiver:  The resource-domain component accepting
+      provisioning and lifecycle updates and making them effective at
+      the RAS.  It is a SCIM service provider and an SSF Receiver.  It
+      and the RAS form one administrative deployment responsible for
+      atomic state application; they need not run in the same process.
+
+   State Record:  The complete extension object defined in Section 5,
+      including its identity, version, status, authorization cutoff, and
+      validity.
+
+   Authorization Cutoff:  A time watermark invalidating authorization
+      derived from grants issued at or before that time.  It survives
+      reactivation and missed intermediate state changes.
+
+   Local Suspension:  A resource-domain restriction maintained
+      independently of the Lifecycle Authority's state.  Upstream
+      activation cannot clear it.
+
+3.  Conformance and Trust Configuration
+
+   A deployment claiming this profile MUST implement:
+
+    +=====================+===========================================+
+    | Component           | Required behavior                         |
+    +=====================+===========================================+
+    | Lifecycle Authority | Issue ordered state records; provision    |
+    | and its connector   | through SCIM; transmit lifecycle SETs;    |
+    |                     | reconcile delivery                        |
+    +---------------------+-------------------------------------------+
+    | Lifecycle Receiver  | Implement the SCIM extension, SSF push    |
+    |                     | delivery, common ordering rules, and      |
+    |                     | durable correlation                       |
+    +---------------------+-------------------------------------------+
+    | IdP grant issuer    | Enforce lifecycle eligibility and the     |
+    |                     | issuance-time contract in Section 5.3     |
+    +---------------------+-------------------------------------------+
+    | RAS                 | Enforce eligibility at redemption and     |
+    |                     | refresh; retain grant provenance;         |
+    |                     | implement the configured enforcement mode |
+    +---------------------+-------------------------------------------+
+    | API                 | Apply the configured mode in Section 8.3  |
+    |                     | and the Federation authorization rules    |
+    +---------------------+-------------------------------------------+
+
+                                  Table 1
+
+   This profile adds lifecycle checks to the applicable Federation
+   profile.  It does not replace its client authentication, grant
+   validation, actor gate, or access-token protection requirements.  A
+   deployment MUST establish applicability through trusted
+   configuration, not infer it from a token missing lifecycle
+   information.
+
+   Before provisioning, the parties MUST configure:
+
+   *  The governing IdP issuer and the permitted agent namespace.
+
+   *  The authenticated SCIM connector and SSF Transmitter authorized
+      for that namespace, and the receiver audience and target tenant.
+
+   *  A maximum active-state validity interval, clock-error bounds, and
+      maximum receiver enforcement delay (Section 8.4).
+
+   *  The enforcement mode and its introspection, caching, or token-
+      lifetime limits for each API population (Section 8.3).
+
+   *  The RAS and APIs covered by the lifecycle enforcement contract.
+
+   The Receiver MUST authorize SCIM and SSF writers for the same
+   namespace.  An event's signing issuer need not equal the governing
+   IdP issuer; that authority relationship MUST be configured.  A valid
+   signature or a SCIM write permission for another tenant does not
+   establish it.
+
+   This revision has one logical Lifecycle Authority per governed
+   identity.  Multiple connectors MAY represent it, but MUST share its
+   version sequence and issuance cutoff.  Independent writers and
+   authority failover without preserved state are outside this profile.
+
+   The lifecycle guarantee assumes that the Authority applies its
+   committed decision to all grant-issuing nodes before publishing
+   disablement, that issuers report actual issuance times within the
+   configured clock bounds, and that renewals reflect a current
+   lifecycle decision rather than a connector's old cached state.  These
+   are source-side trust assumptions; receivers cannot establish them by
+   validating a State Record.  A deployment that does not satisfy them
+   is non-conformant, not a degraded mode of this profile.
+
+4.  Identity, Correlation, and Administrative Authority
+
+   The canonical identity is the exact pair (issuer, subject) in the
+   State Record.  The subject MUST be unique and non-reassignable across
+   all Governance Tenants sharing that issuer.  A Governance Tenant or
+   target tenant does not add a component to the canonical identity.
+
+   For delegated access, issuer and subject MUST equal the validated ID-
+   JAG's act.iss and act.sub, respectively.  The RAS MUST look up
+   lifecycle state by that pair in the grant's authorized Target Tenant,
+   not by the user's sub, the OAuth client, or the access-token issuer.
+
+   The Receiver MUST:
+
+   *  Match both components exactly, without case folding or URI
+      rewriting.
+
+   *  Correlate the pair with at most one local agent principal in each
+      target tenant.
+
+   *  Reject attempts to replace either component of an existing
+      correlation.
+
+   *  Require explicit local administrative authorization to attach the
+      pair to a pre-existing principal; matching names or email
+      addresses is not sufficient.
+
+   SCIM id identifies the Receiver's local resource. externalId is a
+   provisioning correlation value with the scope defined by [RFC7643].
+   Neither replaces the canonical identity. agentUserName and display
+   attributes are not federation identifiers.
+
+   Existing service principals MAY represent agents locally.  Their
+   local identifiers and implementation types do not change the governed
+   identity.  The SCIM Agent resource MUST be a management
+   representation of that same local principal, not a second
+   authorization principal.  The Receiver maintains the mapping from its
+   SCIM id to the existing principal and applies lifecycle changes to
+   that principal's authorization.
+
+   This is local state; no cross-resource linking attribute is defined.
+   Mapping it to a different principal requires explicit administrative
+   correlation, not an ordinary synchronization update.  The same rules
+   apply when the agent is an ID-JAG actor or, in a future WAG
+   composition, a self-acting subject (Section 10.1).
+
+4.1.  Ownership, Groups, and Entitlements
+
+   Agent ownership and group membership use [SCIM-AGENT] and [RFC7643].
+   Receivers SHOULD support those attributes for administrative
+   accountability and local policy.  They MUST authorize their
+   modification independently of permission to deliver lifecycle state.
+
+   An owner is an accountable party, not automatically a delegator.  An
+   owner change MUST NOT itself create user delegation, Client
+   Association, or resource permissions.  Group membership has only the
+   authorization meaning assigned by resource-domain policy; this
+   document defines none.
+
+   The Lifecycle Authority controls enterprise eligibility.  The
+   resource domain controls local permissions and suspension.  Effective
+   eligibility requires both.  An upstream update MUST NOT clear a Local
+   Suspension or restore previously revoked resource permissions.
+
+   Effective eligibility, Local Suspension, and local permissions are
+   not observable through this SCIM extension.  A returned active: true
+   reports the source's administrative status only; it is not an access
+   decision.
+
+5.  Lifecycle State
+
+5.1.  SCIM Extension Attributes
+
+   The extension schema URI is:
+
+   urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent
+
+   Its name is GovernedAgentLifecycle.  The attributes below are all
+   single-valued, REQUIRED, returned by default, and have uniqueness
+   none.  String attributes have caseExact: true.  Mutability is
+   readWrite except for issuer and subject, which are immutable.
+   Uniqueness of the identity pair is enforced under Section 4.
+
+    +========================+==========+============================+
+    | Attribute              | SCIM     | Meaning                    |
+    |                        | type     |                            |
+    +========================+==========+============================+
+    | issuer                 | string   | Governing IdP issuer       |
+    |                        |          | identifier                 |
+    +------------------------+----------+----------------------------+
+    | subject                | string   | Governed Agent identifier  |
+    |                        |          | in that issuer's namespace |
+    +------------------------+----------+----------------------------+
+    | version                | string   | Strictly increasing source |
+    |                        |          | version, defined below     |
+    +------------------------+----------+----------------------------+
+    | status                 | string   | One of active, disabled,   |
+    |                        |          | or retired                 |
+    +------------------------+----------+----------------------------+
+    | authorizationNotBefore | dateTime | Authorization Cutoff;      |
+    |                        |          | grants with iat at or      |
+    |                        |          | before it are ineligible   |
+    +------------------------+----------+----------------------------+
+    | assertedAt             | dateTime | Time the Authority         |
+    |                        |          | produced this State Record |
+    +------------------------+----------+----------------------------+
+    | validUntil             | dateTime | Exclusive end of           |
+    |                        |          | permission to rely on this |
+    |                        |          | record as active           |
+    +------------------------+----------+----------------------------+
+
+                                 Table 2
+
+   Dates MUST use UTC with the Z offset and whole-second precision.
+   authorizationNotBefore MAY be later than assertedAt by the configured
+   issuer-ahead clock bound in Section 5.3.  For active state,
+   validUntil MUST be later than assertedAt.  For disabled or retired
+   state it remains REQUIRED for a uniform record shape but is ignored
+   for validity and enforcement.  These requirements narrow the SCIM
+   dateTime representation to allow unambiguous comparison with JWT
+   NumericDate values [RFC7519].
+
+   The Receiver MUST reject a cutoff later than assertedAt + D.  D is
+   agreed with the Authority for this issuer namespace, not learned from
+   an incoming record.
+
+   version MUST be a decimal string representing an integer from 1
+   through 9223372036854775807, using only ASCII digits and no leading
+   zero.  Comparison is numerical, not lexical.  Implementations MUST
+   preserve it without floating-point rounding; a signed 64-bit integer
+   is sufficient.  The Authority MUST increase it for every new State
+   Record, including renewal of validUntil; it MUST NOT reuse or reset a
+   version for that identity.
+
+   The record is a complete snapshot, not a delta.  The Authority MUST
+   retain the current version and cutoff across restarts, backup
+   recovery, and connector changes.  SCIM meta.version remains the
+   Receiver's HTTP entity tag; it is not this source sequence.
+
+   The schema description above defines the /Schemas representation:
+   status has the three canonical values listed in Section 5.2; the
+   other attributes have no canonical value enumeration.  Providers MUST
+   advertise the specified types, mutability, requiredness, return
+   behavior, and case sensitivity.
+
+5.2.  States and Transitions
+
+   +==========+====================================+===================+
+   | State    | Meaning                            | Permitted         |
+   |          |                                    | next states       |
+   +==========+====================================+===================+
+   | active   | Enterprise eligibility, subject to | active,           |
+   |          | freshness and local authorization  | disabled,         |
+   |          |                                    | retired           |
+   +----------+------------------------------------+-------------------+
+   | disabled | Reversible withdrawal of           | disabled,         |
+   |          | enterprise eligibility             | active,           |
+   |          |                                    | retired           |
+   +----------+------------------------------------+-------------------+
+   | retired  | Permanent withdrawal for this      | retired           |
+   |          | governed identity                  |                   |
+   +----------+------------------------------------+-------------------+
+
+                                  Table 3
+
+   Initial provisioning SHOULD use disabled.  Initial active state
+   requires explicit enterprise activation and local acceptance; record
+   creation alone MUST NOT supply either decision.
+
+   On disablement or retirement, the Authority MUST advance the
+   Authorization Cutoff under Section 5.3.  Repeated disabled or retired
+   snapshots retain that cutoff unless a later cutoff is needed.
+
+   On reactivation, the Authority MUST advance the cutoff again.
+   Earlier authorization remains invalid.  Descriptive changes such as
+   displayName updates require a new source version, even when the
+   lifecycle attributes would otherwise be unchanged.  Descriptive
+   changes and active validity renewals MUST NOT advance the cutoff
+   unless the Authority also intends to invalidate existing
+   authorization.
+
+   If whole-second precision prevents a strictly increased cutoff within
+   the configured clock bound, the Authority waits before asserting the
+   new transition.  Disablement still closes the issuance gate
+   immediately.
+
+   Retirement is terminal.  A new principal needs a new governed
+   identifier.  Deletion of a local SCIM representation MUST NOT permit
+   reuse of the retired identity or erase its retirement protection.
+
+5.3.  Authorization Cutoff and Issuance
+
+   An Authorization Cutoff invalidates grants and retained authorization
+   issued at or before it, even if a Receiver missed the disabled state.
+   It MUST never decrease.
+
+   Every ID-JAG issued under this companion MUST contain iat, as already
+   required by [ID-JAG], Section 3.1.  This profile additionally
+   requires a whole-second NumericDate representing its issuance time.
+
+   Let D be the configured maximum number of whole seconds by which any
+   grant issuer can be ahead of the Authority, including clock error and
+   rounding.  If each clock is within S seconds of a common time source,
+   D must cover at least 2S, rounded up.  This is a difference between
+   clocks, not just one clock's error.
+
+   When advancing the cutoff, the Authority MUST set it to its current
+   whole-second time plus D, strictly above the previous cutoff.  This
+   covers all grants issued before the committed transition without
+   tracking the greatest iat across issuing nodes.  The source-side
+   assumptions in Section 3 still require the issuance gate to close
+   before publication.
+
+   After activation, the issuer MUST issue only grants with iat strictly
+   later than the cutoff.  Until its actual clock clears the cutoff,
+   issuance waits or fails.  A cutoff ahead of the Authority's clock
+   therefore creates a bounded activation delay; it does not justify
+   postdating grants.  Receivers MUST NOT apply positive clock-skew
+   tolerance when comparing the validated grant iat with the cutoff.
+
+   The issuance-time contract is an additional requirement of this
+   companion; the presence of iat is inherited from ID-JAG.  No new
+   grant or access-token claim is defined.  Shared lifecycle decisions
+   and bounded clocks remain necessary; a connector unable to obtain
+   them is non-conformant.
+
+6.  SCIM Provisioning
+
+   The Receiver MUST implement Agent resources at /Agents using
+   [SCIM-AGENT] and the extension in Section 5.  It MUST publish the
+   extension at /Schemas and advertise it in the Agent ResourceType's
+   schemaExtensions.  The extension is REQUIRED for resources governed
+   by this profile; it need not be required for unrelated Agent
+   resources.
+
+   The required operations are POST, resource GET, filtered collection
+   GET, and PUT under [RFC7644].  Receivers MUST support equality
+   filtering on both extension identity attributes and their
+   conjunction.  PATCH and Bulk are OPTIONAL; if supported, they MUST
+   preserve the atomicity and ordering rules below.
+
+6.1.  Creation and Existing Records
+
+   The connector MUST supply the Agent core's required attributes and
+   the complete extension. active MUST be true exactly when extension
+   status is active; inconsistent input is 400 with invalidValue.  The
+   core attribute represents source administrative status, not the
+   result of freshness checks or Local Suspension.
+
+   The Receiver MUST check its correlation and retirement records before
+   creation.  A duplicate canonical identity in the target tenant is 409
+   with uniqueness.  This requirement applies independently of
+   agentUserName uniqueness.
+
+   Malformed extension attributes use 400 with invalidValue; attempts to
+   change immutable identity attributes use 400 with mutability.  Other
+   SCIM errors retain their meanings from [RFC7644].
+
+   After an uncertain POST result, the connector MUST query by the
+   qualified identity before retrying creation.  It MUST NOT create a
+   second principal under a different name to bypass a conflict.
+
+   Explicitly authorized correlation with an existing local principal
+   MAY occur before POST.  The resulting Agent resource represents that
+   principal; the Receiver MUST NOT silently merge principals during
+   synchronization.
+
+6.2.  Updates and Common Processing
+
+   SCIM writes and lifecycle events MUST use the same processing rules:
+
+   1.  Authenticate the sender and authorize its namespace and target
+       tenant.
+
+   2.  Validate the complete record, identity, and times.  Reject an
+       assertedAt in the future by more than the permitted clock error;
+       delayed records are not rejected for their age alone.  Apply the
+       active-reliance clamp in Section 8.4, rather than rejecting an
+       excessive validity interval.
+
+   3.  Compare the source version with the highest retained version.
+
+       *  A lower version cannot modify state.
+
+       *  An equal version with identical defined attribute values is a
+          duplicate; it cannot extend freshness.
+
+       *  An equal version with different defined values is a conflict.
+
+   4.  For a higher version, reject a decreasing cutoff or assertedAt,
+       or any transition out of retained retirement.  An expired
+       snapshot may advance retained state, but cannot establish active
+       eligibility.  A change from active to inactive, or from disabled
+       to active, MUST have a strictly increased cutoff.
+
+   5.  Atomically persist the accepted state and make its issuance and
+       introspection restrictions effective before reporting SCIM
+       success.
+
+   Equality ignores JSON member order.  Receivers MUST compare SCIM
+   attribute names according to SCIM rules and values according to
+   Section 5.  Unknown extension attributes do not establish new
+   permissions.
+
+   A lower-version SCIM write or a conflicting equal-version write
+   receives 409 with a SCIM detail string describing the conflict and no
+   scimType.  There is no applicable registered scimType for a source-
+   version conflict.
+
+   A duplicate write returns the current resource without reapplying its
+   lifecycle changes.  If the same version arrived first through an
+   event, the first authorized SCIM representation at that version MAY
+   populate its descriptive attributes.  The Receiver MUST remember that
+   application; changing those attributes again requires a newer
+   version.
+
+   An invalid transition or decreasing cutoff receives 400 with
+   invalidValue.  Failed HTTP conditional requests use the HTTP and SCIM
+   precondition rules, independently of source versions.
+
+   PUT MUST contain the complete extension.  A supported PATCH changing
+   any lifecycle attribute MUST provide a complete resulting State
+   Record and consistent core active value in one atomic request.
+   Omitting the extension or deleting a required attribute is 400 with
+   invalidValue.
+
+   Metadata changes MUST NOT bypass lifecycle version checks.  If an
+   older PUT includes a stale status and new display name, the entire
+   write is rejected; it is not partially applied.
+
+   An accepted event MUST update the extension and core active value
+   visible through SCIM, including the resource's modification metadata.
+   GET therefore reports applied state, not merely the most recent SCIM
+   write.  Pending events are not represented as successfully applied
+   state.
+
+6.3.  Retirement and Deletion
+
+   The connector MUST deliver retired state before deleting the local
+   representation.  The Receiver MUST reject DELETE of a non-retired
+   profile resource with 403.  This is this profile's operation
+   restriction, not a DELETE rule of RFC 7644; it prevents deletion from
+   bypassing ordered lifecycle processing.
+
+   After deletion, the Receiver MUST retain a tombstone containing the
+   qualified identity, terminal status, highest version, and cutoff.
+   That identity MUST NOT be recreated as an active principal.  A local
+   administrator can remove access without retiring the enterprise
+   identity by applying a Local Suspension instead.
+
+7.  Lifecycle Signals
+
+7.1.  Target Tenant and Stream Binding
+
+   Each lifecycle stream MUST be bound by trusted administrative
+   configuration to exactly one governing issuer namespace and one
+   Target Tenant at the Receiver.  The binding is associated with the
+   SSF stream ID and its stream configuration; this profile adds no SSF
+   configuration member.
+
+   The configured aud MUST contain exactly one audience value assigned
+   to that issuer-namespace and Target-Tenant pair.  That value MUST NOT
+   be reused for a different pair.  Each SET MUST carry that audience as
+   its sole audience, and the Receiver MUST check it against the bound
+   stream before selecting the tenant or looking up the agent.  A shared
+   push endpoint can use the authenticated stream and audience mapping;
+   the agent identifier alone cannot select a Target Tenant.
+
+   The SCIM connector's authorization and endpoint context MUST resolve
+   the same Target Tenant.  Changing a stream's tenant or issuer-
+   namespace binding requires a new stream and audience value; replay on
+   another binding MUST be rejected.  The target tenant scopes local
+   correlation, not the canonical agent identity or its source version
+   sequence.
+
+7.2.  Event Definition
+
+   This document defines the SET event type:
+
+   urn:ietf:params:oauth:event-type:governed-agent-lifecycle
+
+   It carries the Authority's current State Record, including validity
+   renewals.  It is an assertion of enterprise lifecycle state, not a
+   command to grant local access.
+
+   The Transmitter and Receiver MUST follow [RFC8417] and [SSF],
+   including signature validation, stream issuer, audience, and delivery
+   authorization.  The event MUST:
+
+   *  Use JWT type secevent+jwt and contain no exp claim, as required by
+      SSF.  The State Record's validUntil limits active-state reliance;
+      it is not SET expiration.
+
+   *  Identify the agent using the top-level sub_id with the iss_sub
+      format from [RFC9493].
+
+   *  Contain a state member whose value is a JSON object with the seven
+      attributes defined in Section 5 directly as members.  It MUST NOT
+      wrap them in a SCIM schema-URN member or include a schemas member.
+      Required member names use the spelling in that section.  Receivers
+      MUST ignore other unknown members; they confer no lifecycle
+      semantics.
+
+   *  Have matching sub_id.iss / state.issuer and sub_id.sub /
+      state.subject values.
+
+   The event object has no other REQUIRED members.  The subject MUST NOT
+   be placed in an event-local subject member.  A Receiver MUST NOT
+   infer the agent's governing issuer from the SET's top-level iss.
+
+7.3.  Delivery and Acceptance
+
+   Both parties MUST support SSF push delivery using [RFC8935].  SSF
+   poll delivery [RFC8936] MAY additionally be supported.  Mandatory
+   push support is this profile's requirement, not a requirement of base
+   SSF.  The event type is advertised through existing SSF event
+   capability and stream configuration fields; no separate discovery
+   protocol is defined.
+
+   The Authority MUST arrange delivery of each new State Record through
+   SCIM or SSF, and MUST enqueue a lifecycle event on every status or
+   cutoff change for each configured target stream.
+
+   When a stream is paused or delivery fails, the Transmitter retains
+   the event for its configured retry period and the connector uses SCIM
+   reconciliation.  Expiration of that period does not remove the
+   obligation to reconcile current state.  SCIM and SSF do not need to
+   arrive in the same order.  Retransmitting a record MUST NOT change
+   its version or validity; a fresh validity assertion requires a new
+   version.
+
+   Receivers MUST durably deduplicate SETs by Transmitter issuer and jti
+   for the configured delivery retry period.  Source-version processing
+   remains necessary after the deduplication record expires and across
+   SCIM delivery of the same state.  Neither jti nor SET iat is a state
+   ordering mechanism.
+
+   Accepted lower-version events and exact duplicates are acknowledged
+   without changing state.  Invalid or conflicting events use the
+   delivery protocol's existing error reporting; this document defines
+   no new delivery error code.  Conflicting equal-version records MUST
+   also raise an administrative diagnostic.
+
+   A delivery acknowledgment confirms durable acceptance for processing,
+   not completed API enforcement.  The Receiver MUST make accepted
+   restrictions effective within its configured enforcement delay.  It
+   MUST NOT report successful SCIM application of the same version while
+   those restrictions remain pending.
+
+   An event for an unprovisioned identity MUST NOT create an enabled
+   local principal.  A Receiver MUST retain authorized disabled or
+   retired state for that identity, so a later stale provisioning
+   request cannot bypass it.  For active state, it retains the version
+   and cutoff but waits for authorized SCIM provisioning before
+   permitting access.
+
+   An authorized SCIM creation can establish the local correlation using
+   the same version and identical state retained from an earlier event.
+   This creates the resource without changing or refreshing the State
+   Record.  A stale creation attempt is rejected with 409; the connector
+   obtains the current record from its Authority before retrying.
+
+8.  Enforcement and Freshness
+
+8.1.  Eligibility and Existing Authorization
+
+   The RAS MUST deny new grant redemption, access-token issuance, and
+   refresh unless all of the following hold:
+
+   *  The qualified agent has an authorized local correlation.
+
+   *  Its latest accepted status is active and its state is fresh.
+
+   *  No applicable Local Suspension or terminal tombstone exists.
+
+   *  The original IdP grant has a validated iat strictly after the
+      current Authorization Cutoff.
+
+   *  The Federation profile's client, user, tenant, authority, and
+      actor authorization requirements succeed.
+
+   On disablement or retirement, the RAS MUST invalidate existing
+   derived authorization.  When the cutoff advances, it MUST invalidate
+   authorization whose original grant iat is at or before the new
+   cutoff.  These invalidations are permanent: subsequent activation
+   cannot reverse them.  They take effect immediately at the RAS; cached
+   decisions and offline access tokens cease API use within the
+   applicable mode's bound below.
+
+   A token request failing these lifecycle checks uses invalid_grant
+   under [RFC6749] and the applicable grant profile.  Introspection
+   returns active: false under [RFC7662].  Error descriptions SHOULD
+   avoid disclosing lifecycle status or the existence of another
+   tenant's agent.
+
+8.2.  Grant Validation and Retained Provenance
+
+   The RAS MUST reject a grant with missing iat, a non-numeric or
+   fractional iat, or an issuance time inconsistent with its configured
+   clock and grant-validation rules, using invalid_grant.  The grant
+   MUST also clear the current cutoff.  Presence of iat follows ID-JAG;
+   whole-second precision and the cutoff check are additional companion
+   requirements.
+
+   The RAS MUST retain the canonical agent identity, authorized Target
+   Tenant, and original grant iat with every authorization derived from
+   the grant, including access tokens and refresh authorization.
+   Refresh, rotation, and token issuance MUST NOT replace that
+   provenance with a newer local timestamp.  This is an additional RAS
+   requirement of this companion, not an implied property of OAuth
+   refresh or of an access token's own iat.
+
+   No new token claim or storage format is required.  The RAS can retain
+   the context in its authorization record; APIs in the offline mode do
+   not need to recover the original grant time from the access token.
+
+8.2.1.  Migration of Existing Authorization
+
+   Before applying this profile to an existing token population, the RAS
+   MUST either recover its original validated grant context or require a
+   new ID-JAG and new authorization.  It MUST NOT infer missing
+   provenance from an access token's issue time, provisioning time, or
+   current agent state.
+
+   Legacy refresh authorization without recoverable provenance MUST NOT
+   mint tokens in the new population.  Deployments MAY drain existing
+   access tokens under their previous policy before enabling the
+   lifecycle guarantee.  The new guarantee begins only after those
+   tokens and any cached active results can no longer authorize
+   requests.  Migration does not silently grandfather untracked tokens
+   into a stronger bound.
+
+8.3.  API Enforcement Modes
+
+   The RAS and API MUST configure one of the following modes for each
+   governed token population.  These are deployment modes, not new OAuth
+   profile URIs or assurance levels.  A token or validation failure MUST
+   NOT select a weaker mode.  All modes retain Federation's token
+   protection and actor gate.
+
+   +===============+==========================+=======================+
+   | Mode          | Resource behavior        | Additional bound      |
+   |               |                          | after RAS enforcement |
+   +===============+==========================+=======================+
+   | Online        | Introspect each request; | T                     |
+   | introspection | no reuse of active       |                       |
+   |               | responses                |                       |
+   +---------------+--------------------------+-----------------------+
+   | Bounded       | Reuse an active response | T + C                 |
+   | introspection | for at most C, within    |                       |
+   | cache         | token expiry             |                       |
+   +---------------+--------------------------+-----------------------+
+   | Expiring JWT  | Validate JWTs offline;   | A                     |
+   |               | bound their effective    |                       |
+   |               | acceptance lifetime by A |                       |
+   +---------------+--------------------------+-----------------------+
+
+                                 Table 4
+
+   Both introspection modes MUST use authenticated [RFC7662] processing.
+   Before returning active: true, the RAS MUST apply current eligibility
+   and retained-provenance checks in addition to normal token
+   validation.  JWT or opaque access tokens can use these modes.
+
+8.3.1.  Online Introspection
+
+   The API MUST introspect the access token on every request and MUST
+   NOT reuse an active response.  It MUST complete the authorization
+   decision within T of starting introspection; a late result requires
+   another check or denial.  An inactive response, failed check, or
+   timeout cannot permit the request.  This mode narrows Federation's
+   permitted introspection caching.
+
+8.3.2.  Bounded Introspection Cache
+
+   The API MAY reuse an active response for at most C after its receipt,
+   provided that response arrived within T of starting introspection.
+   It MUST check both cache age and token expiry at each authorization
+   decision.  The cache deadline MUST NOT extend beyond exp, and a
+   response without exp MUST NOT be reused, retaining Federation's
+   existing restriction.
+
+   Cache hits MUST NOT restart the interval.  After expiry of the cached
+   result, failed revalidation or timeout cannot authorize use of stale
+   state.  A newly obtained inactive response MUST invalidate the cached
+   active result.  This mode makes Federation's configurable cache-
+   freshness limit explicit.
+
+8.3.3.  Expiring JWT
+
+   The RAS and API MUST apply [RFC9068] and Federation's JWT processing.
+   The RAS MUST limit each token's exp - iat to a configured maximum J.
+   The API MUST reject a token exceeding J, verify expiration at each
+   decision, and apply at most its configured expiration leeway P.
+   Refresh and repeated grant redemption remain subject to current
+   lifecycle state at the RAS.
+
+   Let A = J + 2S + P, where S bounds each party's clock error.  Issuers
+   use their actual issuance clock under Section 3; future dating cannot
+   extend the configured lifetime.  Thus A bounds elapsed acceptance
+   after issuance, including clock uncertainty and leeway.
+
+   This mode retains Federation's offline-validation option and adds a
+   token lifetime ceiling.  An API may continue accepting a previously
+   issued token until its bounded expiry even after RAS revocation.
+   Neither reactivation nor a later cache policy change can extend that
+   token's expiry.  Direct event processing at APIs can shorten this
+   interval, but its consistency protocol is outside this revision.
+
+8.3.4.  Common Resource Requirements
+
+   The API MUST continue enforcing token authority, user authorization,
+   and the actor gate from [FEDERATION].  An active response or valid
+   signature does not itself authorize an operation.  Invalid-token
+   responses follow [RFC6750] and the applicable access-token protection
+   specification.
+
+   The bounds concern new authorization decisions, not rollback of
+   completed operations or cancellation of work already admitted.  Long-
+   running sessions need separate revalidation or cancellation rules.
+   Where APIs use different modes, the deployment-wide bound is the
+   longest applicable bound.
+
+8.4.  State Freshness and Loss of Delivery
+
+   An active State Record is a time-limited assertion.  The Authority
+   MUST renew it within the Receiver's accepted interval to maintain
+   continuous eligibility.  The trust assumption for a current source
+   decision on renewal is stated in Section 3.
+
+   For active state, the Receiver MUST set its effective reliance
+   deadline to the earlier of validUntil and assertedAt + L, where L is
+   its configured maximum interval.  It MUST clamp an excessive
+   interval, not reject the State Record or rewrite the source's stored
+   fields.  It MUST stop relying on active state at that deadline,
+   accounting conservatively for clock error.
+
+   For disabled or retired state, validUntil and L MUST NOT delay,
+   prevent, or expire its restrictive effect.  Syntax, source
+   authorization, ordering, and cutoff checks still apply.  Arrival
+   time, replay, stream heartbeats, and reads of the Receiver's own SCIM
+   resource cannot refresh source state.
+
+   Expiration blocks new RAS issuance, refresh, and active introspection
+   until a newer active record has an effective deadline in the future.
+   Cached results and offline tokens follow their mode's residual
+   acceptance bound.  The distinction is intentional: freshness loss is
+   reversible, while administrative revocation is permanent.  Still-
+   valid authorization MAY become usable after freshness is restored if
+   its grant clears the cutoff; disablement and cutoff invalidation
+   cannot be reversed by renewal.
+
+   Let S bound clock error at each party and E bound enforcement delay
+   after acceptance.  Under the source-side assumptions in Section 3,
+   the conservative RAS stopping bound after disablement is B = L + 2S +
+   E, even if the notification is lost.  Applied notification can
+   shorten this window.
+
+         +=====================+================================+
+         | Enforcement mode    | Conservative denial bound from |
+         |                     | the Authority's disablement    |
+         +=====================+================================+
+         | Online              | B + T = L + 2S + E + T         |
+         | introspection       |                                |
+         +---------------------+--------------------------------+
+         | Bounded             | B + T + C                      |
+         | introspection cache |                                |
+         +---------------------+--------------------------------+
+         | Expiring JWT        | B + A, with A = J + 2S + P     |
+         +---------------------+--------------------------------+
+
+                                 Table 5
+
+   The JWT term includes additional clock uncertainty at token issuance
+   and expiry validation; it is not merely the nominal token lifetime.
+   All parameters are finite deployment limits.  Deployments MUST
+   document their mode, limits, timeouts, and outage behavior.  They
+   MUST NOT claim a shorter bound based solely on grant lifetime or
+   successful event delivery.
+
+9.  Reconciliation and Recovery
+
+   The connector MUST maintain the mapping from each source identity to
+   the Receiver's SCIM resource ID and MUST periodically reconcile it.
+   Reconciliation uses ordinary SCIM GET and PUT; this document defines
+   no snapshot or cursor API.
+
+   For example, this is one decoded SCIM filter value.  Unfold backslash
+   continuations under [RFC8792] before use; remaining line breaks stand
+   for whitespace.  Percent-encode the complete value in the query
+   parameter:
+
+   =============== NOTE: '\' line wrapping per RFC 8792 ================
+
+   urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
+   issuer eq "https://idp.example" and
+   urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
+   subject eq "agent-42"
+
+   The query runs under the connector's authorized Target Tenant.  The
+   extension URI qualifies each attribute as specified by [RFC7644].
+
+   For each identity assigned to a target tenant, the connector:
+
+   1.  Queries its known resource ID, or filters by the qualified
+       identity when the ID is unknown or the resource is missing.
+
+   2.  Compares the returned State Record with the Authority's current
+       record.
+
+   3.  Creates a missing authorized resource or sends the current
+       complete record when the Receiver is behind.
+
+   4.  Investigates a Receiver version ahead of the source; it MUST NOT
+       reset the sequence or overwrite state with a lower version.
+
+   An absent identity in a partial inventory MUST NOT be treated as
+   retired.  The Authority MUST retain explicit retirement records and
+   retry them until affected receivers have applied them.  Retirement
+   tombstones also protect against older backups and late provisioning
+   requests.
+
+   SCIM records, pending event state, and tombstones participate in the
+   same version comparison.  Applying version 43 does not require
+   delivery of version 42 because snapshots include the nondecreasing
+   cutoff.  A Receiver MUST NOT depend on observing every intermediate
+   transition.
+
+   After loss of correlation or lifecycle state, the Receiver MUST deny
+   affected authorization until trusted reconciliation completes.
+   Restoring an old backup MUST NOT make its active records fresh or
+   bypass retained retirement protections.  Restoring an Authority
+   without its version and issuance watermark requires administrative
+   recovery, not a sequence reset.
+
+10.  Relationship-Specific Changes
+
+   Agent-wide lifecycle state is deliberately distinct from changes to
+   an individual relationship:
+
+    +===================+============================================+
+    | Change            | Required boundary                          |
+    +===================+============================================+
+    | Disable one       | Stop new grants through that binding;      |
+    | Identity Binding  | other approved bindings remain independent |
+    +-------------------+--------------------------------------------+
+    | Withdraw a Client | Stop the affected client use; do not infer |
+    | Association       | that the agent has been disabled           |
+    +-------------------+--------------------------------------------+
+    | Revoke one user's | Affect that delegation; do not disable     |
+    | delegation        | unrelated users or self-acting authority   |
+    +-------------------+--------------------------------------------+
+    | Revoke a workload | Apply credential validation and IdP        |
+    | credential        | policy; do not automatically retire the    |
+    |                   | governed principal                         |
+    +-------------------+--------------------------------------------+
+    | Change ownership  | Apply the authorized administrative or     |
+    | or groups         | local policy change; do not infer new      |
+    |                   | delegation                                 |
+    +-------------------+--------------------------------------------+
+
+                                 Table 6
+
+   The IdP applies the first three boundaries under [FEDERATION].  This
+   companion does not define portable events identifying those
+   relationships.  Selective revocation of their existing downstream
+   tokens needs issuance provenance and an agreed relationship
+   identifier; the agent's act identity alone is insufficient.
+
+   OAuth token revocation [RFC7009] remains available to revoke a known
+   token at its issuing server.  It neither identifies every
+   authorization derived from a Governed Agent nor distributes principal
+   lifecycle state across domains.  It complements this profile; it does
+   not replace its cutoff, ordering, or propagation contract.
+
+   A WISE or other upstream signal MAY inform the Authority's decision.
+   The Authority MUST evaluate its source, affected credential or
+   workload, and Identity Bindings before producing agent-wide lifecycle
+   state.  Receivers MUST NOT reinterpret such upstream subjects as
+   governed identifiers without the federation mapping.
+
+10.1.  Self-Acting Access
+
+   The lifecycle identity is independent of the authorization flow.  The
+   intended [WAG] composition correlates the same Governed Agent with
+   the same local agent principal used for delegated access.
+
+   Delegated access preserves the IdP-qualified actor in act; self-
+   acting access represents the correlated local principal as the
+   resource-domain subject.  These representations do not make their
+   authority interchangeable.
+
+   This revision claims no WAG wire conformance.  A future composition
+   needs an authenticated governed subject and issuance time to apply
+   the same cutoff and provenance checks.  It does not need a separate
+   agent lifecycle.
+
+11.  Security Considerations
+
+11.1.  Lifecycle Writers and Token Confusion
+
+   A lifecycle writer can disable agents or assert renewed eligibility.
+   Receivers MUST restrict writers to explicitly authorized issuer and
+   target tenant relationships.  They MUST NOT derive that permission
+   from an unverified payload, a supplied URL, or a display name.
+   Channel credentials and SET keys follow their underlying protocols'
+   validation requirements.
+
+   SETs are not OAuth grants or access tokens.  Receivers MUST keep
+   lifecycle event validation separate from those token classes.  The
+   secevent+jwt type and absence of exp support this separation; they do
+   not replace signature, issuer, audience, and writer authorization
+   checks.
+
+11.2.  Rollback, Reactivation, and Compromised Authorities
+
+   Durable source versions prevent delivery rollback.  The cutoff
+   prevents reactivation from reviving old authorization, including when
+   a Receiver missed disablement.  Both properties depend on retained
+   state.  A higher version does not make a decreasing cutoff
+   acceptable.
+
+   An authorized source that lies about status, issuance times, or
+   freshness can defeat the enterprise lifecycle guarantee.  Local
+   restrictions remain independent and SHOULD be available for incident
+   containment.  This profile does not protect against compromise of the
+   governing IdP itself.
+
+11.3.  Availability and Administrative Evidence
+
+   Short validity intervals and online introspection limit stale access
+   but increase load and sensitivity to outages.  Cached introspection
+   and expiring JWTs trade longer residual access for fewer online
+   checks.  Operators SHOULD choose the mode, state interval, and
+   delivery capacity together, and monitor renewal lag, conflicts, and
+   enforcement delays.
+
+   Maintaining N active agents with validity interval L requires more
+   than N/L fresh state assertions per second when allowing delivery
+   margin.  For 100,000 agents and five minutes, the nominal minimum is
+   about 333 per second per target domain, before retries.  SSF delivery
+   uses signed SETs; SCIM renewals can use existing Bulk support when
+   available.  Neither delivery choice removes the need for a current
+   source eligibility decision.  Staggering renewals avoids synchronized
+   bursts.  Longer intervals reduce traffic but increase the stated
+   disablement bound; a transmitter heartbeat alone cannot renew every
+   agent's eligibility.
+
+   Audit records SHOULD distinguish source decision, receipt,
+   application, and API denial times.  A transport acknowledgment is not
+   evidence that every API has stopped accepting affected authorization.
+
+12.  Privacy Considerations
+
+   Stable governed identifiers enable correlation across users,
+   resources, and time.  Lifecycle streams SHOULD be limited to resource
+   domains that have provisioned or otherwise authorized correlation for
+   the agent.  Writers MUST be authorized for the target tenant before
+   disclosure.
+
+   This profile does not require transmitting external workload
+   identifiers, credential identifiers, user delegations, owner email
+   addresses, or incident details in events.  Implementations SHOULD
+   minimize such additional data.  Retirement tombstones retain only the
+   identity and synchronization data needed to prevent reuse; other
+   attributes can follow local retention policy.
+
+13.  IANA Considerations
+
+13.1.  SCIM Schema Registration
+
+   This document requests registration in the SCIM Schema URIs registry
+   under the procedure in [RFC7643], Section 10.3.  The registration
+   template is in Section 14.
+
+13.2.  OAuth URI Registration
+
+   This document requests registration in the OAuth URI registry under
+   [RFC6755]:
+
+   *  URN: urn:ietf:params:oauth:event-type:governed-agent-lifecycle
+
+   *  Common Name: Governed Agent Lifecycle Security Event
+
+   *  Change Controller: IETF
+
+   *  Specification Document: Section 7 of this document.
+
+   The URI identifies a SET event, not a grant type or access-token
+   type.  This registration deliberately introduces the event-type class
+   under the OAuth URN namespace; it is a proposed use of the
+   registration procedure in RFC 6755, not an existing event-type
+   subregistry or a new registry.  Both identifiers are proposed
+   registrations, not completed assignments.
+
+14.  SCIM Schema Registration Template
+
+   The registration template required by [RFC7643], Section 10.3.2 is:
+
+   *  Schema URI: urn:ietf:params:scim:schemas:extension:governed-
+      agent:2.0:Agent
+
+   *  Schema Name: Governed Agent Lifecycle Extension
+
+   *  Intended or Associated Resource Type: Agent
+
+   *  Purpose: Carry the canonical governed identity and authoritative
+      lifecycle state used for provisioning and OAuth enforcement.
+
+   *  Single-value Attributes: issuer, subject, version, status,
+      authorizationNotBefore, assertedAt, validUntil, as defined in
+      Section 5.
+
+   *  Multi-valued Attributes: None.
+
+15.  References
+
+15.1.  Normative References
+
+   [FEDERATION]
+              McGuinness, K., "OAuth 2.0 Profile for Governed Agent
+              Federation", Work in Progress, Internet-Draft, draft-
+              mcguinness-oauth-workload-agent-federation, 17 September
+              2026, <https://datatracker.ietf.org/doc/html/draft-
+              mcguinness-oauth-workload-agent-federation>.
+
+   [ID-JAG]   Parecki, A., McGuinness, K., and B. Campbell, "Identity
+              Assertion JWT Authorization Grant", Work in Progress,
+              Internet-Draft, draft-ietf-oauth-identity-assertion-authz-
+              grant-04, 21 May 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              identity-assertion-authz-grant-04>.
+
+   [SCIM-AGENT]
+              Wahl, M., Zollner, D., Dingle, P., and I. Kazzouzi, "AI
+              Agent Resource Extension for the System for Cross-domain
+              Identity Management (SCIM)", Work in Progress, Internet-
+              Draft, draft-wzdk-scim-agent-resource-00, 5 June 2026,
+              <https://datatracker.ietf.org/doc/html/draft-wzdk-scim-
+              agent-resource-00>.
+
+   [SSF]      OpenID Foundation, "OpenID Shared Signals Framework
+              Specification 1.0", 29 August 2025,
+              <https://openid.net/specs/openid-sharedsignals-framework-
+              1_0-final.html>.
+
+   [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
+              RFC 6749, DOI 10.17487/RFC6749, October 2012,
+              <https://www.rfc-editor.org/rfc/rfc6749>.
+
+   [RFC6750]  Jones, M. and D. Hardt, "The OAuth 2.0 Authorization
+              Framework: Bearer Token Usage", RFC 6750,
+              DOI 10.17487/RFC6750, October 2012,
+              <https://www.rfc-editor.org/rfc/rfc6750>.
+
+   [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
+              (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
+              <https://www.rfc-editor.org/rfc/rfc7519>.
+
+   [RFC7643]  Hunt, P., Ed., Grizzle, K., Wahlstroem, E., and C.
+              Mortimore, "System for Cross-domain Identity Management:
+              Core Schema", RFC 7643, DOI 10.17487/RFC7643, September
+              2015, <https://www.rfc-editor.org/rfc/rfc7643>.
+
+   [RFC7644]  Hunt, P., Ed., Grizzle, K., Ansari, M., Wahlstroem, E.,
+              and C. Mortimore, "System for Cross-domain Identity
+              Management: Protocol", RFC 7644, DOI 10.17487/RFC7644,
+              September 2015, <https://www.rfc-editor.org/rfc/rfc7644>.
+
+   [RFC7662]  Richer, J., Ed., "OAuth 2.0 Token Introspection",
+              RFC 7662, DOI 10.17487/RFC7662, October 2015,
+              <https://www.rfc-editor.org/rfc/rfc7662>.
+
+   [RFC8417]  Hunt, P., Ed., Jones, M., Denniss, W., and M. Ansari,
+              "Security Event Token (SET)", RFC 8417,
+              DOI 10.17487/RFC8417, July 2018,
+              <https://www.rfc-editor.org/rfc/rfc8417>.
+
+   [RFC8935]  Backman, A., Ed., Jones, M., Ed., Scurtescu, M., Ansari,
+              M., and A. Nadalin, "Push-Based Security Event Token (SET)
+              Delivery Using HTTP", RFC 8935, DOI 10.17487/RFC8935,
+              November 2020, <https://www.rfc-editor.org/rfc/rfc8935>.
+
+   [RFC8936]  Backman, A., Ed., Jones, M., Ed., Scurtescu, M., Ansari,
+              M., and A. Nadalin, "Poll-Based Security Event Token (SET)
+              Delivery Using HTTP", RFC 8936, DOI 10.17487/RFC8936,
+              November 2020, <https://www.rfc-editor.org/rfc/rfc8936>.
+
+   [RFC9068]  Bertocci, V., "JSON Web Token (JWT) Profile for OAuth 2.0
+              Access Tokens", RFC 9068, DOI 10.17487/RFC9068, October
+              2021, <https://www.rfc-editor.org/rfc/rfc9068>.
+
+   [RFC9493]  Backman, A., Ed., Scurtescu, M., and P. Jain, "Subject
+              Identifiers for Security Event Tokens", RFC 9493,
+              DOI 10.17487/RFC9493, December 2023,
+              <https://www.rfc-editor.org/rfc/rfc9493>.
+
+   [BCP14]    Best Current Practice 14,
+              <https://www.rfc-editor.org/info/bcp14>.
+              At the time of writing, this BCP comprises the following:
+
+              Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+              Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+15.2.  Informative References
+
+   [RFC6755]  Campbell, B. and H. Tschofenig, "An IETF URN Sub-Namespace
+              for OAuth", RFC 6755, DOI 10.17487/RFC6755, October 2012,
+              <https://www.rfc-editor.org/rfc/rfc6755>.
+
+   [RFC7009]  Lodderstedt, T., Ed., Dronia, S., and M. Scurtescu, "OAuth
+              2.0 Token Revocation", RFC 7009, DOI 10.17487/RFC7009,
+              August 2013, <https://www.rfc-editor.org/rfc/rfc7009>.
+
+   [RFC8792]  Watsen, K., Auerswald, E., Farrel, A., and Q. Wu,
+              "Handling Long Lines in Content of Internet-Drafts and
+              RFCs", RFC 8792, DOI 10.17487/RFC8792, June 2020,
+              <https://www.rfc-editor.org/rfc/rfc8792>.
+
+   [SCIM-GOVERNANCE]
+              Kushwaha, S., "SCIM Agent Governance Extension", Work in
+              Progress, Internet-Draft, draft-kushwaha-scim-agent-
+              governance-00, 27 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-kushwaha-
+              scim-agent-governance-00>.
+
+   [WISE]     WISE Contributors, "Workload Identity Security Events
+              (WISE) Profile", n.d., <https://github.com/identitymonk/
+              openid-wise/blob/main/openid-wise-profile-1_0.md>.
+
+   [CAEP]     OpenID Foundation, "OpenID Continuous Access Evaluation
+              Profile 1.0", 29 August 2025,
+              <https://openid.net/specs/openid-caep-1_0-final.html>.
+
+   [RISC]     OpenID Foundation, "OpenID RISC Profile Specification
+              1.0", 29 August 2025,
+              <https://openid.net/specs/openid-risc-1_0-final.html>.
+
+   [WAG]      Carleton, P., "Workload Authorization Grant", Work in
+              Progress, Internet-Draft, draft-carleton-workload-authz-
+              grant-00, 3 August 2026,
+              <https://datatracker.ietf.org/doc/html/draft-carleton-
+              workload-authz-grant-00>.
+
+Appendix A.  Provisioning and Disablement Example
+
+   This non-normative example uses an IdP at https://idp.example, a RAS
+   at https://ras.example, and governed subject agent-42.  It uses
+   online introspection, S = 1 second, and issuer-ahead bound D = 2
+   seconds.  Bearer values and the SET signature are placeholders.  SCIM
+   locations identify the Receiver's records, not the enterprise
+   identity.
+
+A.1.  Provision the Agent
+
+   The connector sends a disabled resource.  A prior local
+   administrative decision permits creating the corresponding principal.
+
+   POST /scim/v2/Agents HTTP/1.1
+   Host: ras.example
+   Authorization: Bearer SCIM_CONNECTOR_TOKEN
+   Content-Type: application/scim+json
+
+   {
+     "schemas": [
+       "urn:ietf:params:scim:schemas:core:2.0:Agent",
+       "urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent"
+     ],
+     "agentUserName": "analysis-agent-42",
+     "displayName": "Data Analysis Agent",
+     "active": false,
+     "urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent":
+     {
+       "issuer": "https://idp.example",
+       "subject": "agent-42",
+       "version": "40",
+       "status": "disabled",
+       "authorizationNotBefore": "2026-09-17T12:00:02Z",
+       "assertedAt": "2026-09-17T12:00:00Z",
+       "validUntil": "2026-09-17T12:05:00Z"
+     }
+   }
+
+   The Receiver returns 201 Created, a Location identifying
+   https://ras.example/scim/v2/Agents/local-108, and the created
+   resource including id: "local-108".  The connector retains that
+   location.  The agent remains ineligible until both enterprise and
+   local activation conditions hold.
+
+A.2.  Activate and Issue Authorization
+
+   At 12:01:00 UTC the Authority issues version 41 with status:
+   "active", cutoff 12:01:02, and validity until 12:06:00.  The
+   connector PUTs the complete resource with active: true.  The Receiver
+   applies it and returns 200 OK.
+
+   An ID-JAG issued at 12:01:03 clears the cutoff.  The RAS retains its
+   original iat with the derived access token and refresh authorization.
+   The API introspects the access token on each request.
+
+A.3.  Disable Through a Signal
+
+   At 12:02:00 the Authority disables the agent and publishes version
+   42.  Its stream is administratively bound to issuer
+   https://idp.example and Target Tenant tenant-7, with the exclusive
+   audience https://ras.example/lifecycle/tenant-7/idp-example.  The
+   decoded SET has protected header {"typ":"secevent+jwt"} together with
+   the negotiated signing algorithm and key identifier, and this
+   payload:
+
+   {
+     "iss": "https://signals.idp.example",
+     "aud": "https://ras.example/lifecycle/tenant-7/idp-example",
+     "jti": "event-42",
+     "iat": 1789646520,
+     "sub_id": {
+       "format": "iss_sub",
+       "iss": "https://idp.example",
+       "sub": "agent-42"
+     },
+     "events": {
+       "urn:ietf:params:oauth:event-type:governed-agent-lifecycle": {
+         "state": {
+           "issuer": "https://idp.example",
+           "subject": "agent-42",
+           "version": "42",
+           "status": "disabled",
+           "authorizationNotBefore": "2026-09-17T12:02:02Z",
+           "assertedAt": "2026-09-17T12:02:00Z",
+           "validUntil": "2026-09-17T12:07:00Z"
+         }
+       }
+     }
+   }
+
+   The Receiver applies version 42.  Redemption and refresh fail with
+   invalid_grant; introspection of the previously issued token returns
+   {"active":false}. The API denies its next use.
+
+A.4.  Delayed Delivery and Reactivation
+
+    +=============================+===================================+
+    | Subsequent input            | Result                            |
+    +=============================+===================================+
+    | Delayed SCIM PUT carrying   | 409; disabled version 42 remains  |
+    | active version 41           | in effect                         |
+    +-----------------------------+-----------------------------------+
+    | Retransmission of event 42  | Acknowledged without extending    |
+    |                             | validity or changing state        |
+    +-----------------------------+-----------------------------------+
+    | Different state using       | Rejected and diagnosed as a       |
+    | version 42                  | conflict                          |
+    +-----------------------------+-----------------------------------+
+    | Authorized active version   | Fresh grants after the cutoff can |
+    | 43 with cutoff 12:03:02     | qualify; old tokens stay invalid  |
+    +-----------------------------+-----------------------------------+
+    | Version 43 delivered        | The newer cutoff still rejects    |
+    | without version 42          | the grant issued at 12:01:03      |
+    +-----------------------------+-----------------------------------+
+    | No update or renewal after  | Authorization is denied when its  |
+    | active version 41           | finite validity ends              |
+    +-----------------------------+-----------------------------------+
+    | Retired version 44 followed | Invalid transition; retirement    |
+    | by an active version 45     | remains terminal                  |
+    +-----------------------------+-----------------------------------+
+
+                                  Table 7
+
+   In bounded-cache mode an earlier active introspection result may
+   still be used within C; in expiring-JWT mode the API can accept the
+   old token until its bounded expiry.  Neither mode allows RAS refresh
+   after the disablement is applied.  Their longer bounds are explicit
+   in Section 8.4.
+
+Appendix B.  Relationship to Existing Work
+
+   The assessed inputs are SCIM Agent Resource -00, SCIM Agent
+   Governance -00, and the WISE editor's copy.  Their evolution can
+   change the most appropriate schema and event bindings.
+
+   This profile deliberately reuses the Agent resource, SCIM operations,
+   SET subject identifiers, and SSF delivery.  The new material is the
+   qualified identity extension, shared source ordering, finite state
+   validity, issuance cutoff, and enforcement contract.
+
+   The account-disabled, account-enabled, and account-purged events in
+   [RISC] report account transitions.  They do not define this profile's
+   shared source version, issuance cutoff, or finite active-state
+   validity.  Those fields must also survive missed transitions and SCIM
+   reconciliation.  A dedicated event makes those receiver obligations
+   explicit without changing the meaning of existing account events.
+   This is a distinction in event semantics, not a claim that SSF
+   subjects must be human users.
+
+   Detailed quarantine workflows, autonomy classifications, and
+   credential discovery are not required for that contract.  A
+   deployment using richer governance states maps them into active,
+   disabled, or retired eligibility at the Lifecycle Authority, rather
+   than asking each RAS to interpret them.
+
+Appendix C.  Document History
+
+   Initial version.
+
+Author's Address
+
+   Karl McGuinness
+   Independent
+   Email: public@karlmcguinness.com

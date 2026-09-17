@@ -4036,7 +4036,11 @@ cannot outlive an expiration unknown to the API.<a href="#section-8.5.6-2.5.1" c
 </li>
           </ul>
 <p id="section-8.5.6-3">The processing in <a href="#api-processing" class="auto internal xref">Section 8.9</a> applies to the introspected
-context exactly as to JWT claims.<a href="#section-8.5.6-3" class="pilcrow">¶</a></p>
+context exactly as to JWT claims. Deployments also applying
+<span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> use that companion's configured enforcement mode:
+online introspection forbids active-response reuse, while bounded
+introspection caching imposes an explicit cache interval in addition
+to the limits above.<a href="#section-8.5.6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="ras-refresh">
@@ -4393,16 +4397,21 @@ the requested operation. Missing, ambiguous, or conflicting tenant
 context <span class="bcp14">MUST</span> result in denial.<a href="#section-8.9-4.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-8.9-5">If the API delegates authorization evaluation to a policy decision
+<p id="section-8.9-5"><span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> adds lifecycle enforcement when that companion is
+configured. Its expiring-JWT mode retains offline validation with an
+explicit token-lifetime ceiling; its introspection modes bound the
+time an active response can be relied upon. This document alone does
+not impose those additional modes or their disablement guarantees.<a href="#section-8.9-5" class="pilcrow">¶</a></p>
+<p id="section-8.9-6">If the API delegates authorization evaluation to a policy decision
 service, it <span class="bcp14">MUST</span> preserve the distinction between the user, the
 issuer-qualified Governed Agent, and the OAuth client, and supply the
 tenant and token constraints needed to evaluate the requested operation.
 <span>[<a href="#AUTHZEN" class="cite xref">AUTHZEN</a>]</span> provides an optional evaluation interface; this profile
 defines no AuthZEN message mapping and requires no particular policy
-engine. A policy permit does not override the token's constraints.<a href="#section-8.9-5" class="pilcrow">¶</a></p>
-<p id="section-8.9-6">For example, reserve <code>platform-api</code> for governed tokens and
+engine. A policy permit does not override the token's constraints.<a href="#section-8.9-6" class="pilcrow">¶</a></p>
+<p id="section-8.9-7">For example, reserve <code>platform-api</code> for governed tokens and
 <code>interactive-web</code> for ordinary user tokens under a trusted RAS issuer.
-The API rejects a <code>platform-api</code> token without <code>act</code>.<a href="#section-8.9-6" class="pilcrow">¶</a></p>
+The API rejects a <code>platform-api</code> token without <code>act</code>.<a href="#section-8.9-7" class="pilcrow">¶</a></p>
 <div id="resource-errors">
 <section id="section-8.9.1">
           <h4 id="name-error-responses">
@@ -5010,8 +5019,13 @@ limits.<a href="#section-12.6-1" class="pilcrow">¶</a></p>
 <p id="section-12.6-2">Cross-system disablement and revocation need the mechanisms in
 <a href="#lifecycle-gap" class="auto internal xref">Appendix A.3.1</a>; without a signal or online check, issued tokens
 remain usable until expiration.<a href="#section-12.6-2" class="pilcrow">¶</a></p>
-<p id="section-12.6-3">The following table summarizes the effect after a change is applied at
-the enforcing server; it defines no new propagation mechanism:<a href="#section-12.6-3" class="pilcrow">¶</a></p>
+<p id="section-12.6-3">For deployments applying <span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span>, that companion defines
+ordered state propagation, reactivation cutoffs, and mode-specific
+denial bounds. Its RAS enforcement stops issuance and refresh; cached
+introspection results or offline JWTs may remain usable within the
+configured mode's explicit bound.<a href="#section-12.6-3" class="pilcrow">¶</a></p>
+<p id="section-12.6-4">The following table summarizes the effect after a change is applied at
+the enforcing server; it defines no new propagation mechanism:<a href="#section-12.6-4" class="pilcrow">¶</a></p>
 <table class="center" id="table-29">
           <caption><a href="#table-29" class="selfRef">Table 29</a></caption>
 <thead>
@@ -5044,16 +5058,16 @@ the enforcing server; it defines no new propagation mechanism:<a href="#section-
             </tr>
           </tbody>
         </table>
-<p id="section-12.6-5">Deployments <span class="bcp14">SHOULD</span> document their maximum disablement delay, including
+<p id="section-12.6-6">Deployments <span class="bcp14">SHOULD</span> document their maximum disablement delay, including
 propagation and cache freshness. Without a bound on propagation, the
 remaining lifetime of existing grants, refresh authorizations, and
 access tokens determines the possible continuation window; the
-five-minute ID-JAG recommendation is not a global stopping guarantee.<a href="#section-12.6-5" class="pilcrow">¶</a></p>
-<p id="section-12.6-6">Account-linking errors can grant access to another user's account.
+five-minute ID-JAG recommendation is not a global stopping guarantee.<a href="#section-12.6-6" class="pilcrow">¶</a></p>
+<p id="section-12.6-7">Account-linking errors can grant access to another user's account.
 <a href="#subject-resolution" class="auto internal xref">Section 6.2</a> requires issuer, namespace, tenant, and
 link-change checks before authorization; proof of key possession does
 not establish account ownership, and link removal does not revoke
-outstanding tokens.<a href="#section-12.6-6" class="pilcrow">¶</a></p>
+outstanding tokens.<a href="#section-12.6-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="external-approval">
@@ -5261,6 +5275,10 @@ metadata parameters.<a href="#section-14.1-5" class="pilcrow">¶</a></p>
 <a href="#section-15.2" class="section-number selfRef">15.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="AGENT-LIFECYCLE">[AGENT-LIFECYCLE]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"A SCIM and Shared Signals Profile for Governed Agent Lifecycle"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-governed-agent-lifecycle</span>, <span>n.d.</span>, <span>&lt;<a href="https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html">https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="EMA">[EMA]</dt>
         <dd>
 <span class="refAuthor">Model Context Protocol</span>, <span class="refTitle">"Enterprise-Managed Authorization"</span>, <span>n.d.</span>, <span>&lt;<a href="https://github.com/modelcontextprotocol/ext-auth/blob/main/specification/stable/enterprise-managed-authorization.mdx">https://github.com/modelcontextprotocol/ext-auth/blob/main/specification/stable/enterprise-managed-authorization.mdx</a>&gt;</span>. </dd>
@@ -5570,9 +5588,11 @@ blocks, not a lifecycle propagation contract.<a href="#appendix-A.3-3" class="pi
 <p id="appendix-A.3.1-1">Consistent record correlation and disablement across IdP and RAS need a
 lifecycle specification defining issuer-qualified correlation,
 authoritative properties, update ordering, freshness bounds,
-missed-event recovery, and the effect on outstanding tokens. Until then,
-<a href="#agent-correlation" class="auto internal xref">Section 6.3</a> and <a href="#status-changes" class="auto internal xref">Section 12.6</a> state what this profile
-guarantees.<a href="#appendix-A.3.1-1" class="pilcrow">¶</a></p>
+missed-event recovery, and the effect on outstanding tokens. The companion
+<span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> defines a proposed SCIM and Shared Signals composition
+for those requirements. It is not required for conformance to this
+federation profile; <a href="#agent-correlation" class="auto internal xref">Section 6.3</a> and <a href="#status-changes" class="auto internal xref">Section 12.6</a> state
+the guarantees of this document alone.<a href="#appendix-A.3.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
