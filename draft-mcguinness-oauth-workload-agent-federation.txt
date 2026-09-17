@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                       16 September 2026
-Expires: 20 March 2027
+Intended status: Standards Track                       17 September 2026
+Expires: 21 March 2027
 
 
             OAuth 2.0 Profile for Governed Agent Federation
@@ -63,7 +63,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 20 March 2027.
+   This Internet-Draft will expire on 21 March 2027.
 
 Copyright Notice
 
@@ -116,7 +116,8 @@ Table of Contents
        8.3.2.  Grant Validation
        8.3.3.  Access Token Issuance and Response
        8.3.4.  Access-Token Protection
-       8.3.5.  RAS Refresh Tokens
+       8.3.5.  Opaque Access Tokens and Introspection
+       8.3.6.  RAS Refresh Tokens
      8.4.  Token Endpoint Error Responses
      8.5.  Continuing Access
      8.6.  Resource Server Processing
@@ -157,7 +158,9 @@ Table of Contents
        A.2.3.  WIT-SVID as Actor Evidence
        A.2.4.  Instance-Based Agent Resolution
        A.2.5.  Client Attester Endorsement
-       A.2.6.  Instance Context
+       A.2.6.  Mutual-TLS-Bound Grants
+       A.2.7.  RAR-Only Authorization
+       A.2.8.  Instance Context
      A.3.  Operational Dependencies
        A.3.1.  Provisioning and Disablement
    Appendix B.  Document History
@@ -350,13 +353,15 @@ Table of Contents
          implement private_key_jwt for redemption.  DPoP is required at
          both token endpoints under Section 8.1.
 
-      -  Access tokens are JWTs under [RFC9068]; opaque access tokens
-         are outside this profile.
+      -  Access tokens are JWTs under [RFC9068] or opaque tokens whose
+         introspection response carries the same context under
+         Section 8.3.5.
 
-      -  Existing platform JWTs, Client Attestation, and IdP refresh-
-         token subjects are OPTIONAL.  A deployment MAY select a
-         supported input through trusted configuration; implementing
-         this profile does not require every platform to deploy SPIFFE.
+      -  Existing platform JWTs, Client Attestation, SAML subjects, and
+         IdP refresh-token subjects are OPTIONAL.  A deployment MAY
+         select a supported input through trusted configuration;
+         implementing this profile does not require every platform to
+         deploy SPIFFE.
 
    *  *WAG:* Section 14 states the federation requirements applicable to
       WAG.  This revision claims no WAG protocol conformance
@@ -622,6 +627,20 @@ Table of Contents
 
                                   Table 4
 
+   Existing workload-identity-federation configuration can supply these
+   values; no new configuration object is required.  As a non-normative
+   example, Microsoft Entra's federated identity credential (issuer,
+   subject, and audiences, matched case-sensitively) and Google Cloud's
+   workload identity pool provider (issuer-uri, allowed-audiences,
+   attribute-mapping, and attribute-condition) each express an Identity
+   Binding: the issuer and the exact subject or mapped attribute select
+   the workload, the audience authorizes presentation, and the principal
+   the policy grants access to is the Governed Agent.  The application
+   registration or principal:// binding that decides which client may
+   present the credential plays a role comparable to the Client
+   Association.  For the JWT-SVID input the same relationship is a
+   trust-domain bundle plus an exact SPIFFE ID.
+
    Request hints, discovered client metadata, and unverified JWT claims
    MUST NOT by themselves establish credential-authority trust or change
    an approved Identity Binding or Client Association.  Creating and
@@ -808,9 +827,10 @@ Table of Contents
    The IdP MUST:
 
    *  Resolve exactly one user from the ID Token's issuer-qualified
-      subject and tenant context, or from the validated refresh token's
-      authorization context.  The actor credential and the authenticated
-      client MUST NOT substitute for that identity.
+      subject or the SAML assertion's issuer-qualified NameID and tenant
+      context, or from the validated refresh token's authorization
+      context.  The actor credential and the authenticated client MUST
+      NOT substitute for that identity.
 
    *  Select the subject namespace of the target RAS's SSO relationship.
       A client-specific pairwise subject MUST NOT be copied into another
@@ -865,6 +885,13 @@ Table of Contents
    deactivation.  Once deactivation is applied, the RAS MUST reject new
    issuance and refresh for that agent; outstanding tokens follow
    Section 11.5.  No provisioning protocol is required (Appendix A.3).
+
+   This profile requires four observable results: stable issuer-
+   qualified correlation, authorized delegation, preserved actor
+   attribution, and denial after applied disablement.  It prescribes no
+   principal class, consent store, policy engine, or provisioning
+   protocol; an existing service principal, tenant assignment, or
+   directory connector can satisfy each.
 
 7.  Authorization Relationship
 
@@ -1000,38 +1027,38 @@ Table of Contents
    client, and supplies a DPoP proof for that endpoint.  The following
    parameters are REQUIRED:
 
-     +======================+========================================+
-     | Parameter            | Value                                  |
-     +======================+========================================+
-     | grant_type           | urn:ietf:params:oauth:grant-           |
-     |                      | type:token-exchange                    |
-     +----------------------+----------------------------------------+
-     | requested_token_type | urn:ietf:params:oauth:token-type:id-   |
-     |                      | jag                                    |
-     +----------------------+----------------------------------------+
-     | subject_token        | User ID Token, or a refresh token when |
-     |                      | supported, issued by this IdP for the  |
-     |                      | authenticated client                   |
-     +----------------------+----------------------------------------+
-     | subject_token_type   | urn:ietf:params:oauth:token-           |
-     |                      | type:id_token for an ID Token;         |
-     |                      | urn:ietf:params:oauth:token-           |
-     |                      | type:refresh_token for a refresh token |
-     +----------------------+----------------------------------------+
-     | actor_token          | Direct credential selected under       |
-     |                      | Section 8.2.3                          |
-     +----------------------+----------------------------------------+
-     | actor_token_type     | urn:ietf:params:oauth:token-type:jwt   |
-     +----------------------+----------------------------------------+
-     | audience             | One target RAS issuer identifier       |
-     +----------------------+----------------------------------------+
-     | resource             | One or more resource URIs under        |
-     |                      | [RFC8707], all served by the RAS named |
-     |                      | in audience                            |
-     +----------------------+----------------------------------------+
-     | scope                | Non-empty scope string for the         |
-     |                      | requested resources                    |
-     +----------------------+----------------------------------------+
+   +======================+============================================+
+   | Parameter            | Value                                      |
+   +======================+============================================+
+   | grant_type           | urn:ietf:params:oauth:grant-type:token-    |
+   |                      | exchange                                   |
+   +----------------------+--------------------------------------------+
+   | requested_token_type | urn:ietf:params:oauth:token-type:id-jag    |
+   +----------------------+--------------------------------------------+
+   | subject_token        | User ID Token, SAML 2.0 assertion, or      |
+   |                      | refresh token when supported, issued       |
+   |                      | for the authenticated client               |
+   +----------------------+--------------------------------------------+
+   | subject_token_type   | urn:ietf:params:oauth:token-               |
+   |                      | type:id_token,                             |
+   |                      | urn:ietf:params:oauth:token-type:saml2,    |
+   |                      | or urn:ietf:params:oauth:token-            |
+   |                      | type:refresh_token                         |
+   +----------------------+--------------------------------------------+
+   | actor_token          | Direct credential selected under           |
+   |                      | Section 8.2.3                              |
+   +----------------------+--------------------------------------------+
+   | actor_token_type     | urn:ietf:params:oauth:token-type:jwt       |
+   +----------------------+--------------------------------------------+
+   | audience             | One target RAS issuer identifier           |
+   +----------------------+--------------------------------------------+
+   | resource             | One or more resource URIs under            |
+   |                      | [RFC8707], all served by the RAS named     |
+   |                      | in audience                                |
+   +----------------------+--------------------------------------------+
+   | scope                | Non-empty scope string for the             |
+   |                      | requested resources                        |
+   +----------------------+--------------------------------------------+
 
                                   Table 6
 
@@ -1041,19 +1068,26 @@ Table of Contents
    this revision a common authorization mechanism through grant
    issuance, redemption, refresh, and API enforcement.  Resource-
    specific authorization details can supplement it; RAR-only
-   authorization is outside this revision.
+   authorization is outside this revision (Appendix A.2.7).
 
    The IdP MUST validate the DPoP proof under [RFC9449] and [ID-JAG],
    Section 9.8.1.1.
 
 8.2.2.  Subject Token Validation
 
-   The IdP MUST support ID Token subjects and MAY support its own
-   refresh tokens when agreed in client configuration, validating either
-   under [ID-JAG], Section 4.3.3:
+   The IdP MUST support ID Token subjects, MAY support SAML 2.0
+   assertion subjects, and MAY support its own refresh tokens when
+   agreed in client configuration, validating each under [ID-JAG],
+   Section 4.3.3:
 
    *  *ID Token:* the audience MUST identify the authenticated IdP
       client.
+
+   *  *SAML 2.0 assertion:* subject_token_type is
+      urn:ietf:params:oauth:token-type:saml2.  The IdP MUST map the
+      assertion's Audience to the authenticated client under [ID-JAG],
+      Section 4.5 and resolve the subject under [ID-JAG], Section 3.2;
+      agent evidence and actor construction are unchanged.
 
    *  *Refresh token:* apply refresh_token grant validation, including
       client binding, validity, revocation, and proof requirements.  The
@@ -1062,9 +1096,8 @@ Table of Contents
       MUST be enforced rather than bypassed by selecting another actor
       input, with conflicts rejected as invalid_grant.
 
-   Both inputs require current actor evidence and delegation
-   authorization under Section 7.1; the output remains an ID-JAG.  SAML
-   assertions are not profiled in this revision.
+   All subject inputs require current actor evidence and delegation
+   authorization under Section 7.1; the output remains an ID-JAG.
 
 8.2.3.  Actor Token Validation
 
@@ -1219,17 +1252,19 @@ Table of Contents
 
 8.3.3.  Access Token Issuance and Response
 
-   After validation and authorization, the RAS MUST issue a JWT access
-   token under [RFC9068] with the RAS as issuer, the resolved user as
-   subject, the redeemed resource as audience, the validated act
-   unchanged, a non-empty authorized scope (otherwise invalid_scope),
-   and the protection selected under Section 8.3.4.  It MUST NOT broaden
-   authority or substitute its authenticated client for the actor.  The
-   response follows [ID-JAG], Section 4.4.2; the client MUST reject an
-   output that does not satisfy its configured protection requirement.
-   Refresh-token issuance follows Section 8.3.5.  An unexpired ID-JAG
-   remains reusable under ID-JAG, each redemption requiring fresh proof
-   validation and current RAS policy.
+   After validation and authorization, the RAS MUST issue an access
+   token whose context, as JWT claims under [RFC9068] or in its
+   introspection response under Section 8.3.5, carries the RAS as
+   issuer, the resolved user as subject, the redeemed resource as
+   audience, the validated act unchanged, a non-empty authorized scope
+   (otherwise invalid_scope), and the protection selected under
+   Section 8.3.4.  It MUST NOT broaden authority or substitute its
+   authenticated client for the actor.  The response follows [ID-JAG],
+   Section 4.4.2; the client MUST reject an output that does not satisfy
+   its configured protection requirement.  Refresh-token issuance
+   follows Section 8.3.6.  An unexpired ID-JAG remains reusable under
+   ID-JAG, each redemption requiring fresh proof validation and current
+   RAS policy.
 
 8.3.4.  Access-Token Protection
 
@@ -1264,7 +1299,8 @@ Table of Contents
    DPoP key in the same redemption request; certificate possession alone
    does not redeem the grant.  In this mode the grant proof key protects
    grant redemption and any DPoP-bound refresh token; the mutual-TLS key
-   protects subsequent access-token use.
+   protects subsequent access-token use.  A native mutual-TLS-bound
+   grant is future work (Appendix A.2.6).
 
    Bearer issuance accommodates resources without sender-constraint
    support, and grant proof validation remains mandatory.  The RAS MUST
@@ -1273,7 +1309,32 @@ Table of Contents
    as an unconstrained bearer token or bypass an unrecognized
    confirmation method.
 
-8.3.5.  RAS Refresh Tokens
+8.3.5.  Opaque Access Tokens and Introspection
+
+   A RAS MAY issue an opaque access token instead of a JWT when the API
+   obtains equivalent context through token introspection [RFC7662].  In
+   that case:
+
+   *  The API MUST authenticate to the introspection endpoint
+      ([RFC7662], Section 2.1) and MUST treat any response other than
+      active equal to true as an invalid token.
+
+   *  The response MUST carry sub, aud, scope, client_id, and the
+      validated act object unchanged, using the act introspection member
+      registered by [RFC8693], Section 7.5.
+
+   *  For a bound token the response MUST carry cnf with jkt under
+      [RFC9449], Section 6.2 or x5t#S256 under [RFC8705], Section 3.2,
+      and the API MUST enforce it as it would the JWT claim.
+
+   *  The API MUST NOT cache a response beyond the token's remaining
+      validity or the freshness its resource policy requires for
+      disablement ([RFC7662], Section 4).
+
+   The processing in Section 8.6 applies to the introspected context
+   exactly as to JWT claims.
+
+8.3.6.  RAS Refresh Tokens
 
    RAS refresh preserves an existing authorization at the same RAS;
    Identity Continuation Assertion [ICA] establishes identity continuity
@@ -1350,7 +1411,7 @@ Table of Contents
    An unexpired ID-JAG can be redeemed again under Section 8.3; a new
    exchange under Section 8.2 requires a valid subject credential,
    current actor evidence, and a fresh authorization decision.  RAS
-   refresh under Section 8.3.5 preserves an existing authorization at
+   refresh under Section 8.3.6 preserves an existing authorization at
    the same RAS, and Identity Continuation Assertion [ICA] establishes
    identity continuity across authorization domains in a separate
    composition (Appendix A.2.1).
@@ -1365,8 +1426,9 @@ Table of Contents
 
 8.6.  Resource Server Processing
 
-   The API MUST validate access tokens under [RFC9068], the selected
-   protection under Section 8.3.4, and actor authorization under
+   The API MUST validate access tokens under [RFC9068], or obtain the
+   same context under Section 8.3.5, and MUST validate the selected
+   protection under Section 8.3.4 and actor authorization under
    Section 7.2 and [ACTOR-PROFILE], Section 8.  In addition, the API
    MUST:
 
@@ -1657,7 +1719,7 @@ Table of Contents
    that the selected input requires.  Bearer-evidence theft remains a
    threat even when the output is sender-constrained (Section 11), and
    shared workload identities do not distinguish replicas
-   (Appendix A.2.6).
+   (Appendix A.2.8).
 
    Bearer evidence establishes the credential authority's assertion of
    the workload identity, not a cryptographic binding of the current
@@ -1726,7 +1788,8 @@ Table of Contents
     +==============================+=================================+
     | Common path, when configured | Options, by separate agreement  |
     +==============================+=================================+
-    | ID Token subject             | IdP refresh-token subject       |
+    | ID Token subject             | SAML 2.0 assertion or IdP       |
+    |                              | refresh-token subject           |
     +------------------------------+---------------------------------+
     | JWT-SVID as actor and IdP    | Existing platform JWT with      |
     | client authentication        | separate client authentication, |
@@ -1750,8 +1813,12 @@ Table of Contents
     | or bearer where the resource |                                 |
     | explicitly permits it        |                                 |
     +------------------------------+---------------------------------+
+    | JWT access token under       | Opaque access token with        |
+    | [RFC9068]                    | introspection under             |
+    |                              | Section 8.3.5                   |
+    +------------------------------+---------------------------------+
     | No RAS refresh token;        | RAS refresh tokens under        |
-    | renewal by new exchange      | Section 8.3.5                   |
+    | renewal by new exchange      | Section 8.3.6                   |
     +------------------------------+---------------------------------+
 
                                  Table 12
@@ -1776,45 +1843,48 @@ Table of Contents
    cost.  Each is chosen for the reason given, and none changes what
    bearer workload evidence proves.
 
-    +====================+==================+=========================+
-    | Requirement        | Benefit          | Cost                    |
-    +====================+==================+=========================+
-    | Native JWT-SVID as | Reuses SPIFFE    | JWT-SVID is bearer      |
-    | the common input   | issuance, client | evidence; deployments   |
-    |                    | authentication,  | requiring issuer-bound  |
-    |                    | and trust-domain | presenter proof must    |
-    |                    | validation       | select another          |
-    |                    |                  | supported input         |
-    +--------------------+------------------+-------------------------+
-    | DPoP at both token | A stolen ID-JAG  | Every client holds and  |
-    | endpoints; grant   | cannot be        | proves a key.  Grant    |
-    | bound to the grant | redeemed without | binding does not make   |
-    | proof key          | the key          | bearer evidence proof   |
-    |                    |                  | of an issuer-authorized |
-    |                    |                  | presenter (Section 9.4) |
-    +--------------------+------------------+-------------------------+
-    | Same key for       | No key-          | A broker that obtains   |
-    | issuance and       | transition       | grants must also redeem |
-    | redemption         | protocol to      | them (Section 8.1)      |
-    |                    | secure           |                         |
-    +--------------------+------------------+-------------------------+
-    | JWT access tokens  | The API reads    | Opaque-token            |
-    | under [RFC9068]    | act, scope, and  | deployments need a      |
-    |                    | cnf without      | structured token or an  |
-    |                    | introspection    | introspection profile   |
-    |                    |                  | this document does not  |
-    |                    |                  | define                  |
-    +--------------------+------------------+-------------------------+
-    | Actor-aware API    | The actor gate   | APIs parse act and      |
-    | processing         | is enforced      | consult the gate on     |
-    |                    | where access     | delegated paths         |
-    |                    | happens          |                         |
-    +--------------------+------------------+-------------------------+
-    | Sender-constrained | Token theft is   | Resources without DPoP  |
-    | access tokens by   | contained        | or mutual TLS must be   |
-    | default            |                  | explicitly configured   |
-    |                    |                  | for bearer              |
-    +--------------------+------------------+-------------------------+
+   +====================+=====================+========================+
+   | Requirement        | Benefit             | Cost                   |
+   +====================+=====================+========================+
+   | Native JWT-SVID as | Reuses SPIFFE       | JWT-SVID is bearer     |
+   | the common input   | issuance, client    | evidence; deployments  |
+   |                    | authentication,     | requiring issuer-bound |
+   |                    | and trust-domain    | presenter proof must   |
+   |                    | validation          | select another         |
+   |                    |                     | supported input        |
+   +--------------------+---------------------+------------------------+
+   | DPoP at both token | A stolen ID-JAG     | Every client holds and |
+   | endpoints; grant   | cannot be           | proves a key.  Grant   |
+   | bound to the grant | redeemed without    | binding does not make  |
+   | proof key          | the key             | bearer evidence proof  |
+   |                    |                     | of an issuer-          |
+   |                    |                     | authorized presenter   |
+   |                    |                     | (Section 9.4)          |
+   +--------------------+---------------------+------------------------+
+   | Same key for       | No key-             | A broker that obtains  |
+   | issuance and       | transition          | grants must also       |
+   | redemption         | protocol to         | redeem them            |
+   |                    | secure              | (Section 8.1)          |
+   +--------------------+---------------------+------------------------+
+   | Access-token       | The API reads       | Opaque-token           |
+   | context as JWT     | act, scope, and     | deployments add an     |
+   | claims or          | cnf from the        | introspection round    |
+   | introspection      | token or from an    | trip and a freshness   |
+   |                    | authenticated       | policy                 |
+   |                    | introspection       |                        |
+   |                    | response            |                        |
+   |                    | (Section 8.3.5)     |                        |
+   +--------------------+---------------------+------------------------+
+   | Actor-aware API    | The actor gate      | APIs parse act and     |
+   | processing         | is enforced         | consult the gate on    |
+   |                    | where access        | delegated paths        |
+   |                    | happens             |                        |
+   +--------------------+---------------------+------------------------+
+   | Sender-constrained | Token theft is      | Resources without DPoP |
+   | access tokens by   | contained           | or mutual TLS must be  |
+   | default            |                     | explicitly configured  |
+   |                    |                     | for bearer             |
+   +--------------------+---------------------+------------------------+
 
                                   Table 13
 
@@ -2004,6 +2074,10 @@ Table of Contents
               Authorization Grants", RFC 7523, DOI 10.17487/RFC7523, May
               2015, <https://www.rfc-editor.org/rfc/rfc7523>.
 
+   [RFC7662]  Richer, J., Ed., "OAuth 2.0 Token Introspection",
+              RFC 7662, DOI 10.17487/RFC7662, October 2015,
+              <https://www.rfc-editor.org/rfc/rfc7662>.
+
    [RFC8414]  Jones, M., Sakimura, N., and J. Bradley, "OAuth 2.0
               Authorization Server Metadata", RFC 8414,
               DOI 10.17487/RFC8414, June 2018,
@@ -2084,6 +2158,11 @@ Table of Contents
    [RFC6755]  Campbell, B. and H. Tschofenig, "An IETF URN Sub-Namespace
               for OAuth", RFC 6755, DOI 10.17487/RFC6755, October 2012,
               <https://www.rfc-editor.org/rfc/rfc6755>.
+
+   [RFC9396]  Lodderstedt, T., Richer, J., and B. Campbell, "OAuth 2.0
+              Rich Authorization Requests", RFC 9396,
+              DOI 10.17487/RFC9396, May 2023,
+              <https://www.rfc-editor.org/rfc/rfc9396>.
 
    [WAG]      Carleton, P., "Workload Authorization Grant", Work in
               Progress, Internet-Draft, draft-carleton-workload-authz-
@@ -2232,7 +2311,29 @@ A.2.5.  Client Attester Endorsement
    delegation checks independent.  This revision uses configured
    attester trust.
 
-A.2.6.  Instance Context
+A.2.6.  Mutual-TLS-Bound Grants
+
+   Redemption requires the grant proof key even when the access token
+   will be certificate-bound, so a mutual-TLS deployment operates two
+   proof mechanisms.  A native composition would bind the ID-JAG to the
+   client certificate (cnf.x5t#S256) and redeem it over mutual TLS.  It
+   must deliver the properties of the DPoP path, presenter binding at
+   issuance and redemption, recipient binding, and replay handling, and
+   needs agreement with the grant specifications before this profile can
+   claim it.  The DPoP check stays in the meantime.
+
+A.2.7.  RAR-Only Authorization
+
+   The scope requirement gives every stage a common authorization
+   vocabulary.  [RFC9396] permits authorization details without scope,
+   so an API whose authority lives entirely in authorization_details
+   would today have to supply a placeholder scope.  A follow-on
+   composition must define RAR-only issuance, resource selection,
+   carriage in the access token or introspection response, API
+   enforcement, refresh, and errors end to end; placeholder scopes are
+   not an acceptable interim.
+
+A.2.8.  Instance Context
 
    A workload identity can span several replicas [SPIFFE-CONCEPTS], and
    an identifier alone establishes neither continuity nor authority.
