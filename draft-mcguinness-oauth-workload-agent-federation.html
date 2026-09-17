@@ -2207,82 +2207,115 @@ administrative act outside this profile (<a href="#operational-guidance" class="
         <h3 id="name-identity-mapping-example">
 <a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-identity-mapping-example" class="section-name selfRef">Identity Mapping Example</a>
         </h3>
-<p id="section-4.4-1">This non-normative example uses a shared platform SSO client and a
-corresponding RAS client. The IdP associates approved SPIFFE IDs with
-the shared client for authentication; tenant trust, Identity Bindings,
-and Client Associations remain separate. Replicas obtain evidence for
-the same platform agent without per-replica registration.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.4-1">Alice asks a data-analysis agent to read a file. The platform uses one
+shared OAuth client for many agents, so its client identifier alone
+cannot identify which agent is acting. This non-normative example uses
+the optional SPIFFE input to make that distinction.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.4-2">The request passes four separate decisions:<a href="#section-4.4-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.4-3">
+<li id="section-4.4-3.1">
+            <p id="section-4.4-3.1.1"><strong>Resolve the agent.</strong> The IdP validates the
+workload's JWT-SVID. An Identity Binding maps its exact SPIFFE ID,
+<code>spiffe://platform.example/accounts/acme/agents/workload-7</code>, to
+<code>agent-42</code> in the namespace of <code>https://idp.example/</code>. The agent
+belongs to Governance Tenant <code>acme</code>.<a href="#section-4.4-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.4-3.2">
+            <p id="section-4.4-3.2.1"><strong>Authorize the client.</strong> The IdP's configured SPIFFE
+association authenticates the caller as <code>platform-sso</code>. A separate
+Client Association permits that client to use this Identity Binding
+for delegated ID-JAG issuance. Authenticating the client does not
+grant that permission.<a href="#section-4.4-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.4-3.3">
+            <p id="section-4.4-3.3.1"><strong>Authorize delegation.</strong> Alice's ID Token identifies her as
+<code>alice-app</code> and was issued for <code>platform-sso</code>. The IdP authorizes
+<code>agent-42</code> to act for her with <code>files.read</code> at the requested resource
+in Target Tenant <code>acme-data</code>, and issues an ID-JAG for the RAS.<a href="#section-4.4-3.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.4-3.4">
+            <p id="section-4.4-3.4.1"><strong>Apply resource policy.</strong> The RAS resolves
+Alice to its local user <code>user-108</code> and correlates the IdP-qualified
+agent with local principal <code>service-principal-42</code>. Alice has the
+file permission, and resource policy permits this agent to act for
+her. In this example, the agent needs no separate file ACL.<a href="#section-4.4-3.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-4.4-4">The resulting tokens show which identities change across the boundary:<a href="#section-4.4-4" class="pilcrow">¶</a></p>
 <table class="center" id="table-6">
           <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
 <thead>
             <tr>
-              <th class="text-left" rowspan="1" colspan="1">Association</th>
-              <th class="text-left" rowspan="1" colspan="1">Configured value</th>
+              <th class="text-left" rowspan="1" colspan="1">Claim</th>
+              <th class="text-left" rowspan="1" colspan="1">ID-JAG issued by IdP</th>
+              <th class="text-left" rowspan="1" colspan="1">Access token issued by RAS</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Shared OAuth client at IdP; corresponding client at RAS</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>platform-sso</code>; <code>platform-api</code>
+                <code>sub</code> (Alice)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>alice-ras</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>user-108</code>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Approved SPIFFE trust domain and bundle endpoint</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>platform.example</code>; <code>https://platform.example/spiffe/bundle</code>
+                <code>act.iss</code> (agent namespace)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://idp.example/</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://idp.example/</code>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Exact external workload identity</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>spiffe://platform.example/accounts/acme/agents/workload-7</code>
+                <code>act.sub</code> (Governed Agent)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>agent-42</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>agent-42</code>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Client authentication</td>
-              <td class="text-left" rowspan="1" colspan="1">JWT-SVID associated with <code>platform-sso</code> at IdP; <code>private_key_jwt</code> for <code>platform-api</code> at RAS</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Governed Agent and Governance Tenant</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>agent-42</code> at <code>https://idp.example/</code>; <code>acme</code>
+                <code>client_id</code> (client at RAS)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>platform-api</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>platform-api</code>
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Target RAS, tenant, and resource</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>https://ras.example/</code>; <code>acme-data</code>; <code>https://api.example/tenants/acme-data/</code>
+                <code>scope</code>
 </td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">RAS agent principal</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>service-principal-42</code>, linked to <code>(https://idp.example/, agent-42)</code>
+                <code>files.read</code>
 </td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Delegation</td>
-              <td class="text-left" rowspan="1" colspan="1">Agent may act for Alice on <code>files.read</code> in <code>acme-data</code>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>files.read</code>
 </td>
             </tr>
           </tbody>
         </table>
-<p id="section-4.4-3">Alice's ID Token has <code>sub=alice-app</code> and <code>aud=platform-sso</code>.
-The IdP translates her subject to <code>alice-ras</code> for the RAS, which links
-it to local user <code>user-108</code>. Alice holds the file permission; the local
-agent principal passes the actor gate without an independent file ACL.<a href="#section-4.4-3" class="pilcrow">¶</a></p>
-<p id="section-4.4-4">The same agent can run in Kubernetes with SPIFFE ID
-<code>spiffe://platform.example/accounts/acme/agents/workload-7-k8s</code>.
-A second Identity Binding resolves it to <code>agent-42</code>. The Client
-Association permits the shared client to use either approved binding.
-Either binding produces the same IdP-qualified actor and RAS principal.
-Disabling one leaves the other available, subject to policy.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
-<p id="section-4.4-5">Under the intended WAG composition, <code>agent-42</code> would be the subject
-for self-acting work (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>). The execution environment changes
-neither the governed identity nor its downstream correlation.<a href="#section-4.4-5" class="pilcrow">¶</a></p>
-<p id="section-4.4-6"><a href="#shared-client-example" class="auto internal xref">Appendix C</a> applies this configuration to the complete
-message sequence in <a href="#walkthrough" class="auto internal xref">Appendix B</a>.<a href="#section-4.4-6" class="pilcrow">¶</a></p>
+<p id="section-4.4-6"><code>alice-ras</code> is Alice's identifier in the target SSO namespace;
+<code>platform-api</code> is the registration corresponding to <code>platform-sso</code> at
+the RAS. The RAS translates the user and preserves the agent. Its local
+agent record supports authorization; <code>service-principal-42</code> does not
+replace <code>act.sub</code>.<a href="#section-4.4-6" class="pilcrow">¶</a></p>
+<p id="section-4.4-7">If the agent later runs under another approved workload identity, a
+second Identity Binding can resolve it to the same <code>agent-42</code>. Client
+Association must permit that binding too. The downstream agent identity
+then stays unchanged, and either binding can be disabled independently.<a href="#section-4.4-7" class="pilcrow">¶</a></p>
+<p id="section-4.4-8"><a href="#shared-client-example" class="auto internal xref">Appendix C</a> supplies the credential and request details
+for this scenario, using the complete message sequence in <a href="#walkthrough" class="auto internal xref">Appendix B</a>.<a href="#section-4.4-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="profile-requirements">
