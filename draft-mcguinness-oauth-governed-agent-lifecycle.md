@@ -1,5 +1,5 @@
 ---
-title: "A SCIM and Shared Signals Profile for Governed Agent Lifecycle"
+title: "Governed Agent Lifecycle State and OAuth Enforcement"
 abbrev: "Governed Agent Lifecycle"
 category: std
 docname: draft-mcguinness-oauth-governed-agent-lifecycle-latest
@@ -41,12 +41,14 @@ normative:
     author:
       - org: OpenID Foundation
     date: 2025-08-29
+  RFC3339:
   RFC6749:
   RFC6750:
   RFC7519:
   RFC7643:
   RFC7644:
   RFC7662:
+  RFC8259:
   RFC8417:
   RFC8935:
   RFC8936:
@@ -77,17 +79,18 @@ informative:
   WAG: I-D.carleton-workload-authz-grant
 --- abstract
 
-This document defines provisioning and lifecycle management for the
-stable, issuer-qualified principals established by Governed Agent
-Federation. It profiles SCIM Agent resources for correlation with
-resource-local principals and defines a Shared Signals event carrying
-the same authoritative lifecycle state.
+This document defines Governed Agent Lifecycle State: a versioned,
+transport-independent object expressing whether an issuer-qualified
+agent remains eligible. An eligibility lease limits reliance on active
+state, and an authorization cutoff prevents old authorization from
+reviving after reactivation.
 
-The profile specifies disablement, reactivation, retirement, update
-ordering, recovery, and enforcement against new and existing OAuth
-authorization. Lifecycle changes do not establish client authority,
-user delegation, or resource permissions. No new workload credential
-or event-delivery protocol is defined.
+SCIM and Shared Signals bindings carry the same state into a receiver's
+lifecycle registry. A second layer applies that state to OAuth issuance,
+refresh, and resource access with explicit denial bounds. Lifecycle
+eligibility does not establish client authority, user delegation, or
+resource permissions. No new workload credential or delivery protocol
+is defined.
 
 --- middle
 
@@ -103,37 +106,32 @@ Assertion JWT Authorization Grant (ID-JAG) {{ID-JAG}}. This companion uses
 Security Event Tokens (SETs) {{RFC8417}} and the Shared Signals Framework
 (SSF) {{SSF}} to convey lifecycle changes to the resource domain.
 
-Resource domains also need to provision that principal and respond to
-changes in its eligibility. Creating a directory record does not grant
-access. Disabling a record does not, by itself, invalidate issued tokens.
-Delivering a security event does not demonstrate that an API enforced it.
+Federation establishes who the agent is. Lifecycle state establishes
+whether that identity remains eligible. SCIM reconciles its local
+representation; Shared Signals accelerates delivery of state changes.
+OAuth enforcement limits how long stale authorization can remain usable.
 
-This profile connects those operations:
+The lifecycle registry and local resource representation are separate:
 
 ~~~
- Enterprise IdP                         Resource domain
- +----------------------+               +--------------------+
- | Governed Agent       | -- SCIM ----> | Correlated local   |
- | Lifecycle Authority  | -- SET/SSF -> | agent + lifecycle  |
- +----------------------+               +---------+----------+
-                                                  |
-                                          +-------v-------+
-                                          | RAS issuance, |
-                                          | refresh, and  |
-                                          | introspection |
-                                          +-------+-------+
-                                                  |
-                                          +-------v-------+
-                                          | API request   |
-                                          | authorization |
-                                          +---------------+
+ Lifecycle Authority             Resource domain
+ +-----------------+             +--------------------+
+ | Lifecycle State | --SCIM/SET-> | Lifecycle Registry |
+ +-----------------+             +----------+---------+
+                                            |
+                       +--------------------+-------------+
+                       |                                  |
+              +--------v--------+               +---------v---------+
+              | SCIM Agent view |               | OAuth enforcement |
+              | Local principal |               | RAS and API       |
+              +-----------------+               +-------------------+
 ~~~
 {: #lifecycle-model title="Provisioning and lifecycle enforcement"}
 
-SCIM supplies the durable resource interface. Shared Signals supplies
-timely notification. Both carry one versioned state, so delayed delivery
-cannot reverse a newer change. A finite validity interval bounds reliance
-on active state when neither channel delivers an update.
+The registry can retain state before a local Agent resource exists and
+after it is deleted. Neither a descriptive SCIM edit nor event delivery
+creates permission to act. Both bindings use the same lifecycle version
+and cutoff, so delayed delivery cannot reverse a newer decision.
 
 ## Scope and Relationship to Other Specifications
 
@@ -180,9 +178,19 @@ Lifecycle Receiver:
   deployment responsible for atomic state application; they need not
   run in the same process.
 
-State Record:
-: The complete extension object defined in {{state-schema}}, including
-  its identity, version, status, authorization cutoff, and validity.
+Governed Agent Lifecycle State (State Record):
+: The transport-independent object in {{state-schema}}, containing
+  identity, lifecycle version, status, authorization cutoff, and lease.
+
+Eligibility Lease:
+: The time-limited permission to rely on active lifecycle state.
+  `validUntil` gives its source expiration; receiver policy can shorten
+  it. It grants no resource permissions and does not extend token validity.
+
+Lifecycle Registry:
+: The Receiver's durable state store, independent of its SCIM resources.
+  It retains lifecycle decisions and retirement protection for each
+  qualified agent within the authorized Target Tenant.
 
 Authorization Cutoff:
 : A time watermark invalidating authorization derived from grants
@@ -195,12 +203,23 @@ Local Suspension:
 
 # Conformance and Trust Configuration {#conformance}
 
+This document separates two layers:
+
+| Layer | Contract |
+|---|---|
+| Lifecycle state and distribution | State Record, eligibility lease, registry ordering, SCIM and Shared Signals bindings, and recovery |
+| OAuth enforcement | Issuance-time interpretation of the cutoff, retained authorization provenance, resource enforcement modes, and denial bounds |
+
+The state model is reusable independently of its bindings. This revision's
+full-profile conformance requires both layers and the bindings specified
+here; storing state alone does not establish an OAuth enforcement guarantee.
+
 A deployment claiming this profile MUST implement:
 
 | Component | Required behavior |
 |---|---|
 | Lifecycle Authority and its connector | Issue ordered state records; provision through SCIM; transmit lifecycle SETs; reconcile delivery |
-| Lifecycle Receiver | Implement the SCIM extension, SSF push delivery, common ordering rules, and durable correlation |
+| Lifecycle Receiver | Maintain the independent registry and correlation; apply both bindings through common state processing |
 | IdP grant issuer | Enforce lifecycle eligibility and the issuance-time contract in {{cutoff}} |
 | RAS | Enforce eligibility at redemption and refresh; retain grant provenance; implement the configured enforcement mode |
 | API | Apply the configured mode in {{api-enforcement}} and the Federation authorization rules |
@@ -302,38 +321,36 @@ Effective eligibility, Local Suspension, and local permissions are not
 observable through this SCIM extension. A returned `active: true` reports
 the source's administrative status only; it is not an access decision.
 
-# Lifecycle State {#state-schema}
+# Governed Agent Lifecycle State {#state-schema}
 
-## SCIM Extension Attributes
+A State Record is a complete JSON object, not a SCIM resource or a delta.
+The following members are REQUIRED. Member names are case-sensitive;
+unknown members have no lifecycle meaning and MUST be ignored. Bindings
+MUST preserve the defined member values and semantics.
 
-The extension schema URI is:
-
-`urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent`
-
-Its name is `GovernedAgentLifecycle`. The attributes below are all
-single-valued, REQUIRED, returned by default, and have uniqueness `none`.
-String attributes have `caseExact: true`. Mutability is `readWrite` except
-for `issuer` and `subject`, which are `immutable`. Uniqueness of the
-identity pair is enforced under {{identity}}.
-
-| Attribute | SCIM type | Meaning |
+| Member | JSON type | Meaning |
 |---|---|---|
 | `issuer` | string | Governing IdP issuer identifier |
 | `subject` | string | Governed Agent identifier in that issuer's namespace |
-| `version` | string | Strictly increasing source version, defined below |
+| `version` | string | Strictly increasing lifecycle version |
 | `status` | string | One of `active`, `disabled`, or `retired` |
-| `authorizationNotBefore` | dateTime | Authorization Cutoff; grants with `iat` at or before it are ineligible |
-| `assertedAt` | dateTime | Time the Authority produced this State Record |
-| `validUntil` | dateTime | Exclusive end of permission to rely on this record as active |
+| `authorizationCutoff` | string | Time watermark invalidating authorization issued at or before it |
+| `assertedAt` | string | Time the Authority produced this State Record |
+| `validUntil` | string | Exclusive source expiration of the eligibility lease for active state |
+
+The identity pair MUST remain unchanged for the lifetime of the record.
+Timestamps use the RFC 3339 format {{RFC3339}} restricted below. The
+object's JSON representation follows {{RFC8259}}; duplicate member names
+MUST be rejected rather than selecting one value.
 
 Dates MUST use UTC with the `Z` offset and whole-second precision.
-`authorizationNotBefore` MAY be later than `assertedAt` by the configured
+`authorizationCutoff` MAY be later than `assertedAt` by the configured
 issuer-ahead clock bound in {{cutoff}}. For active state, `validUntil`
 MUST be later than `assertedAt`. For disabled or retired state it remains
 REQUIRED for a uniform record shape but is ignored for validity and
-enforcement. These requirements narrow
-the SCIM dateTime representation to allow unambiguous comparison with
-JWT NumericDate values {{RFC7519}}.
+enforcement. Timestamps MUST use uppercase `T` and `Z`, and seconds from
+00 through 59. This canonical representation permits exact comparison
+across bindings and conversion to OAuth issuance times.
 
 The Receiver MUST reject a cutoff later than `assertedAt + D`. D is
 agreed with the Authority for this issuer namespace, not learned from
@@ -343,20 +360,38 @@ an incoming record.
 9223372036854775807, using only ASCII digits and no leading zero.
 Comparison is numerical, not lexical. Implementations MUST preserve it
 without floating-point rounding; a signed 64-bit integer is sufficient.
-The Authority MUST increase it for every new State Record,
-including renewal of `validUntil`; it MUST NOT reuse or reset a version
-for that identity.
+The Authority MUST increase it for every change to the State Record,
+including a lease renewal; it MUST NOT reuse or reset a lifecycle version.
+Descriptive SCIM changes MUST NOT by themselves change the State Record
+or increment its version.
 
-The record is a complete snapshot, not a delta. The Authority MUST retain
-the current version and cutoff across restarts, backup recovery, and
-connector changes. SCIM `meta.version` remains the Receiver's HTTP entity
-tag; it is not this source sequence.
+The Authority MUST retain the current version and cutoff across restarts,
+backup recovery, and connector changes. Display names, ownership, local
+permissions, and resource modification timestamps are not members of this
+object and do not participate in its version sequence.
 
-The schema description above defines the `/Schemas` representation:
-`status` has the three canonical values listed in {{transitions}};
-the other attributes have no canonical value enumeration. Providers
-MUST advertise the specified types, mutability, requiredness, return
-behavior, and case sensitivity.
+## Eligibility Lease {#lease}
+
+For active state, `validUntil` is an eligibility lease, not an event
+expiration or a resource authorization. The Authority renews it from a
+current lifecycle decision to maintain continuous eligibility; the source
+trust assumption is stated in {{conformance}}.
+
+The Receiver MUST set its effective lease deadline to the earlier of
+`validUntil` and `assertedAt + L`, where L is its configured maximum lease
+interval. It MUST clamp an excessive interval without rejecting the record
+or rewriting the source fields, and MUST stop relying on active eligibility
+at that deadline, accounting conservatively for clock error.
+
+For disabled or retired state, `validUntil` and L MUST NOT delay, prevent,
+or expire the restriction. Syntax, authority, ordering, and cutoff checks
+still apply. Arrival time, replay, stream heartbeats, and reads of a local
+SCIM representation MUST NOT renew the lease.
+
+Lease expiration is intentionally reversible: an unexpired lease from a
+newer active State Record can restore eligibility. It does not reverse a
+disablement or cutoff invalidation. Local permissions and authorization
+remain separate decisions in either case.
 
 ## States and Transitions {#transitions}
 
@@ -375,11 +410,10 @@ Authorization Cutoff under {{cutoff}}. Repeated disabled or retired
 snapshots retain that cutoff unless a later cutoff is needed.
 
 On reactivation, the Authority MUST advance the cutoff again. Earlier
-authorization remains invalid. Descriptive changes such as `displayName`
-updates require a new source version, even when the lifecycle attributes
-would otherwise be unchanged. Descriptive changes and active validity
-renewals MUST NOT advance the cutoff unless the
-Authority also intends to invalidate existing authorization.
+authorization remains invalid. A lease renewal changes the lifecycle
+version but MUST NOT advance the cutoff unless the Authority also intends
+to invalidate existing authorization. Descriptive SCIM changes affect
+neither the version nor the cutoff.
 
 If whole-second precision prevents a strictly increased cutoff within
 the configured clock bound, the Authority waits before asserting the
@@ -389,44 +423,60 @@ Retirement is terminal. A new principal needs a new governed identifier.
 Deletion of a local SCIM representation MUST NOT permit reuse of the
 retired identity or erase its retirement protection.
 
-## Authorization Cutoff and Issuance {#cutoff}
+# Receiver Lifecycle Registry {#registry}
 
-An Authorization Cutoff invalidates grants and retained authorization
-issued at or before it, even if a Receiver missed the disabled state.
-It MUST never decrease.
+The Receiver MUST maintain a durable lifecycle registry independently of
+SCIM resource existence. Each entry is addressed by the qualified agent
+identity within its authorized Target Tenant and retains:
 
-Every ID-JAG issued under this companion MUST contain `iat`, as already
-required by {{ID-JAG, Section 3.1}}. This profile additionally requires a
-whole-second NumericDate representing its issuance time.
+* The highest accepted lifecycle version and complete applied State Record.
+* Pending accepted state until applied or superseded by newer complete state.
+* Permanent retirement protection.
+* The local-principal and SCIM-resource mapping, when provisioned.
 
-Let D be the configured maximum number of whole seconds by which any
-grant issuer can be ahead of the Authority, including clock error and
-rounding. If each clock is within S seconds of a common time source,
-D must cover at least 2S, rounded up. This is a difference between clocks,
-not just one clock's error.
+A state entry need not have a SCIM resource. Receiving an active record
+MUST NOT create a local principal, local permissions, or delegation.
+Provisioning adds an authorized mapping to an existing entry when one is
+already present; it MUST NOT reset that entry's version, cutoff, or lease.
 
-When advancing the cutoff, the Authority MUST set it to its current
-whole-second time plus D, strictly above the previous cutoff. This covers
-all grants issued before the committed transition without tracking the
-greatest `iat` across issuing nodes. The source-side assumptions in
-{{conformance}} still require the issuance gate to close before publication.
+Deleting a SCIM resource removes its representation and mapping, not the
+registry's retirement protection. Reading that representation is therefore
+not the only source of retained lifecycle truth. This profile specifies
+logical behavior, not a database layout or a new registry API.
 
-After activation, the issuer MUST issue only grants with `iat` strictly
-later than the cutoff. Until its actual clock clears the cutoff, issuance
-waits or fails. A cutoff ahead of the Authority's clock therefore creates
-a bounded activation delay; it does not justify postdating grants.
-Receivers MUST NOT apply positive clock-skew tolerance when comparing
-the validated grant `iat` with the cutoff.
+## State Acceptance and Ordering {#ordering}
 
-The issuance-time contract is an additional requirement of this companion;
-the presence of `iat` is inherited from ID-JAG. No new grant or access-token
-claim is defined. Shared lifecycle decisions and bounded clocks remain
-necessary; a connector unable to obtain them is non-conformant.
+Both transport bindings MUST apply the following registry rules:
+
+1. Authenticate the sender and authorize its issuer namespace and Target
+   Tenant before selecting the entry.
+2. Validate the complete State Record. Reject `assertedAt` in the future
+   beyond the configured clock tolerance; delay alone is not an error.
+   Apply the eligibility-lease clamp in {{lease}}.
+3. Compare with the highest accepted lifecycle version, including pending
+   state. A lower version is stale. An equal version with identical
+   defined member values is a duplicate; different values are a conflict.
+4. For a higher version, reject a decreasing cutoff or `assertedAt`, or
+   a transition out of retirement. Moving from active to inactive, or
+   disabled to active, requires a strictly increased cutoff.
+5. Persist pending state before acknowledging delivery. When applying it,
+   atomically advance the applied record and its RAS restrictions. Delivery
+   acknowledgment alone does not acknowledge completed enforcement.
+
+Equality compares the defined members after binding-specific decoding,
+not serialized bytes or member order. A duplicate cannot refresh the lease.
+An expired record can advance registry state but cannot establish active
+eligibility. Bindings map stale, conflicting, and invalid inputs to their
+existing response mechanisms ({{scim-updates}}, {{signals}}).
+
+An accepted later version MUST NOT allow an older pending record to
+become current afterward. Complete snapshots and the nondecreasing cutoff
+make intermediate versions unnecessary for recovery.
 
 # SCIM Provisioning {#scim}
 
 The Receiver MUST implement Agent resources at `/Agents` using
-{{SCIM-AGENT}} and the extension in {{state-schema}}. It MUST publish the
+{{SCIM-AGENT}} and the extension in {{scim-schema}}. It MUST publish the
 extension at `/Schemas` and advertise it in the Agent ResourceType's
 `schemaExtensions`. The extension is REQUIRED for resources governed by
 this profile; it need not be required for unrelated Agent resources.
@@ -437,6 +487,33 @@ both extension identity attributes and their conjunction. PATCH and Bulk
 are OPTIONAL; if supported, they MUST preserve the atomicity and ordering
 rules below.
 
+## State-to-SCIM Mapping {#scim-schema}
+
+The extension schema URI is:
+
+`urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent`
+
+Its name is `GovernedAgentLifecycle`. Each State Record member maps to a
+same-named SCIM attribute. `authorizationCutoff`, `assertedAt`, and
+`validUntil` have SCIM type `dateTime`; the other attributes have type
+`string`. Their values retain the representation in {{state-schema}}.
+
+All seven attributes are single-valued, REQUIRED, returned by default,
+and have uniqueness `none`. String attributes have `caseExact: true`.
+Mutability is `readWrite` except for immutable `issuer` and `subject`.
+The registry enforces uniqueness of the qualified identity within the
+Target Tenant; the individual attributes are not independently unique.
+
+Providers MUST advertise these characteristics in `/Schemas`. `status`
+has the three canonical values in {{transitions}}; the other attributes
+have no enumeration. SCIM attribute-name matching follows {{RFC7643}};
+the binding decodes those names to the State Record's canonical names
+before registry comparison. Ambiguous duplicate attributes MUST be rejected.
+
+The extension is a projection of the registry state. Its enclosing SCIM
+resource can change without changing lifecycle state, and lifecycle state
+can change without a SCIM write.
+
 ## Creation and Existing Records
 
 The connector MUST supply the Agent core's required attributes and the
@@ -446,9 +523,15 @@ The core attribute represents source administrative status, not the
 result of freshness checks or Local Suspension.
 
 The Receiver MUST check its correlation and retirement records before
-creation. A duplicate canonical identity in the target tenant is `409`
-with `uniqueness`. This requirement applies independently of
-`agentUserName` uniqueness.
+creation. A second Agent resource for the same qualified identity in the
+target tenant is `409` with `uniqueness`. This requirement applies
+independently of `agentUserName` uniqueness.
+
+A registry entry without an Agent resource is not a duplicate resource.
+Authorized creation can establish the local correlation using the same
+version and identical state retained from an earlier event, without
+renewing its lease. A stale creation attempt receives `409`; the connector
+obtains current state from its Authority before retrying.
 
 Malformed extension attributes use `400` with `invalidValue`; attempts
 to change immutable identity attributes use `400` with `mutability`.
@@ -462,59 +545,40 @@ Explicitly authorized correlation with an existing local principal MAY
 occur before POST. The resulting Agent resource represents that principal;
 the Receiver MUST NOT silently merge principals during synchronization.
 
-## Updates and Common Processing {#ordering}
+## Resource Updates and Lifecycle Versions {#scim-updates}
 
-SCIM writes and lifecycle events MUST use the same processing rules:
+A SCIM write carrying the extension MUST submit its State Record to the
+registry under {{ordering}}. A lower version or a conflicting equal
+version receives `409` with a SCIM `detail` string and no `scimType`.
+An invalid transition or decreasing cutoff receives `400` with
+`invalidValue`. These errors reject the entire write, including any
+accompanying descriptive edits.
 
-1. Authenticate the sender and authorize its namespace and target tenant.
-2. Validate the complete record, identity, and times. Reject an `assertedAt`
-   in the future by more than the permitted clock error; delayed records
-   are not rejected for their age alone. Apply the active-reliance clamp
-   in {{freshness}}, rather than rejecting an excessive validity interval.
-3. Compare the source version with the highest retained version.
-   * A lower version cannot modify state.
-   * An equal version with identical defined attribute values is a
-     duplicate; it cannot extend freshness.
-   * An equal version with different defined values is a conflict.
-4. For a higher version, reject a decreasing cutoff or `assertedAt`, or
-   any transition out of retained retirement. An expired snapshot may
-   advance retained state, but cannot establish active eligibility.
-   A change from active to inactive, or from disabled to active, MUST
-   have a strictly increased cutoff.
-5. Atomically persist the accepted state and make its issuance and
-   introspection restrictions effective before reporting SCIM success.
+An equal version with identical state is a lifecycle no-op, not a no-op
+for the whole SCIM request. Authorized changes to `displayName` and other
+non-lifecycle attributes MAY be applied without changing the State Record,
+renewing its lease, or emitting a lifecycle event. This also handles a
+SCIM representation arriving after an event with the same state version.
 
-Equality ignores JSON member order. Receivers MUST compare SCIM attribute
-names according to SCIM rules and values according to {{state-schema}}.
-Unknown extension attributes do not establish new permissions.
+SCIM resource concurrency is independent of lifecycle ordering. Receivers
+SHOULD support resource ETags and `meta.version` under {{RFC7644, Section
+3.14}}; clients SHOULD use `If-Match` to avoid overwriting concurrent
+metadata changes. Failed conditions use the base protocol's precondition
+response. Lifecycle `version` MUST NOT substitute for an HTTP entity tag.
 
-A lower-version SCIM write or a conflicting equal-version write receives
-`409` with a SCIM `detail` string describing the conflict and no `scimType`.
-There is no applicable registered `scimType` for a source-version conflict.
+PUT MUST contain the complete extension. A supported PATCH changing a
+lifecycle attribute or core `active` MUST provide a complete resulting
+State Record and consistent `active` value in one atomic request. A PATCH
+changing only non-lifecycle attributes MAY omit the extension; it MUST
+leave the registry unchanged. Removing the extension or a required state
+attribute is `400` with `invalidValue`.
 
-A duplicate write returns the current resource without reapplying
-its lifecycle changes. If the same version arrived first through an
-event, the first authorized SCIM representation at that version MAY
-populate its descriptive attributes. The Receiver MUST remember that
-application; changing those attributes again requires a newer version.
-
-An invalid transition or decreasing cutoff receives `400`
-with `invalidValue`. Failed HTTP conditional requests use the HTTP and
-SCIM precondition rules, independently of source versions.
-
-PUT MUST contain the complete extension. A supported PATCH changing any
-lifecycle attribute MUST provide a complete resulting State Record and
-consistent core `active` value in one atomic request. Omitting the
-extension or deleting a required attribute is `400` with `invalidValue`.
-
-Metadata changes MUST NOT bypass lifecycle version checks. If an older
-PUT includes a stale status and new display name, the entire write is
-rejected; it is not partially applied.
-
-An accepted event MUST update the extension and core `active` value
-visible through SCIM, including the resource's modification metadata.
-GET therefore reports applied state, not merely the most recent SCIM
-write. Pending events are not represented as successfully applied state.
+The Receiver MUST make accepted registry state and its RAS restrictions
+effective before reporting SCIM success. GET MUST project that applied
+state into the extension and core `active` value, even if it arrived by
+SSF. An unapplied event cannot appear as applied SCIM state. Resource
+modification metadata, including an ETag when supported, MUST reflect
+changes to the representation through either binding.
 
 ## Retirement and Deletion
 
@@ -559,7 +623,7 @@ This document defines the SET event type:
 
 `urn:ietf:params:oauth:event-type:governed-agent-lifecycle`
 
-It carries the Authority's current State Record, including validity
+It carries the Authority's current State Record, including eligibility-lease
 renewals. It is an assertion of enterprise lifecycle state, not a command
 to grant local access.
 
@@ -572,8 +636,8 @@ The event MUST:
   is not SET expiration.
 * Identify the agent using the top-level `sub_id` with the `iss_sub`
   format from {{RFC9493}}.
-* Contain a `state` member whose value is a JSON object with the seven
-  attributes defined in {{state-schema}} directly as members. It MUST NOT
+* Contain a `state` member whose value is the State Record object from
+  {{state-schema}}, with its seven members directly in that object. It MUST NOT
   wrap them in a SCIM schema-URN member or include a `schemas` member.
   Required member names use the spelling in that section. Receivers MUST
   ignore other unknown members; they confer no lifecycle semantics.
@@ -601,8 +665,8 @@ delivery fails, the Transmitter retains the event for its configured
 retry period and the connector uses SCIM reconciliation. Expiration of
 that period does not remove the obligation to reconcile current state.
 SCIM and SSF do not need to arrive in the same order. Retransmitting a
-record MUST NOT change its version or validity; a fresh validity assertion
-requires a new version.
+record MUST NOT change its version or lease; a lease renewal requires
+a new State Record with a higher version.
 
 Receivers MUST durably deduplicate SETs by Transmitter issuer and `jti`
 for the configured delivery retry period. Source-version processing
@@ -622,19 +686,102 @@ effective within its configured enforcement delay. It MUST NOT report
 successful SCIM application of the same version while those restrictions
 remain pending.
 
-An event for an unprovisioned identity MUST NOT create an enabled local
-principal. A Receiver MUST retain authorized disabled or retired state
-for that identity, so a later stale provisioning request cannot bypass
-it. For active state, it retains the version and cutoff but waits for
-authorized SCIM provisioning before permitting access.
+State for an unprovisioned identity is retained in the registry under
+{{registry}}. Provisioning can later establish a local representation
+under {{scim}}; event receipt alone cannot enable a principal.
 
-An authorized SCIM creation can establish the local correlation using
-the same version and identical state retained from an earlier event.
-This creates the resource without changing or refreshing the State Record.
-A stale creation attempt is rejected with `409`; the connector obtains
-the current record from its Authority before retrying.
+# Reconciliation and Recovery {#recovery}
 
-# Enforcement and Freshness {#enforcement}
+The connector MUST maintain the mapping from each source identity to
+the Receiver's SCIM resource ID and MUST periodically reconcile it.
+Reconciliation uses ordinary SCIM GET and PUT; this document defines
+no snapshot or cursor API.
+
+For example, this is one decoded SCIM `filter` value. Unfold backslash
+continuations under {{RFC8792}} before use; remaining line breaks stand
+for whitespace. Percent-encode the complete value in the query parameter:
+
+~~~ text
+=============== NOTE: '\' line wrapping per RFC 8792 ================
+
+urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
+issuer eq "https://idp.example" and
+urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
+subject eq "agent-42"
+~~~
+
+The query runs under the connector's authorized Target Tenant. The
+extension URI qualifies each attribute as specified by {{RFC7644}}.
+
+For each identity assigned to a target tenant, the connector:
+
+1. Queries its known resource ID, or filters by the qualified identity
+   when the ID is unknown or the resource is missing.
+2. Compares the returned State Record with the Authority's current record.
+3. Creates a missing authorized resource or sends the current complete
+   record when the Receiver is behind.
+4. Investigates a Receiver version ahead of the source; it MUST NOT reset
+   the sequence or overwrite state with a lower version.
+5. Reconciles descriptive attributes separately under SCIM concurrency
+   rules, even when lifecycle versions match. A descriptive difference
+   does not require a new State Record.
+
+An absent identity in a partial inventory MUST NOT be treated as retired.
+The Authority MUST retain explicit retirement records and retry them
+until affected receivers have applied them. Retirement tombstones also
+protect against older backups and late provisioning requests.
+
+The registry compares state from both bindings against retained and pending
+state, including retirement tombstones. Applying version 43 does not
+require delivery of version 42 because snapshots include the nondecreasing cutoff. A Receiver
+MUST NOT depend on observing every intermediate transition.
+
+After loss of correlation or lifecycle state, the Receiver MUST deny
+affected authorization until trusted reconciliation completes. Restoring
+an old backup MUST NOT make its active records fresh or bypass retained
+retirement protections. Restoring an Authority without its version and
+issuance watermark requires administrative recovery, not a sequence reset.
+
+# OAuth Enforcement Layer {#enforcement}
+
+This layer interprets lifecycle state for ID-JAG and derived OAuth
+authorization. It defines the issuance-time contract, retained provenance,
+and resource denial bounds. The distribution layer above does not itself
+validate grants, revoke tokens, or decide whether an operation is allowed.
+
+## Authorization Cutoff and Issuance {#cutoff}
+
+An Authorization Cutoff invalidates grants and retained authorization
+issued at or before it, even if a Receiver missed the disabled state.
+It MUST never decrease.
+
+Every ID-JAG issued under this companion MUST contain `iat`, as already
+required by {{ID-JAG, Section 3.1}}. This profile additionally requires a
+whole-second NumericDate {{RFC7519}} representing its issuance time.
+
+Let D be the configured maximum number of whole seconds by which any
+grant issuer can be ahead of the Authority, including clock error and
+rounding. If each clock is within S seconds of a common time source,
+D must cover at least 2S, rounded up. This is a difference between clocks,
+not just one clock's error.
+
+When advancing the cutoff, the Authority MUST set it to its current
+whole-second time plus D, strictly above the previous cutoff. This covers
+all grants issued before the committed transition without tracking the
+greatest `iat` across issuing nodes. The source-side assumptions in
+{{conformance}} still require the issuance gate to close before publication.
+
+After activation, the issuer MUST issue only grants with `iat` strictly
+later than the cutoff. Until its actual clock clears the cutoff, issuance
+waits or fails. A cutoff ahead of the Authority's clock therefore creates
+a bounded activation delay; it does not justify postdating grants.
+Receivers MUST NOT apply positive clock-skew tolerance when comparing
+the validated grant `iat` with the cutoff.
+
+The issuance-time contract is an additional requirement of this companion;
+the presence of `iat` is inherited from ID-JAG. No new grant or access-token
+claim is defined. Shared lifecycle decisions and bounded clocks remain
+necessary; a connector unable to obtain them is non-conformant.
 
 ## Eligibility and Existing Authorization
 
@@ -765,31 +912,13 @@ operations or cancellation of work already admitted. Long-running sessions
 need separate revalidation or cancellation rules. Where APIs use different
 modes, the deployment-wide bound is the longest applicable bound.
 
-## State Freshness and Loss of Delivery {#freshness}
+## Denial Bounds and Loss of Delivery {#freshness}
 
-An active State Record is a time-limited assertion. The Authority MUST
-renew it within the Receiver's accepted interval to maintain continuous
-eligibility. The trust assumption for a current source decision on renewal
-is stated in {{conformance}}.
-
-For active state, the Receiver MUST set its effective reliance deadline to
-the earlier of `validUntil` and `assertedAt + L`, where L is its configured
-maximum interval. It MUST clamp an excessive interval, not reject the
-State Record or rewrite the source's stored fields. It MUST stop relying
-on active state at that deadline, accounting conservatively for clock error.
-
-For disabled or retired state, `validUntil` and L MUST NOT delay, prevent,
-or expire its restrictive effect. Syntax, source authorization, ordering,
-and cutoff checks still apply. Arrival time, replay, stream heartbeats,
-and reads of the Receiver's own SCIM resource cannot refresh source state.
-
-Expiration blocks new RAS issuance, refresh, and active introspection until
-a newer active record has an effective deadline in the future. Cached
-results and offline tokens follow their mode's residual acceptance bound.
-The distinction is intentional: freshness loss is reversible, while
-administrative revocation is permanent. Still-valid authorization MAY
-become usable after freshness is restored if its grant clears the cutoff;
-disablement and cutoff invalidation cannot be reversed by renewal.
+An expired eligibility lease blocks new RAS issuance, refresh, and active
+introspection. Cached results and offline tokens follow their configured
+mode's residual acceptance bound. When a newer active lease restores
+eligibility, still-valid authorization MAY be used only if its original
+grant clears the cutoff and has not otherwise been revoked.
 
 Let S bound clock error at each party and E bound enforcement delay after
 acceptance. Under the source-side assumptions in {{conformance}}, the
@@ -807,55 +936,6 @@ expiry validation; it is not merely the nominal token lifetime. All
 parameters are finite deployment limits. Deployments MUST document their
 mode, limits, timeouts, and outage behavior. They MUST NOT claim a shorter
 bound based solely on grant lifetime or successful event delivery.
-
-# Reconciliation and Recovery {#recovery}
-
-The connector MUST maintain the mapping from each source identity to
-the Receiver's SCIM resource ID and MUST periodically reconcile it.
-Reconciliation uses ordinary SCIM GET and PUT; this document defines
-no snapshot or cursor API.
-
-For example, this is one decoded SCIM `filter` value. Unfold backslash
-continuations under {{RFC8792}} before use; remaining line breaks stand
-for whitespace. Percent-encode the complete value in the query parameter:
-
-~~~ text
-=============== NOTE: '\' line wrapping per RFC 8792 ================
-
-urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
-issuer eq "https://idp.example" and
-urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
-subject eq "agent-42"
-~~~
-
-The query runs under the connector's authorized Target Tenant. The
-extension URI qualifies each attribute as specified by {{RFC7644}}.
-
-For each identity assigned to a target tenant, the connector:
-
-1. Queries its known resource ID, or filters by the qualified identity
-   when the ID is unknown or the resource is missing.
-2. Compares the returned State Record with the Authority's current record.
-3. Creates a missing authorized resource or sends the current complete
-   record when the Receiver is behind.
-4. Investigates a Receiver version ahead of the source; it MUST NOT reset
-   the sequence or overwrite state with a lower version.
-
-An absent identity in a partial inventory MUST NOT be treated as retired.
-The Authority MUST retain explicit retirement records and retry them
-until affected receivers have applied them. Retirement tombstones also
-protect against older backups and late provisioning requests.
-
-SCIM records, pending event state, and tombstones participate in the same
-version comparison. Applying version 43 does not require delivery of
-version 42 because snapshots include the nondecreasing cutoff. A Receiver
-MUST NOT depend on observing every intermediate transition.
-
-After loss of correlation or lifecycle state, the Receiver MUST deny
-affected authorization until trusted reconciliation completes. Restoring
-an old backup MUST NOT make its active records fresh or bypass retained
-retirement protections. Restoring an Authority without its version and
-issuance watermark requires administrative recovery, not a sequence reset.
 
 # Relationship-Specific Changes {#relationship-changes}
 
@@ -999,8 +1079,8 @@ The registration template required by {{RFC7643, Section 10.3.2}} is:
 * Purpose: Carry the canonical governed identity and authoritative
   lifecycle state used for provisioning and OAuth enforcement.
 * Single-value Attributes: `issuer`, `subject`, `version`, `status`,
-  `authorizationNotBefore`, `assertedAt`, `validUntil`, as defined in
-  {{state-schema}}.
+  `authorizationCutoff`, `assertedAt`, `validUntil`, as defined in
+  {{state-schema}} and mapped to SCIM types in {{scim-schema}}.
 * Multi-valued Attributes: None.
 
 --- back
@@ -1039,7 +1119,7 @@ Content-Type: application/scim+json
     "subject": "agent-42",
     "version": "40",
     "status": "disabled",
-    "authorizationNotBefore": "2026-09-17T12:00:02Z",
+    "authorizationCutoff": "2026-09-17T12:00:02Z",
     "assertedAt": "2026-09-17T12:00:00Z",
     "validUntil": "2026-09-17T12:05:00Z"
   }
@@ -1090,7 +1170,7 @@ with the negotiated signing algorithm and key identifier, and this payload:
         "subject": "agent-42",
         "version": "42",
         "status": "disabled",
-        "authorizationNotBefore": "2026-09-17T12:02:02Z",
+        "authorizationCutoff": "2026-09-17T12:02:02Z",
         "assertedAt": "2026-09-17T12:02:00Z",
         "validUntil": "2026-09-17T12:07:00Z"
       }
@@ -1108,11 +1188,13 @@ The Receiver applies version 42. Redemption and refresh fail with
 | Subsequent input | Result |
 |---|---|
 | Delayed SCIM PUT carrying active version 41 | `409`; disabled version 42 remains in effect |
-| Retransmission of event 42 | Acknowledged without extending validity or changing state |
+| Authorized SCIM PUT with identical state 42 and a new display name | Descriptive edit applies; lifecycle version, cutoff, and lease remain unchanged |
+| Descriptive edit with a stale `If-Match`, when ETags are supported | `412`; no change |
+| Retransmission of event 42 | Acknowledged without renewing the lease or changing state |
 | Different state using version 42 | Rejected and diagnosed as a conflict |
 | Authorized active version 43 with cutoff 12:03:02 | Fresh grants after the cutoff can qualify; old tokens stay invalid |
 | Version 43 delivered without version 42 | The newer cutoff still rejects the grant issued at 12:01:03 |
-| No update or renewal after active version 41 | Authorization is denied when its finite validity ends |
+| No update or renewal after active version 41 | Authorization is denied when its eligibility lease ends |
 | Retired version 44 followed by an active version 45 | Invalid transition; retirement remains terminal |
 
 In bounded-cache mode an earlier active introspection result may still
@@ -1128,8 +1210,8 @@ appropriate schema and event bindings.
 
 This profile deliberately reuses the Agent resource, SCIM operations,
 SET subject identifiers, and SSF delivery. The new material is the
-qualified identity extension, shared source ordering, finite state
-validity, issuance cutoff, and enforcement contract.
+transport-independent lifecycle state, shared ordering, eligibility lease,
+authorization cutoff, and OAuth enforcement contract.
 
 The account-disabled, account-enabled, and account-purged events in
 {{RISC}} report account transitions. They do not define this profile's

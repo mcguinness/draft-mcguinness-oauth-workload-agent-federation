@@ -56,7 +56,7 @@ normative:
   RFC9700:
 informative:
   AGENT-LIFECYCLE:
-    title: "A SCIM and Shared Signals Profile for Governed Agent Lifecycle"
+    title: "Governed Agent Lifecycle State and OAuth Enforcement"
     target: https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html
     author:
       - name: Karl McGuinness

@@ -3,7 +3,7 @@
 # OAuth 2.0 Profile for Governed Agent Federation
 
 This is the working area for "OAuth 2.0 Profile for Governed Agent Federation"
-and its companion, "A SCIM and Shared Signals Profile for Governed Agent Lifecycle".
+and its companion, "Governed Agent Lifecycle State and OAuth Enforcement".
 
 The draft defines how an IdP resolves dedicated OAuth client identities or
 independently validated workload identities to stable Governed Agents.
@@ -42,19 +42,17 @@ Continuation Assertion compositions remain deferred.
 
 ## Provisioning and Lifecycle Companion
 
-The companion profiles SCIM Agent resources and Shared Signals for the same
-IdP-qualified Governed Agent identity. It defines local-principal correlation,
-disablement, reactivation, retirement, ordered state updates, and recovery.
-The lifecycle contract covers grant redemption, refresh, and existing API
-access without adding a workload credential or changing the Federation
-draft's grant profiles.
+The companion defines transport-independent Governed Agent Lifecycle State
+for the same IdP-qualified identity. SCIM and Shared Signals carry that state
+into a lifecycle registry independently of local resource existence.
+Descriptive SCIM edits do not advance the lifecycle version.
 
-The design uses finite validity for active lifecycle state and a bounded-clock
-issuance cutoff that prevents reactivation of old authorization. APIs can use
-online introspection, bounded introspection caching, or expiring JWTs, each
-with an explicit disablement bound. Streams bind the governed issuer namespace
-to a Target Tenant. WAG remains a future wire composition using the same
-principal lifecycle.
+An eligibility lease limits reliance on active state; an authorization cutoff
+prevents old authorization from reviving after reactivation. A second layer
+applies state to OAuth redemption, refresh, and API access. Online introspection,
+bounded introspection caching, and expiring JWTs each have an explicit denial
+bound. Streams bind the governed issuer namespace to a Target Tenant. WAG
+remains a future wire composition using the same principal lifecycle.
 
 * [Companion source](draft-mcguinness-oauth-governed-agent-lifecycle.md)
 * [Companion editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html)
