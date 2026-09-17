@@ -136,12 +136,13 @@ authorization, and representation to extensions. {{ATTEST}} and
 {{SPIFFE-OAUTH}} authenticate OAuth clients, not the agents a shared
 client serves.
 
-This profile supplies the integration contract: accepted workload
-evidence, resolution to a Governed Agent through an Identity Binding,
-permitted client use through a Client Association, and delegated
-ID-JAG issuance and redemption. The RAS receives the governed identity
-as the actor, independently of the external credential and OAuth client
-({{model}}).
+This profile composes existing workload federation and OAuth mechanisms
+into an integration contract: the IdP resolves external evidence to a
+Governed Agent, authorizes a separate OAuth client to exercise that
+identity, and issues an ID-JAG whose actor the RAS preserves and
+authorizes. Existing service principals can represent the agent. The
+contribution is the end-to-end identity and authorization contract,
+not a new principal type or credential format ({{model}}).
 
 # Conventions and Terminology
 
@@ -345,25 +346,19 @@ The complete messages for this configuration are in {{walkthrough}}.
 
 ## Requirements by Implementer {#profile-requirements}
 
-This non-normative index locates requirements by implementer. Common
-requirements are in {{model}}, {{identity}}, and {{authorization}}.
+This non-normative index locates requirements by role. The differences
+from the underlying protocols are summarized in {{profile-additions}}.
 
 | Implementer | Requirement | Defined in |
 |---|---|---|
 | Platform | Supply an existing credential accepted by the selected input profile | {{evidence}} |
-| IdP; client selecting JWT-SVID | Implement JWT-SVID actor evidence and native SPIFFE client authentication | {{jwt-svid-input}} |
-| Client and RAS | Implement `private_key_jwt` for redemption; common JWT and DPoP algorithms | {{flow-configuration}} |
-| Client and IdP | ID Token or supported SAML assertion or IdP refresh-token subject; direct JWT actor; one or more resources at one RAS and non-empty scope | {{exchange-request}} |
-| IdP | Validate evidence; enforce the Client Association for the selected Identity Binding, flow, and credential class | {{identity}} and {{inputs}} |
-| IdP | Authorize one user-to-agent relationship; construct `act.sub` from the Governed Agent and `act.iss` from the IdP | {{authorization}} and {{actor-construction}} |
-| IdP and RAS | Resolve the user in the target namespace; authorize links and reject conflicts | {{subject-resolution}} |
-| IdP | Bind grant expiry to input expiry and a finite configured limit; five minutes recommended | {{grant-issuance}} |
-| Client, IdP, and RAS | DPoP at both token endpoints; access-token protection selected per resource | {{root-request}} and {{access-token-protection}} |
-| Client and RAS | `jwt-bearer` redemption; grant confirmation check; matching resource and preserved actor | {{redemption}} |
-| Client | Reuse tokens only within their associated authorization context | {{client-token-reuse}} |
-| API | Configured applicability; actor gate and selected token protection | {{api-processing}} |
-| IdP and RAS | `invalid_grant` for invalid credentials; `actor_unauthorized` for delegation denial | {{errors}} |
-| Client, IdP, and RAS | Grant-profile URI at RAS and client; configured IdP issuance and optional inputs | {{metadata}} |
+| Client | Select supported inputs, authenticate, prove the grant key, and retain token context | {{scope}}, {{flow-configuration}}, {{exchange-request}}, {{redemption}}, {{client-token-reuse}} |
+| IdP | Validate evidence, resolve the agent, enforce the Client Association, and authorize delegation | {{inputs}}, {{identity}}, {{authorization}} |
+| IdP | Construct the governed actor and issue the bounded grant | {{actor-construction}}, {{grant-issuance}} |
+| IdP and RAS | Resolve and link the user in the target namespace | {{subject-resolution}} |
+| RAS | Validate and redeem the grant; apply local authorization and token-protection policy | {{redemption}} |
+| API | Enforce profile applicability, actor authorization, tenant, and token protection | {{api-processing}} |
+| Client, IdP, and RAS | Configure capabilities, advertise support, and process failures | {{metadata}}, {{errors}} |
 
 # Federation Model {#model}
 
@@ -704,6 +699,15 @@ redemption limit, not a continued-access deadline.
 Absent such a deadline, the RAS determines authorization duration under
 its local policy; revocation follows {{status-changes}}.
 
+For example, both servers can share a policy record authorizing Alice
+and `agent-42`, through the configured clients, for `files.read` in
+`acme-data` until 18:00 UTC on an agreed date. Each server resolves that
+record from its validated request context; the RAS caps access-token
+and refresh authorization at 18:00, independently of the ID-JAG's `exp`.
+Distinct deadlines for otherwise identical delegations need an
+authoritative correlation or lookup mechanism. This profile defines no
+such mechanism; without one, the IdP cannot issue those delegations.
+
 ## Delegated Actor Authorization {#actor-authorization}
 
 For delegated access, the RAS and API MUST enforce both:
@@ -738,6 +742,31 @@ authorization or attribution.
 This section profiles ID-JAG issuance and redemption using the actor
 extension point in {{ID-JAG, Section 9.7}}. Where it is silent, ID-JAG
 applies unchanged; the text states only additions and narrowings.
+
+## Relationship to Base Specifications {#profile-additions}
+
+Token Exchange request and response syntax, the ID-JAG format,
+`jwt-bearer` redemption, and DPoP proof processing are inherited from
+{{RFC8693}}, {{ID-JAG}}, and {{RFC9449}}. This non-normative table
+identifies this profile's additions and deliberate narrowings; the
+referenced sections define the requirements.
+
+| Area | Profile requirement | Defined in |
+|---|---|---|
+| Actor extension | Resolve external evidence through an Identity Binding; authorize client use through a separate Client Association | {{identity-binding}} |
+| Actor representation | One actor with the Governed Agent as `act.sub` and the IdP as `act.iss`; replaces Actor Profile's credential-to-actor copying | {{actor-construction}} |
+| Request narrowing | Actor evidence, explicit resource, non-empty scope, and DPoP required; no incoming actor chain | {{root-request}}, {{actor-inputs}} |
+| Identity and client binding | Resolve users and agents separately; derive downstream `client_id` from an authoritative client-registration association | {{subject-resolution}}, {{agent-correlation}}, {{flow-configuration}} |
+| Grant narrowing | Require `cnf.jkt`, resource and scope constraints, and expiration bounded by evidence and policy | {{grant-issuance}} |
+| Resource processing | Preserve actor and tenant context; enforce the user authority and actor gate with the selected token protection | {{access-token-response}}, {{api-processing}} |
+| Refresh narrowing | Explicit policy, client and DPoP binding, and a finite absolute authorization expiration | {{ras-refresh}} |
+| Error processing | Actor-credential failures use `invalid_grant` rather than RFC 8693's default `invalid_request`; actor authorization denial uses `actor_unauthorized` | {{errors}} |
+| Profile discovery | Add this profile's URI to existing ID-JAG metadata | {{metadata}} |
+
+Deployment policy selects trusted credential authorities, bindings,
+delegation rules, local principal links, and resource protection. The
+profile constrains their results without defining an administration
+protocol ({{model}}).
 
 ## Prerequisites and Common Capabilities {#flow-configuration}
 
@@ -1207,12 +1236,14 @@ tenant and token constraints needed to evaluate the requested operation.
 defines no AuthZEN message mapping and requires no particular policy
 engine. A policy permit does not override the token's constraints.
 
-For example, a shared API can accept ordinary user tokens for its
-interactive client while requiring this profile for `platform-api`.
-The API uses the validated issuer and `client_id` with trusted issuance
-policy, not the absence of `act`, to distinguish these cases. If one
-client serves both cases, the API needs authoritative issuance context
-that distinguishes them; this document defines no new discriminator.
+For example, the RAS can reserve `platform-api` for this profile while
+issuing ordinary user tokens to `interactive-web`. The API configures
+that distinction for trusted issuer `https://ras.example/` and selects
+processing from the validated issuer and `client_id`. A token for
+`platform-api` missing `act` is rejected, not treated as an ordinary
+user token. If the RAS issues both populations to one client, these
+claims are insufficient: the API needs other authoritative issuance
+context and rejects ambiguous tokens. No new discriminator is defined.
 
 ### Error Responses {#resource-errors}
 
@@ -1228,8 +1259,10 @@ actor-specific rejection details outside the trust domain.
 
 ## Walkthrough: Shared Platform Client {#walkthrough}
 
-This non-normative walkthrough completes the example configured in
-{{identity-example}}.
+This non-normative walkthrough completes {{identity-example}} with
+DPoP-protected access to the API. Key coordinates, thumbprints, token
+hashes, and compact JWTs are labeled placeholders, not cryptographic
+test vectors.
 
 ### SPIFFE Workload Evidence
 
@@ -1342,8 +1375,8 @@ Tenant; the tenant-specific resource identifies Target Tenant
 `RAS_CLIENT_ASSERTION` authenticates the corresponding RAS client with
 `iss=sub=platform-api`, `aud=https://ras.example/token`, a short
 expiration, and its own `jti`. It uses that registration's signing key.
-`RAS_DPOP_PROOF` is a
-fresh proof using K, `htm=POST`, and `htu=https://ras.example/token`.
+`RAS_DPOP_PROOF` is a fresh proof using K, `htm=POST`, and
+`htu=https://ras.example/token`.
 The RAS validates the grant binding regardless of the API's token mode.
 
 ~~~ http-message
@@ -1361,7 +1394,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 &resource=https%3A%2F%2Fapi.example%2Ftenants%2Facme-data%2F
 ~~~
 
-For a resource with explicitly permitted bearer access, the response is:
+For the configured DPoP-protected resource, the response is:
 
 ~~~ http-message
 HTTP/1.1 200 OK
@@ -1371,7 +1404,7 @@ Pragma: no-cache
 
 {
   "access_token": "API_ACCESS_TOKEN",
-  "token_type": "Bearer",
+  "token_type": "DPoP",
   "expires_in": 600,
   "scope": "files.read",
   "resource": "https://api.example/tenants/acme-data/"
@@ -1390,20 +1423,73 @@ The access token uses `typ=at+jwt` and the following decoded payload:
   "jti": "access-1",
   "client_id": "platform-api",
   "scope": "files.read",
-  "act": {"iss":"https://idp.example/", "sub":"agent-42"}
+  "act": {"iss":"https://idp.example/", "sub":"agent-42"},
+  "cnf": {"jkt":"JKT_K"}
 }
 ~~~
 
-For a DPoP-protected resource, the response instead reports
-`token_type=DPoP` and the access token includes `cnf.jkt=JKT_K`. The
-client presents it with a fresh API proof including `ath` under RFC 9449.
-In either mode, the RAS translates Alice's subject while preserving the
-Governed Agent actor; the shared OAuth client never becomes that actor.
+The RAS translates Alice's subject while preserving the Governed Agent
+actor. The shared OAuth client never becomes that actor, and the access
+token is bound to the same key K used at both token endpoints.
+
+### Protected Resource Request
+
+The client presents the access token and a new proof signed with K:
+
+~~~ http-message
+GET /tenants/acme-data/files/report-7 HTTP/1.1
+Host: api.example
+Authorization: DPoP API_ACCESS_TOKEN
+DPoP: API_DPOP_PROOF
+~~~
+
+The decoded proof header and payload are:
+
+~~~ json
+{
+  "typ": "dpop+jwt",
+  "alg": "ES256",
+  "jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "K_X",
+    "y": "K_Y"
+  }
+}
+~~~
+
+~~~ json
+{
+  "jti": "api-proof-1",
+  "htm": "GET",
+  "htu": "https://api.example/tenants/acme-data/files/report-7",
+  "iat": 1789488005,
+  "ath": "ATH_ACCESS_TOKEN"
+}
+~~~
+
+`K_X` and `K_Y` represent K's base64url-encoded public coordinates.
+The public JWK's thumbprint is `JKT_K`. `ATH_ACCESS_TOKEN` represents
+the base64url-encoded SHA-256 hash of the ASCII access-token value,
+computed without padding under {{RFC9449, Section 4.2}}. The proof has
+a new `jti` and current `iat`; if the API requires a nonce, the client
+also includes the API-provided `nonce`.
+
+The API validates the token and proof, including `htm`, `htu`, `ath`,
+and the match between the proof key and `cnf.jkt`. It then enforces
+the user permissions, actor gate, and tenant constraints.
 
 The API verifies the tenant-specific audience for `acme-data`; a call
 for another tenant is rejected even if Alice and the agent also have
 permissions there. The platform caches this token for Alice and
 `agent-42` in `acme-data`, not for all agents using `platform-api`.
+
+For explicitly configured bearer access, the response instead uses
+`token_type=Bearer`, the access token has no `cnf`, and the API request
+uses `Authorization: Bearer API_ACCESS_TOKEN` without a DPoP proof.
+DPoP at grant issuance and redemption remains required.
+
+### Renewal and Rejection Examples
 
 The response contains no refresh token. After access-token expiration,
 the client obtains a new ID-JAG using valid subject and actor inputs.
@@ -1413,6 +1499,16 @@ authorization with a thirty-minute inactivity limit permits renewal
 only while both limits hold. Rotation does not restart the four-hour
 period, each access token expires no later than its end, and extension
 requires a new ID-JAG. Any earlier continued-access deadline also applies.
+
+Each rejection below changes one condition in the walkthrough; all
+other credentials, proofs, and policy checks succeed. Token endpoint
+errors follow {{errors}}; API errors follow {{resource-errors}}.
+
+| Changed condition | Rejecting party | Result |
+|---|---|---|
+| JWT-SVID and Identity Binding remain valid, but the Client Association for `platform-sso` is disabled | IdP | HTTP 400, `actor_unauthorized`; no ID-JAG |
+| Redemption carries a valid DPoP proof signed with another key, while the ID-JAG contains `cnf.jkt=JKT_K` | RAS | HTTP 400, `invalid_grant`; no access token |
+| The client presents the access token for an operation in another tenant, with a fresh valid proof for that request URI | API | HTTP 401, `invalid_token`; no operation performed |
 
 # Optional Evidence Inputs {#optional-inputs}
 
