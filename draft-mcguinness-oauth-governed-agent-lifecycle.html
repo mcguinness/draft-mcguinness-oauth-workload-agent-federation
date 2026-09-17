@@ -4,19 +4,20 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>A SCIM and Shared Signals Profile for Governed Agent Lifecycle</title>
+<title>Governed Agent Lifecycle State and OAuth Enforcement</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
-       This document defines provisioning and lifecycle management for the
-stable, issuer-qualified principals established by Governed Agent
-Federation. It profiles SCIM Agent resources for correlation with
-resource-local principals and defines a Shared Signals event carrying
-the same authoritative lifecycle state. 
-       The profile specifies disablement, reactivation, retirement, update
-ordering, recovery, and enforcement against new and existing OAuth
-authorization. Lifecycle changes do not establish client authority,
-user delegation, or resource permissions. No new workload credential
-or event-delivery protocol is defined. 
+       This document defines Governed Agent Lifecycle State: a versioned,
+transport-independent object expressing whether an issuer-qualified
+agent remains eligible. An eligibility lease limits reliance on active
+state, and an authorization cutoff prevents old authorization from
+reviving after reactivation. 
+       SCIM and Shared Signals bindings carry the same state into a receiver's
+lifecycle registry. A second layer applies that state to OAuth issuance,
+refresh, and resource access with explicit denial bounds. Lifecycle
+eligibility does not establish client authority, user delegation, or
+resource permissions. No new workload credential or delivery protocol
+is defined. 
     " name="description">
 <meta content="xml2rfc 3.34.0" name="generator">
 <meta content="OAuth" name="keyword">
@@ -1086,19 +1087,20 @@ svg {
 </dd>
 </dl>
 </div>
-<h1 id="title">A SCIM and Shared Signals Profile for Governed Agent Lifecycle</h1>
+<h1 id="title">Governed Agent Lifecycle State and OAuth Enforcement</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines provisioning and lifecycle management for the
-stable, issuer-qualified principals established by Governed Agent
-Federation. It profiles SCIM Agent resources for correlation with
-resource-local principals and defines a Shared Signals event carrying
-the same authoritative lifecycle state.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">The profile specifies disablement, reactivation, retirement, update
-ordering, recovery, and enforcement against new and existing OAuth
-authorization. Lifecycle changes do not establish client authority,
-user delegation, or resource permissions. No new workload credential
-or event-delivery protocol is defined.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines Governed Agent Lifecycle State: a versioned,
+transport-independent object expressing whether an issuer-qualified
+agent remains eligible. An eligibility lease limits reliance on active
+state, and an authorization cutoff prevents old authorization from
+reviving after reactivation.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">SCIM and Shared Signals bindings carry the same state into a receiver's
+lifecycle registry. A second layer applies that state to OAuth issuance,
+refresh, and resource access with explicit denial bounds. Lifecycle
+eligibility does not establish client authority, user delegation, or
+resource permissions. No new workload credential or delivery protocol
+is defined.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1187,80 +1189,52 @@ or event-delivery protocol is defined.<a href="#section-abstract-2" class="pilcr
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-lifecycle-state" class="internal xref">Lifecycle State</a></p>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-governed-agent-lifecycle-st" class="internal xref">Governed Agent Lifecycle State</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
-                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-scim-extension-attributes" class="internal xref">SCIM Extension Attributes</a></p>
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-eligibility-lease" class="internal xref">Eligibility Lease</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
                 <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-states-and-transitions" class="internal xref">States and Transitions</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
-                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-authorization-cutoff-and-is" class="internal xref">Authorization Cutoff and Issuance</a></p>
-</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-scim-provisioning" class="internal xref">SCIM Provisioning</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-receiver-lifecycle-registry" class="internal xref">Receiver Lifecycle Registry</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
-                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-creation-and-existing-recor" class="internal xref">Creation and Existing Records</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
-                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-updates-and-common-processi" class="internal xref">Updates and Common Processing</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
-                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-retirement-and-deletion" class="internal xref">Retirement and Deletion</a></p>
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-state-acceptance-and-orderi" class="internal xref">State Acceptance and Ordering</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-lifecycle-signals" class="internal xref">Lifecycle Signals</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-scim-provisioning" class="internal xref">SCIM Provisioning</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
-                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-target-tenant-and-stream-bi" class="internal xref">Target Tenant and Stream Binding</a></p>
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-state-to-scim-mapping" class="internal xref">State-to-SCIM Mapping</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
-                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-event-definition" class="internal xref">Event Definition</a></p>
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-creation-and-existing-recor" class="internal xref">Creation and Existing Records</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
-                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-delivery-and-acceptance" class="internal xref">Delivery and Acceptance</a></p>
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-resource-updates-and-lifecy" class="internal xref">Resource Updates and Lifecycle Versions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-retirement-and-deletion" class="internal xref">Retirement and Deletion</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-enforcement-and-freshness" class="internal xref">Enforcement and Freshness</a></p>
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-lifecycle-signals" class="internal xref">Lifecycle Signals</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
-                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-eligibility-and-existing-au" class="internal xref">Eligibility and Existing Authorization</a></p>
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-target-tenant-and-stream-bi" class="internal xref">Target Tenant and Stream Binding</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-grant-validation-and-retain" class="internal xref">Grant Validation and Retained Provenance</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2.2.1">
-                    <p id="section-toc.1-1.8.2.2.2.1.1"><a href="#section-8.2.1" class="auto internal xref">8.2.1</a>.  <a href="#name-migration-of-existing-autho" class="internal xref">Migration of Existing Authorization</a></p>
-</li>
-                </ul>
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-event-definition" class="internal xref">Event Definition</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
-                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-api-enforcement-modes" class="internal xref">API Enforcement Modes</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3.2.1">
-                    <p id="section-toc.1-1.8.2.3.2.1.1"><a href="#section-8.3.1" class="auto internal xref">8.3.1</a>.  <a href="#name-online-introspection" class="internal xref">Online Introspection</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3.2.2">
-                    <p id="section-toc.1-1.8.2.3.2.2.1"><a href="#section-8.3.2" class="auto internal xref">8.3.2</a>.  <a href="#name-bounded-introspection-cache" class="internal xref">Bounded Introspection Cache</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3.2.3">
-                    <p id="section-toc.1-1.8.2.3.2.3.1"><a href="#section-8.3.3" class="auto internal xref">8.3.3</a>.  <a href="#name-expiring-jwt" class="internal xref">Expiring JWT</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3.2.4">
-                    <p id="section-toc.1-1.8.2.3.2.4.1"><a href="#section-8.3.4" class="auto internal xref">8.3.4</a>.  <a href="#name-common-resource-requirement" class="internal xref">Common Resource Requirements</a></p>
-</li>
-                </ul>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.4">
-                <p id="section-toc.1-1.8.2.4.1"><a href="#section-8.4" class="auto internal xref">8.4</a>.  <a href="#name-state-freshness-and-loss-of" class="internal xref">State Freshness and Loss of Delivery</a></p>
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-delivery-and-acceptance" class="internal xref">Delivery and Acceptance</a></p>
 </li>
             </ul>
 </li>
@@ -1268,80 +1242,119 @@ or event-delivery protocol is defined.<a href="#section-abstract-2" class="pilcr
             <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-reconciliation-and-recovery" class="internal xref">Reconciliation and Recovery</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-relationship-specific-chang" class="internal xref">Relationship-Specific Changes</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-oauth-enforcement-layer" class="internal xref">OAuth Enforcement Layer</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
-                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-self-acting-access" class="internal xref">Self-Acting Access</a></p>
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-authorization-cutoff-and-is" class="internal xref">Authorization Cutoff and Issuance</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-eligibility-and-existing-au" class="internal xref">Eligibility and Existing Authorization</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3">
+                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-grant-validation-and-retain" class="internal xref">Grant Validation and Retained Provenance</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3.2.1">
+                    <p id="section-toc.1-1.10.2.3.2.1.1"><a href="#section-10.3.1" class="auto internal xref">10.3.1</a>.  <a href="#name-migration-of-existing-autho" class="internal xref">Migration of Existing Authorization</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4">
+                <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="auto internal xref">10.4</a>.  <a href="#name-api-enforcement-modes" class="internal xref">API Enforcement Modes</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4.2.1">
+                    <p id="section-toc.1-1.10.2.4.2.1.1"><a href="#section-10.4.1" class="auto internal xref">10.4.1</a>.  <a href="#name-online-introspection" class="internal xref">Online Introspection</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4.2.2">
+                    <p id="section-toc.1-1.10.2.4.2.2.1"><a href="#section-10.4.2" class="auto internal xref">10.4.2</a>.  <a href="#name-bounded-introspection-cache" class="internal xref">Bounded Introspection Cache</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4.2.3">
+                    <p id="section-toc.1-1.10.2.4.2.3.1"><a href="#section-10.4.3" class="auto internal xref">10.4.3</a>.  <a href="#name-expiring-jwt" class="internal xref">Expiring JWT</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4.2.4">
+                    <p id="section-toc.1-1.10.2.4.2.4.1"><a href="#section-10.4.4" class="auto internal xref">10.4.4</a>.  <a href="#name-common-resource-requirement" class="internal xref">Common Resource Requirements</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.5">
+                <p id="section-toc.1-1.10.2.5.1"><a href="#section-10.5" class="auto internal xref">10.5</a>.  <a href="#name-denial-bounds-and-loss-of-d" class="internal xref">Denial Bounds and Loss of Delivery</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-relationship-specific-chang" class="internal xref">Relationship-Specific Changes</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
-                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-lifecycle-writers-and-token" class="internal xref">Lifecycle Writers and Token Confusion</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
-                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-rollback-reactivation-and-c" class="internal xref">Rollback, Reactivation, and Compromised Authorities</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.3">
-                <p id="section-toc.1-1.11.2.3.1"><a href="#section-11.3" class="auto internal xref">11.3</a>.  <a href="#name-availability-and-administra" class="internal xref">Availability and Administrative Evidence</a></p>
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-self-acting-access" class="internal xref">Self-Acting Access</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-privacy-considerations" class="internal xref">Privacy Considerations</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1">
+                <p id="section-toc.1-1.12.2.1.1"><a href="#section-12.1" class="auto internal xref">12.1</a>.  <a href="#name-lifecycle-writers-and-token" class="internal xref">Lifecycle Writers and Token Confusion</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.2">
+                <p id="section-toc.1-1.12.2.2.1"><a href="#section-12.2" class="auto internal xref">12.2</a>.  <a href="#name-rollback-reactivation-and-c" class="internal xref">Rollback, Reactivation, and Compromised Authorities</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.3">
+                <p id="section-toc.1-1.12.2.3.1"><a href="#section-12.3" class="auto internal xref">12.3</a>.  <a href="#name-availability-and-administra" class="internal xref">Availability and Administrative Evidence</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
-            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.1">
-                <p id="section-toc.1-1.13.2.1.1"><a href="#section-13.1" class="auto internal xref">13.1</a>.  <a href="#name-scim-schema-registration" class="internal xref">SCIM Schema Registration</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.2">
-                <p id="section-toc.1-1.13.2.2.1"><a href="#section-13.2" class="auto internal xref">13.2</a>.  <a href="#name-oauth-uri-registration" class="internal xref">OAuth URI Registration</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-privacy-considerations" class="internal xref">Privacy Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
-            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-scim-schema-registration-te" class="internal xref">SCIM Schema Registration Template</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
-            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-references" class="internal xref">References</a></p>
+            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.1">
-                <p id="section-toc.1-1.15.2.1.1"><a href="#section-15.1" class="auto internal xref">15.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.1">
+                <p id="section-toc.1-1.14.2.1.1"><a href="#section-14.1" class="auto internal xref">14.1</a>.  <a href="#name-scim-schema-registration" class="internal xref">SCIM Schema Registration</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.2">
-                <p id="section-toc.1-1.15.2.2.1"><a href="#section-15.2" class="auto internal xref">15.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.2">
+                <p id="section-toc.1-1.14.2.2.1"><a href="#section-14.2" class="auto internal xref">14.2</a>.  <a href="#name-oauth-uri-registration" class="internal xref">OAuth URI Registration</a></p>
 </li>
             </ul>
 </li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-scim-schema-registration-te" class="internal xref">SCIM Schema Registration Template</a></p>
+</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
-            <p id="section-toc.1-1.16.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-provisioning-and-disablemen" class="internal xref">Provisioning and Disablement Example</a></p>
+            <p id="section-toc.1-1.16.1"><a href="#section-16" class="auto internal xref">16</a>. <a href="#name-references" class="internal xref">References</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.1">
-                <p id="section-toc.1-1.16.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-provision-the-agent" class="internal xref">Provision the Agent</a></p>
+                <p id="section-toc.1-1.16.2.1.1"><a href="#section-16.1" class="auto internal xref">16.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.2">
-                <p id="section-toc.1-1.16.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-activate-and-issue-authoriz" class="internal xref">Activate and Issue Authorization</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.3">
-                <p id="section-toc.1-1.16.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-disable-through-a-signal" class="internal xref">Disable Through a Signal</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.4">
-                <p id="section-toc.1-1.16.2.4.1"><a href="#appendix-A.4" class="auto internal xref">A.4</a>.  <a href="#name-delayed-delivery-and-reacti" class="internal xref">Delayed Delivery and Reactivation</a></p>
+                <p id="section-toc.1-1.16.2.2.1"><a href="#section-16.2" class="auto internal xref">16.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
-            <p id="section-toc.1-1.17.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-relationship-to-existing-wo" class="internal xref">Relationship to Existing Work</a></p>
+            <p id="section-toc.1-1.17.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-provisioning-and-disablemen" class="internal xref">Provisioning and Disablement Example</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.1">
+                <p id="section-toc.1-1.17.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-provision-the-agent" class="internal xref">Provision the Agent</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.2">
+                <p id="section-toc.1-1.17.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-activate-and-issue-authoriz" class="internal xref">Activate and Issue Authorization</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.3">
+                <p id="section-toc.1-1.17.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-disable-through-a-signal" class="internal xref">Disable Through a Signal</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.4">
+                <p id="section-toc.1-1.17.2.4.1"><a href="#appendix-A.4" class="auto internal xref">A.4</a>.  <a href="#name-delayed-delivery-and-reacti" class="internal xref">Delayed Delivery and Reactivation</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
-            <p id="section-toc.1-1.18.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
+            <p id="section-toc.1-1.18.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-relationship-to-existing-wo" class="internal xref">Relationship to Existing Work</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19">
-            <p id="section-toc.1-1.19.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.19.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20">
+            <p id="section-toc.1-1.20.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1360,41 +1373,36 @@ independently of the workload credentials used to establish it.<a href="#section
 Assertion JWT Authorization Grant (ID-JAG) <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>. This companion uses
 Security Event Tokens (SETs) <span>[<a href="#RFC8417" class="cite xref">RFC8417</a>]</span> and the Shared Signals Framework
 (SSF) <span>[<a href="#SSF" class="cite xref">SSF</a>]</span> to convey lifecycle changes to the resource domain.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">Resource domains also need to provision that principal and respond to
-changes in its eligibility. Creating a directory record does not grant
-access. Disabling a record does not, by itself, invalidate issued tokens.
-Delivering a security event does not demonstrate that an API enforced it.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">This profile connects those operations:<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-3">Federation establishes who the agent is. Lifecycle state establishes
+whether that identity remains eligible. SCIM reconciles its local
+representation; Shared Signals accelerates delivery of state changes.
+OAuth enforcement limits how long stale authorization can remain usable.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">The lifecycle registry and local resource representation are separate:<a href="#section-1-4" class="pilcrow">¶</a></p>
 <span id="name-provisioning-and-lifecycle-"></span><div id="lifecycle-model">
 <figure id="figure-1">
         <div class="alignLeft art-text artwork" id="section-1-5.1">
 <pre>
- Enterprise IdP                         Resource domain
- +----------------------+               +--------------------+
- | Governed Agent       | -- SCIM ----&gt; | Correlated local   |
- | Lifecycle Authority  | -- SET/SSF -&gt; | agent + lifecycle  |
- +----------------------+               +---------+----------+
-                                                  |
-                                          +-------v-------+
-                                          | RAS issuance, |
-                                          | refresh, and  |
-                                          | introspection |
-                                          +-------+-------+
-                                                  |
-                                          +-------v-------+
-                                          | API request   |
-                                          | authorization |
-                                          +---------------+
+ Lifecycle Authority             Resource domain
+ +-----------------+             +--------------------+
+ | Lifecycle State | --SCIM/SET-&gt; | Lifecycle Registry |
+ +-----------------+             +----------+---------+
+                                            |
+                       +--------------------+-------------+
+                       |                                  |
+              +--------v--------+               +---------v---------+
+              | SCIM Agent view |               | OAuth enforcement |
+              | Local principal |               | RAS and API       |
+              +-----------------+               +-------------------+
 </pre>
 </div>
 <figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
 <a href="#name-provisioning-and-lifecycle-" class="selfRef">Provisioning and lifecycle enforcement</a>
         </figcaption></figure>
 </div>
-<p id="section-1-6">SCIM supplies the durable resource interface. Shared Signals supplies
-timely notification. Both carry one versioned state, so delayed delivery
-cannot reverse a newer change. A finite validity interval bounds reliance
-on active state when neither channel delivers an update.<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-6">The registry can retain state before a local Agent resource exists and
+after it is deleted. Neither a descriptive SCIM edit nor event delivery
+creates permission to act. Both bindings use the same lifecycle version
+and cutoff, so delayed delivery cannot reverse a newer decision.<a href="#section-1-6" class="pilcrow">¶</a></p>
 <div id="scope-and-relationship-to-other-specifications">
 <section id="section-1.1">
         <h3 id="name-scope-and-relationship-to-o">
@@ -1427,7 +1435,7 @@ result for a Governed Agent and the receiver obligations that follow.<a href="#s
 <p id="section-1.1-5">Platform-to-IdP enrollment, Identity Binding administration, individual
 delegation revocation, task cancellation, runtime instance lifecycle,
 and risk scoring are outside this revision. Their boundaries are stated
-in <a href="#relationship-changes" class="auto internal xref">Section 10</a>.<a href="#section-1.1-5" class="pilcrow">¶</a></p>
+in <a href="#relationship-changes" class="auto internal xref">Section 11</a>.<a href="#section-1.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1461,23 +1469,37 @@ deployment responsible for atomic state application; they need not
 run in the same process.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-2-3.5">State Record:</dt>
+<dt id="section-2-3.5">Governed Agent Lifecycle State (State Record):</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.6">
-          <p id="section-2-3.6.1">The complete extension object defined in <a href="#state-schema" class="auto internal xref">Section 5</a>, including
-its identity, version, status, authorization cutoff, and validity.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
+          <p id="section-2-3.6.1">The transport-independent object in <a href="#state-schema" class="auto internal xref">Section 5</a>, containing
+identity, lifecycle version, status, authorization cutoff, and lease.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-2-3.7">Authorization Cutoff:</dt>
+<dt id="section-2-3.7">Eligibility Lease:</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.8">
-          <p id="section-2-3.8.1">A time watermark invalidating authorization derived from grants
-issued at or before that time. It survives reactivation and missed
-intermediate state changes.<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
+          <p id="section-2-3.8.1">The time-limited permission to rely on active lifecycle state.
+<code>validUntil</code> gives its source expiration; receiver policy can shorten
+it. It grants no resource permissions and does not extend token validity.<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-2-3.9">Local Suspension:</dt>
+<dt id="section-2-3.9">Lifecycle Registry:</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.10">
-          <p id="section-2-3.10.1">A resource-domain restriction maintained independently of the
-Lifecycle Authority's state. Upstream activation cannot clear it.<a href="#section-2-3.10.1" class="pilcrow">¶</a></p>
+          <p id="section-2-3.10.1">The Receiver's durable state store, independent of its SCIM resources.
+It retains lifecycle decisions and retirement protection for each
+qualified agent within the authorized Target Tenant.<a href="#section-2-3.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.11">Authorization Cutoff:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.12">
+          <p id="section-2-3.12.1">A time watermark invalidating authorization derived from grants
+issued at or before that time. It survives reactivation and missed
+intermediate state changes.<a href="#section-2-3.12.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.13">Local Suspension:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.14">
+          <p id="section-2-3.14.1">A resource-domain restriction maintained independently of the
+Lifecycle Authority's state. Upstream activation cannot clear it.<a href="#section-2-3.14.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -1488,9 +1510,32 @@ Lifecycle Authority's state. Upstream activation cannot clear it.<a href="#secti
       <h2 id="name-conformance-and-trust-confi">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-conformance-and-trust-confi" class="section-name selfRef">Conformance and Trust Configuration</a>
       </h2>
-<p id="section-3-1">A deployment claiming this profile <span class="bcp14">MUST</span> implement:<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-1">This document separates two layers:<a href="#section-3-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-1">
         <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Layer</th>
+            <th class="text-left" rowspan="1" colspan="1">Contract</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Lifecycle state and distribution</td>
+            <td class="text-left" rowspan="1" colspan="1">State Record, eligibility lease, registry ordering, SCIM and Shared Signals bindings, and recovery</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">OAuth enforcement</td>
+            <td class="text-left" rowspan="1" colspan="1">Issuance-time interpretation of the cutoff, retained authorization provenance, resource enforcement modes, and denial bounds</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-3-3">The state model is reusable independently of its bindings. This revision's
+full-profile conformance requires both layers and the bindings specified
+here; storing state alone does not establish an OAuth enforcement guarantee.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">A deployment claiming this profile <span class="bcp14">MUST</span> implement:<a href="#section-3-4" class="pilcrow">¶</a></p>
+<table class="center" id="table-2">
+        <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">Component</th>
@@ -1504,11 +1549,11 @@ Lifecycle Authority's state. Upstream activation cannot clear it.<a href="#secti
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Lifecycle Receiver</td>
-            <td class="text-left" rowspan="1" colspan="1">Implement the SCIM extension, SSF push delivery, common ordering rules, and durable correlation</td>
+            <td class="text-left" rowspan="1" colspan="1">Maintain the independent registry and correlation; apply both bindings through common state processing</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">IdP grant issuer</td>
-            <td class="text-left" rowspan="1" colspan="1">Enforce lifecycle eligibility and the issuance-time contract in <a href="#cutoff" class="auto internal xref">Section 5.3</a>
+            <td class="text-left" rowspan="1" colspan="1">Enforce lifecycle eligibility and the issuance-time contract in <a href="#cutoff" class="auto internal xref">Section 10.1</a>
 </td>
           </tr>
           <tr>
@@ -1517,52 +1562,52 @@ Lifecycle Authority's state. Upstream activation cannot clear it.<a href="#secti
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">API</td>
-            <td class="text-left" rowspan="1" colspan="1">Apply the configured mode in <a href="#api-enforcement" class="auto internal xref">Section 8.3</a> and the Federation authorization rules</td>
+            <td class="text-left" rowspan="1" colspan="1">Apply the configured mode in <a href="#api-enforcement" class="auto internal xref">Section 10.4</a> and the Federation authorization rules</td>
           </tr>
         </tbody>
       </table>
-<p id="section-3-3">This profile adds lifecycle checks to the applicable Federation profile.
+<p id="section-3-6">This profile adds lifecycle checks to the applicable Federation profile.
 It does not replace its client authentication, grant validation, actor
 gate, or access-token protection requirements. A deployment <span class="bcp14">MUST</span> establish
 applicability through trusted configuration, not infer it from a token
-missing lifecycle information.<a href="#section-3-3" class="pilcrow">¶</a></p>
-<p id="section-3-4">Before provisioning, the parties <span class="bcp14">MUST</span> configure:<a href="#section-3-4" class="pilcrow">¶</a></p>
+missing lifecycle information.<a href="#section-3-6" class="pilcrow">¶</a></p>
+<p id="section-3-7">Before provisioning, the parties <span class="bcp14">MUST</span> configure:<a href="#section-3-7" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3-5.1">
-          <p id="section-3-5.1.1">The governing IdP issuer and the permitted agent namespace.<a href="#section-3-5.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3-8.1">
+          <p id="section-3-8.1.1">The governing IdP issuer and the permitted agent namespace.<a href="#section-3-8.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-5.2">
-          <p id="section-3-5.2.1">The authenticated SCIM connector and SSF Transmitter authorized for
-that namespace, and the receiver audience and target tenant.<a href="#section-3-5.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-3-8.2">
+          <p id="section-3-8.2.1">The authenticated SCIM connector and SSF Transmitter authorized for
+that namespace, and the receiver audience and target tenant.<a href="#section-3-8.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-5.3">
-          <p id="section-3-5.3.1">A maximum active-state validity interval, clock-error bounds, and
-maximum receiver enforcement delay (<a href="#freshness" class="auto internal xref">Section 8.4</a>).<a href="#section-3-5.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-3-8.3">
+          <p id="section-3-8.3.1">A maximum active-state validity interval, clock-error bounds, and
+maximum receiver enforcement delay (<a href="#freshness" class="auto internal xref">Section 10.5</a>).<a href="#section-3-8.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-5.4">
-          <p id="section-3-5.4.1">The enforcement mode and its introspection, caching, or token-lifetime
-limits for each API population (<a href="#api-enforcement" class="auto internal xref">Section 8.3</a>).<a href="#section-3-5.4.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-3-8.4">
+          <p id="section-3-8.4.1">The enforcement mode and its introspection, caching, or token-lifetime
+limits for each API population (<a href="#api-enforcement" class="auto internal xref">Section 10.4</a>).<a href="#section-3-8.4.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-5.5">
-          <p id="section-3-5.5.1">The RAS and APIs covered by the lifecycle enforcement contract.<a href="#section-3-5.5.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-3-8.5">
+          <p id="section-3-8.5.1">The RAS and APIs covered by the lifecycle enforcement contract.<a href="#section-3-8.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-3-6">The Receiver <span class="bcp14">MUST</span> authorize SCIM and SSF writers for the same namespace.
+<p id="section-3-9">The Receiver <span class="bcp14">MUST</span> authorize SCIM and SSF writers for the same namespace.
 An event's signing issuer need not equal the governing IdP issuer; that
 authority relationship <span class="bcp14">MUST</span> be configured. A valid signature or a SCIM
-write permission for another tenant does not establish it.<a href="#section-3-6" class="pilcrow">¶</a></p>
-<p id="section-3-7">This revision has one logical Lifecycle Authority per governed identity.
+write permission for another tenant does not establish it.<a href="#section-3-9" class="pilcrow">¶</a></p>
+<p id="section-3-10">This revision has one logical Lifecycle Authority per governed identity.
 Multiple connectors <span class="bcp14">MAY</span> represent it, but <span class="bcp14">MUST</span> share its version sequence
 and issuance cutoff. Independent writers and authority failover without
-preserved state are outside this profile.<a href="#section-3-7" class="pilcrow">¶</a></p>
-<p id="section-3-8">The lifecycle guarantee assumes that the Authority applies its committed
+preserved state are outside this profile.<a href="#section-3-10" class="pilcrow">¶</a></p>
+<p id="section-3-11">The lifecycle guarantee assumes that the Authority applies its committed
 decision to all grant-issuing nodes before publishing disablement, that
 issuers report actual issuance times within the configured clock bounds,
 and that renewals reflect a current lifecycle decision rather than a
 connector's old cached state. These are source-side trust assumptions;
 receivers cannot establish them by validating a State Record. A deployment
 that does not satisfy them is non-conformant, not a degraded mode of
-this profile.<a href="#section-3-8" class="pilcrow">¶</a></p>
+this profile.<a href="#section-3-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="identity">
@@ -1610,7 +1655,7 @@ applies lifecycle changes to that principal's authorization.<a href="#section-4-
 to a different principal requires explicit administrative correlation,
 not an ordinary synchronization update.
 The same rules apply when the agent is an ID-JAG actor or, in a future WAG
-composition, a self-acting subject (<a href="#self-acting" class="auto internal xref">Section 10.1</a>).<a href="#section-4-7" class="pilcrow">¶</a></p>
+composition, a self-acting subject (<a href="#self-acting" class="auto internal xref">Section 11.1</a>).<a href="#section-4-7" class="pilcrow">¶</a></p>
 <div id="ownership-groups-and-entitlements">
 <section id="section-4.1">
         <h3 id="name-ownership-groups-and-entitl">
@@ -1637,110 +1682,124 @@ the source's administrative status only; it is not an access decision.<a href="#
 </div>
 <div id="state-schema">
 <section id="section-5">
-      <h2 id="name-lifecycle-state">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-lifecycle-state" class="section-name selfRef">Lifecycle State</a>
+      <h2 id="name-governed-agent-lifecycle-st">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-governed-agent-lifecycle-st" class="section-name selfRef">Governed Agent Lifecycle State</a>
       </h2>
-<div id="scim-extension-attributes">
-<section id="section-5.1">
-        <h3 id="name-scim-extension-attributes">
-<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-scim-extension-attributes" class="section-name selfRef">SCIM Extension Attributes</a>
-        </h3>
-<p id="section-5.1-1">The extension schema URI is:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1-2"><code>urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent</code><a href="#section-5.1-2" class="pilcrow">¶</a></p>
-<p id="section-5.1-3">Its name is <code>GovernedAgentLifecycle</code>. The attributes below are all
-single-valued, <span class="bcp14">REQUIRED</span>, returned by default, and have uniqueness <code>none</code>.
-String attributes have <code>caseExact: true</code>. Mutability is <code>readWrite</code> except
-for <code>issuer</code> and <code>subject</code>, which are <code>immutable</code>. Uniqueness of the
-identity pair is enforced under <a href="#identity" class="auto internal xref">Section 4</a>.<a href="#section-5.1-3" class="pilcrow">¶</a></p>
-<table class="center" id="table-2">
-          <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<p id="section-5-1">A State Record is a complete JSON object, not a SCIM resource or a delta.
+The following members are <span class="bcp14">REQUIRED</span>. Member names are case-sensitive;
+unknown members have no lifecycle meaning and <span class="bcp14">MUST</span> be ignored. Bindings
+<span class="bcp14">MUST</span> preserve the defined member values and semantics.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-3">
+        <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
 <thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">Attribute</th>
-              <th class="text-left" rowspan="1" colspan="1">SCIM type</th>
-              <th class="text-left" rowspan="1" colspan="1">Meaning</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>issuer</code>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Member</th>
+            <th class="text-left" rowspan="1" colspan="1">JSON type</th>
+            <th class="text-left" rowspan="1" colspan="1">Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>issuer</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">string</td>
-              <td class="text-left" rowspan="1" colspan="1">Governing IdP issuer identifier</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>subject</code>
+            <td class="text-left" rowspan="1" colspan="1">string</td>
+            <td class="text-left" rowspan="1" colspan="1">Governing IdP issuer identifier</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>subject</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">string</td>
-              <td class="text-left" rowspan="1" colspan="1">Governed Agent identifier in that issuer's namespace</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>version</code>
+            <td class="text-left" rowspan="1" colspan="1">string</td>
+            <td class="text-left" rowspan="1" colspan="1">Governed Agent identifier in that issuer's namespace</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>version</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">string</td>
-              <td class="text-left" rowspan="1" colspan="1">Strictly increasing source version, defined below</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>status</code>
+            <td class="text-left" rowspan="1" colspan="1">string</td>
+            <td class="text-left" rowspan="1" colspan="1">Strictly increasing lifecycle version</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>status</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">string</td>
-              <td class="text-left" rowspan="1" colspan="1">One of <code>active</code>, <code>disabled</code>, or <code>retired</code>
+            <td class="text-left" rowspan="1" colspan="1">string</td>
+            <td class="text-left" rowspan="1" colspan="1">One of <code>active</code>, <code>disabled</code>, or <code>retired</code>
 </td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>authorizationNotBefore</code>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>authorizationCutoff</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">dateTime</td>
-              <td class="text-left" rowspan="1" colspan="1">Authorization Cutoff; grants with <code>iat</code> at or before it are ineligible</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>assertedAt</code>
+            <td class="text-left" rowspan="1" colspan="1">string</td>
+            <td class="text-left" rowspan="1" colspan="1">Time watermark invalidating authorization issued at or before it</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>assertedAt</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">dateTime</td>
-              <td class="text-left" rowspan="1" colspan="1">Time the Authority produced this State Record</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>validUntil</code>
+            <td class="text-left" rowspan="1" colspan="1">string</td>
+            <td class="text-left" rowspan="1" colspan="1">Time the Authority produced this State Record</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>validUntil</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">dateTime</td>
-              <td class="text-left" rowspan="1" colspan="1">Exclusive end of permission to rely on this record as active</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-5.1-5">Dates <span class="bcp14">MUST</span> use UTC with the <code>Z</code> offset and whole-second precision.
-<code>authorizationNotBefore</code> <span class="bcp14">MAY</span> be later than <code>assertedAt</code> by the configured
-issuer-ahead clock bound in <a href="#cutoff" class="auto internal xref">Section 5.3</a>. For active state, <code>validUntil</code>
-          <span class="bcp14">MUST</span> be later than <code>assertedAt</code>. For disabled or retired state it remains
+            <td class="text-left" rowspan="1" colspan="1">string</td>
+            <td class="text-left" rowspan="1" colspan="1">Exclusive source expiration of the eligibility lease for active state</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-5-3">The identity pair <span class="bcp14">MUST</span> remain unchanged for the lifetime of the record.
+Timestamps use the RFC 3339 format <span>[<a href="#RFC3339" class="cite xref">RFC3339</a>]</span> restricted below. The
+object's JSON representation follows <span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span>; duplicate member names
+<span class="bcp14">MUST</span> be rejected rather than selecting one value.<a href="#section-5-3" class="pilcrow">¶</a></p>
+<p id="section-5-4">Dates <span class="bcp14">MUST</span> use UTC with the <code>Z</code> offset and whole-second precision.
+<code>authorizationCutoff</code> <span class="bcp14">MAY</span> be later than <code>assertedAt</code> by the configured
+issuer-ahead clock bound in <a href="#cutoff" class="auto internal xref">Section 10.1</a>. For active state, <code>validUntil</code>
+        <span class="bcp14">MUST</span> be later than <code>assertedAt</code>. For disabled or retired state it remains
 <span class="bcp14">REQUIRED</span> for a uniform record shape but is ignored for validity and
-enforcement. These requirements narrow
-the SCIM dateTime representation to allow unambiguous comparison with
-JWT NumericDate values <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
-<p id="section-5.1-6">The Receiver <span class="bcp14">MUST</span> reject a cutoff later than <code>assertedAt + D</code>. D is
+enforcement. Timestamps <span class="bcp14">MUST</span> use uppercase <code>T</code> and <code>Z</code>, and seconds from
+00 through 59. This canonical representation permits exact comparison
+across bindings and conversion to OAuth issuance times.<a href="#section-5-4" class="pilcrow">¶</a></p>
+<p id="section-5-5">The Receiver <span class="bcp14">MUST</span> reject a cutoff later than <code>assertedAt + D</code>. D is
 agreed with the Authority for this issuer namespace, not learned from
-an incoming record.<a href="#section-5.1-6" class="pilcrow">¶</a></p>
-<p id="section-5.1-7"><code>version</code> <span class="bcp14">MUST</span> be a decimal string representing an integer from 1 through
+an incoming record.<a href="#section-5-5" class="pilcrow">¶</a></p>
+<p id="section-5-6"><code>version</code> <span class="bcp14">MUST</span> be a decimal string representing an integer from 1 through
 9223372036854775807, using only ASCII digits and no leading zero.
 Comparison is numerical, not lexical. Implementations <span class="bcp14">MUST</span> preserve it
 without floating-point rounding; a signed 64-bit integer is sufficient.
-The Authority <span class="bcp14">MUST</span> increase it for every new State Record,
-including renewal of <code>validUntil</code>; it <span class="bcp14">MUST NOT</span> reuse or reset a version
-for that identity.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
-<p id="section-5.1-8">The record is a complete snapshot, not a delta. The Authority <span class="bcp14">MUST</span> retain
-the current version and cutoff across restarts, backup recovery, and
-connector changes. SCIM <code>meta.version</code> remains the Receiver's HTTP entity
-tag; it is not this source sequence.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
-<p id="section-5.1-9">The schema description above defines the <code>/Schemas</code> representation:
-<code>status</code> has the three canonical values listed in <a href="#transitions" class="auto internal xref">Section 5.2</a>;
-the other attributes have no canonical value enumeration. Providers
-<span class="bcp14">MUST</span> advertise the specified types, mutability, requiredness, return
-behavior, and case sensitivity.<a href="#section-5.1-9" class="pilcrow">¶</a></p>
+The Authority <span class="bcp14">MUST</span> increase it for every change to the State Record,
+including a lease renewal; it <span class="bcp14">MUST NOT</span> reuse or reset a lifecycle version.
+Descriptive SCIM changes <span class="bcp14">MUST NOT</span> by themselves change the State Record
+or increment its version.<a href="#section-5-6" class="pilcrow">¶</a></p>
+<p id="section-5-7">The Authority <span class="bcp14">MUST</span> retain the current version and cutoff across restarts,
+backup recovery, and connector changes. Display names, ownership, local
+permissions, and resource modification timestamps are not members of this
+object and do not participate in its version sequence.<a href="#section-5-7" class="pilcrow">¶</a></p>
+<div id="lease">
+<section id="section-5.1">
+        <h3 id="name-eligibility-lease">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-eligibility-lease" class="section-name selfRef">Eligibility Lease</a>
+        </h3>
+<p id="section-5.1-1">For active state, <code>validUntil</code> is an eligibility lease, not an event
+expiration or a resource authorization. The Authority renews it from a
+current lifecycle decision to maintain continuous eligibility; the source
+trust assumption is stated in <a href="#conformance" class="auto internal xref">Section 3</a>.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-2">The Receiver <span class="bcp14">MUST</span> set its effective lease deadline to the earlier of
+<code>validUntil</code> and <code>assertedAt + L</code>, where L is its configured maximum lease
+interval. It <span class="bcp14">MUST</span> clamp an excessive interval without rejecting the record
+or rewriting the source fields, and <span class="bcp14">MUST</span> stop relying on active eligibility
+at that deadline, accounting conservatively for clock error.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+<p id="section-5.1-3">For disabled or retired state, <code>validUntil</code> and L <span class="bcp14">MUST NOT</span> delay, prevent,
+or expire the restriction. Syntax, authority, ordering, and cutoff checks
+still apply. Arrival time, replay, stream heartbeats, and reads of a local
+SCIM representation <span class="bcp14">MUST NOT</span> renew the lease.<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<p id="section-5.1-4">Lease expiration is intentionally reversible: an unexpired lease from a
+newer active State Record can restore eligibility. It does not reverse a
+disablement or cutoff invalidation. Local permissions and authorization
+remain separate decisions in either case.<a href="#section-5.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="transitions">
@@ -1748,8 +1807,8 @@ behavior, and case sensitivity.<a href="#section-5.1-9" class="pilcrow">¶</a></
         <h3 id="name-states-and-transitions">
 <a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-states-and-transitions" class="section-name selfRef">States and Transitions</a>
         </h3>
-<table class="center" id="table-3">
-          <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
+<table class="center" id="table-4">
+          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">State</th>
@@ -1791,14 +1850,13 @@ behavior, and case sensitivity.<a href="#section-5.1-9" class="pilcrow">¶</a></
 requires explicit enterprise activation and local acceptance; record
 creation alone <span class="bcp14">MUST NOT</span> supply either decision.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
 <p id="section-5.2-3">On disablement or retirement, the Authority <span class="bcp14">MUST</span> advance the
-Authorization Cutoff under <a href="#cutoff" class="auto internal xref">Section 5.3</a>. Repeated disabled or retired
+Authorization Cutoff under <a href="#cutoff" class="auto internal xref">Section 10.1</a>. Repeated disabled or retired
 snapshots retain that cutoff unless a later cutoff is needed.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
 <p id="section-5.2-4">On reactivation, the Authority <span class="bcp14">MUST</span> advance the cutoff again. Earlier
-authorization remains invalid. Descriptive changes such as <code>displayName</code>
-updates require a new source version, even when the lifecycle attributes
-would otherwise be unchanged. Descriptive changes and active validity
-renewals <span class="bcp14">MUST NOT</span> advance the cutoff unless the
-Authority also intends to invalidate existing authorization.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
+authorization remains invalid. A lease renewal changes the lifecycle
+version but <span class="bcp14">MUST NOT</span> advance the cutoff unless the Authority also intends
+to invalidate existing authorization. Descriptive SCIM changes affect
+neither the version nor the cutoff.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
 <p id="section-5.2-5">If whole-second precision prevents a strictly increased cutoff within
 the configured clock bound, the Authority waits before asserting the
 new transition. Disablement still closes the issuance gate immediately.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
@@ -1807,532 +1865,312 @@ Deletion of a local SCIM representation <span class="bcp14">MUST NOT</span> perm
 retired identity or erase its retirement protection.<a href="#section-5.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="cutoff">
-<section id="section-5.3">
-        <h3 id="name-authorization-cutoff-and-is">
-<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-authorization-cutoff-and-is" class="section-name selfRef">Authorization Cutoff and Issuance</a>
+</section>
+</div>
+<div id="registry">
+<section id="section-6">
+      <h2 id="name-receiver-lifecycle-registry">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-receiver-lifecycle-registry" class="section-name selfRef">Receiver Lifecycle Registry</a>
+      </h2>
+<p id="section-6-1">The Receiver <span class="bcp14">MUST</span> maintain a durable lifecycle registry independently of
+SCIM resource existence. Each entry is addressed by the qualified agent
+identity within its authorized Target Tenant and retains:<a href="#section-6-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-2.1">
+          <p id="section-6-2.1.1">The highest accepted lifecycle version and complete applied State Record.<a href="#section-6-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-2.2">
+          <p id="section-6-2.2.1">Pending accepted state until applied or superseded by newer complete state.<a href="#section-6-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-2.3">
+          <p id="section-6-2.3.1">Permanent retirement protection.<a href="#section-6-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-2.4">
+          <p id="section-6-2.4.1">The local-principal and SCIM-resource mapping, when provisioned.<a href="#section-6-2.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-6-3">A state entry need not have a SCIM resource. Receiving an active record
+<span class="bcp14">MUST NOT</span> create a local principal, local permissions, or delegation.
+Provisioning adds an authorized mapping to an existing entry when one is
+already present; it <span class="bcp14">MUST NOT</span> reset that entry's version, cutoff, or lease.<a href="#section-6-3" class="pilcrow">¶</a></p>
+<p id="section-6-4">Deleting a SCIM resource removes its representation and mapping, not the
+registry's retirement protection. Reading that representation is therefore
+not the only source of retained lifecycle truth. This profile specifies
+logical behavior, not a database layout or a new registry API.<a href="#section-6-4" class="pilcrow">¶</a></p>
+<div id="ordering">
+<section id="section-6.1">
+        <h3 id="name-state-acceptance-and-orderi">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-state-acceptance-and-orderi" class="section-name selfRef">State Acceptance and Ordering</a>
         </h3>
-<p id="section-5.3-1">An Authorization Cutoff invalidates grants and retained authorization
-issued at or before it, even if a Receiver missed the disabled state.
-It <span class="bcp14">MUST</span> never decrease.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
-<p id="section-5.3-2">Every ID-JAG issued under this companion <span class="bcp14">MUST</span> contain <code>iat</code>, as already
-required by <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>. This profile additionally requires a
-whole-second NumericDate representing its issuance time.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
-<p id="section-5.3-3">Let D be the configured maximum number of whole seconds by which any
-grant issuer can be ahead of the Authority, including clock error and
-rounding. If each clock is within S seconds of a common time source,
-D must cover at least 2S, rounded up. This is a difference between clocks,
-not just one clock's error.<a href="#section-5.3-3" class="pilcrow">¶</a></p>
-<p id="section-5.3-4">When advancing the cutoff, the Authority <span class="bcp14">MUST</span> set it to its current
-whole-second time plus D, strictly above the previous cutoff. This covers
-all grants issued before the committed transition without tracking the
-greatest <code>iat</code> across issuing nodes. The source-side assumptions in
-<a href="#conformance" class="auto internal xref">Section 3</a> still require the issuance gate to close before publication.<a href="#section-5.3-4" class="pilcrow">¶</a></p>
-<p id="section-5.3-5">After activation, the issuer <span class="bcp14">MUST</span> issue only grants with <code>iat</code> strictly
-later than the cutoff. Until its actual clock clears the cutoff, issuance
-waits or fails. A cutoff ahead of the Authority's clock therefore creates
-a bounded activation delay; it does not justify postdating grants.
-Receivers <span class="bcp14">MUST NOT</span> apply positive clock-skew tolerance when comparing
-the validated grant <code>iat</code> with the cutoff.<a href="#section-5.3-5" class="pilcrow">¶</a></p>
-<p id="section-5.3-6">The issuance-time contract is an additional requirement of this companion;
-the presence of <code>iat</code> is inherited from ID-JAG. No new grant or access-token
-claim is defined. Shared lifecycle decisions and bounded clocks remain
-necessary; a connector unable to obtain them is non-conformant.<a href="#section-5.3-6" class="pilcrow">¶</a></p>
+<p id="section-6.1-1">Both transport bindings <span class="bcp14">MUST</span> apply the following registry rules:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.1-2">
+<li id="section-6.1-2.1">
+            <p id="section-6.1-2.1.1">Authenticate the sender and authorize its issuer namespace and Target
+Tenant before selecting the entry.<a href="#section-6.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.2">
+            <p id="section-6.1-2.2.1">Validate the complete State Record. Reject <code>assertedAt</code> in the future
+beyond the configured clock tolerance; delay alone is not an error.
+Apply the eligibility-lease clamp in <a href="#lease" class="auto internal xref">Section 5.1</a>.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.3">
+            <p id="section-6.1-2.3.1">Compare with the highest accepted lifecycle version, including pending
+state. A lower version is stale. An equal version with identical
+defined member values is a duplicate; different values are a conflict.<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.4">
+            <p id="section-6.1-2.4.1">For a higher version, reject a decreasing cutoff or <code>assertedAt</code>, or
+a transition out of retirement. Moving from active to inactive, or
+disabled to active, requires a strictly increased cutoff.<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.5">
+            <p id="section-6.1-2.5.1">Persist pending state before acknowledging delivery. When applying it,
+atomically advance the applied record and its RAS restrictions. Delivery
+acknowledgment alone does not acknowledge completed enforcement.<a href="#section-6.1-2.5.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-6.1-3">Equality compares the defined members after binding-specific decoding,
+not serialized bytes or member order. A duplicate cannot refresh the lease.
+An expired record can advance registry state but cannot establish active
+eligibility. Bindings map stale, conflicting, and invalid inputs to their
+existing response mechanisms (<a href="#scim-updates" class="auto internal xref">Section 7.3</a>, <a href="#signals" class="auto internal xref">Section 8</a>).<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.1-4">An accepted later version <span class="bcp14">MUST NOT</span> allow an older pending record to
+become current afterward. Complete snapshots and the nondecreasing cutoff
+make intermediate versions unnecessary for recovery.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="scim">
-<section id="section-6">
+<section id="section-7">
       <h2 id="name-scim-provisioning">
-<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-scim-provisioning" class="section-name selfRef">SCIM Provisioning</a>
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-scim-provisioning" class="section-name selfRef">SCIM Provisioning</a>
       </h2>
-<p id="section-6-1">The Receiver <span class="bcp14">MUST</span> implement Agent resources at <code>/Agents</code> using
-<span>[<a href="#SCIM-AGENT" class="cite xref">SCIM-AGENT</a>]</span> and the extension in <a href="#state-schema" class="auto internal xref">Section 5</a>. It <span class="bcp14">MUST</span> publish the
+<p id="section-7-1">The Receiver <span class="bcp14">MUST</span> implement Agent resources at <code>/Agents</code> using
+<span>[<a href="#SCIM-AGENT" class="cite xref">SCIM-AGENT</a>]</span> and the extension in <a href="#scim-schema" class="auto internal xref">Section 7.1</a>. It <span class="bcp14">MUST</span> publish the
 extension at <code>/Schemas</code> and advertise it in the Agent ResourceType's
 <code>schemaExtensions</code>. The extension is <span class="bcp14">REQUIRED</span> for resources governed by
-this profile; it need not be required for unrelated Agent resources.<a href="#section-6-1" class="pilcrow">¶</a></p>
-<p id="section-6-2">The required operations are POST, resource GET, filtered collection GET,
+this profile; it need not be required for unrelated Agent resources.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">The required operations are POST, resource GET, filtered collection GET,
 and PUT under <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>. Receivers <span class="bcp14">MUST</span> support equality filtering on
 both extension identity attributes and their conjunction. PATCH and Bulk
 are <span class="bcp14">OPTIONAL</span>; if supported, they <span class="bcp14">MUST</span> preserve the atomicity and ordering
-rules below.<a href="#section-6-2" class="pilcrow">¶</a></p>
-<div id="creation-and-existing-records">
-<section id="section-6.1">
-        <h3 id="name-creation-and-existing-recor">
-<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-creation-and-existing-recor" class="section-name selfRef">Creation and Existing Records</a>
+rules below.<a href="#section-7-2" class="pilcrow">¶</a></p>
+<div id="scim-schema">
+<section id="section-7.1">
+        <h3 id="name-state-to-scim-mapping">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-state-to-scim-mapping" class="section-name selfRef">State-to-SCIM Mapping</a>
         </h3>
-<p id="section-6.1-1">The connector <span class="bcp14">MUST</span> supply the Agent core's required attributes and the
+<p id="section-7.1-1">The extension schema URI is:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.1-2"><code>urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent</code><a href="#section-7.1-2" class="pilcrow">¶</a></p>
+<p id="section-7.1-3">Its name is <code>GovernedAgentLifecycle</code>. Each State Record member maps to a
+same-named SCIM attribute. <code>authorizationCutoff</code>, <code>assertedAt</code>, and
+<code>validUntil</code> have SCIM type <code>dateTime</code>; the other attributes have type
+<code>string</code>. Their values retain the representation in <a href="#state-schema" class="auto internal xref">Section 5</a>.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-4">All seven attributes are single-valued, <span class="bcp14">REQUIRED</span>, returned by default,
+and have uniqueness <code>none</code>. String attributes have <code>caseExact: true</code>.
+Mutability is <code>readWrite</code> except for immutable <code>issuer</code> and <code>subject</code>.
+The registry enforces uniqueness of the qualified identity within the
+Target Tenant; the individual attributes are not independently unique.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+<p id="section-7.1-5">Providers <span class="bcp14">MUST</span> advertise these characteristics in <code>/Schemas</code>. <code>status</code>
+has the three canonical values in <a href="#transitions" class="auto internal xref">Section 5.2</a>; the other attributes
+have no enumeration. SCIM attribute-name matching follows <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>;
+the binding decodes those names to the State Record's canonical names
+before registry comparison. Ambiguous duplicate attributes <span class="bcp14">MUST</span> be rejected.<a href="#section-7.1-5" class="pilcrow">¶</a></p>
+<p id="section-7.1-6">The extension is a projection of the registry state. Its enclosing SCIM
+resource can change without changing lifecycle state, and lifecycle state
+can change without a SCIM write.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="creation-and-existing-records">
+<section id="section-7.2">
+        <h3 id="name-creation-and-existing-recor">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-creation-and-existing-recor" class="section-name selfRef">Creation and Existing Records</a>
+        </h3>
+<p id="section-7.2-1">The connector <span class="bcp14">MUST</span> supply the Agent core's required attributes and the
 complete extension. <code>active</code> <span class="bcp14">MUST</span> be <code>true</code> exactly when extension
 <code>status</code> is <code>active</code>; inconsistent input is <code>400</code> with <code>invalidValue</code>.
 The core attribute represents source administrative status, not the
-result of freshness checks or Local Suspension.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
-<p id="section-6.1-2">The Receiver <span class="bcp14">MUST</span> check its correlation and retirement records before
-creation. A duplicate canonical identity in the target tenant is <code>409</code>
-with <code>uniqueness</code>. This requirement applies independently of
-<code>agentUserName</code> uniqueness.<a href="#section-6.1-2" class="pilcrow">¶</a></p>
-<p id="section-6.1-3">Malformed extension attributes use <code>400</code> with <code>invalidValue</code>; attempts
+result of freshness checks or Local Suspension.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2-2">The Receiver <span class="bcp14">MUST</span> check its correlation and retirement records before
+creation. A second Agent resource for the same qualified identity in the
+target tenant is <code>409</code> with <code>uniqueness</code>. This requirement applies
+independently of <code>agentUserName</code> uniqueness.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
+<p id="section-7.2-3">A registry entry without an Agent resource is not a duplicate resource.
+Authorized creation can establish the local correlation using the same
+version and identical state retained from an earlier event, without
+renewing its lease. A stale creation attempt receives <code>409</code>; the connector
+obtains current state from its Authority before retrying.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
+<p id="section-7.2-4">Malformed extension attributes use <code>400</code> with <code>invalidValue</code>; attempts
 to change immutable identity attributes use <code>400</code> with <code>mutability</code>.
-Other SCIM errors retain their meanings from <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
-<p id="section-6.1-4">After an uncertain POST result, the connector <span class="bcp14">MUST</span> query by the qualified
+Other SCIM errors retain their meanings from <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+<p id="section-7.2-5">After an uncertain POST result, the connector <span class="bcp14">MUST</span> query by the qualified
 identity before retrying creation. It <span class="bcp14">MUST NOT</span> create a second principal
-under a different name to bypass a conflict.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
-<p id="section-6.1-5">Explicitly authorized correlation with an existing local principal <span class="bcp14">MAY</span>
+under a different name to bypass a conflict.<a href="#section-7.2-5" class="pilcrow">¶</a></p>
+<p id="section-7.2-6">Explicitly authorized correlation with an existing local principal <span class="bcp14">MAY</span>
 occur before POST. The resulting Agent resource represents that principal;
-the Receiver <span class="bcp14">MUST NOT</span> silently merge principals during synchronization.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
+the Receiver <span class="bcp14">MUST NOT</span> silently merge principals during synchronization.<a href="#section-7.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="ordering">
-<section id="section-6.2">
-        <h3 id="name-updates-and-common-processi">
-<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-updates-and-common-processi" class="section-name selfRef">Updates and Common Processing</a>
+<div id="scim-updates">
+<section id="section-7.3">
+        <h3 id="name-resource-updates-and-lifecy">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-resource-updates-and-lifecy" class="section-name selfRef">Resource Updates and Lifecycle Versions</a>
         </h3>
-<p id="section-6.2-1">SCIM writes and lifecycle events <span class="bcp14">MUST</span> use the same processing rules:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-6.2-2">
-<li id="section-6.2-2.1">
-            <p id="section-6.2-2.1.1">Authenticate the sender and authorize its namespace and target tenant.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-6.2-2.2">
-            <p id="section-6.2-2.2.1">Validate the complete record, identity, and times. Reject an <code>assertedAt</code>
-in the future by more than the permitted clock error; delayed records
-are not rejected for their age alone. Apply the active-reliance clamp
-in <a href="#freshness" class="auto internal xref">Section 8.4</a>, rather than rejecting an excessive validity interval.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-6.2-2.3">
-            <p id="section-6.2-2.3.1">Compare the source version with the highest retained version.<a href="#section-6.2-2.3.1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-6.2-2.3.2.1">
-                <p id="section-6.2-2.3.2.1.1">A lower version cannot modify state.<a href="#section-6.2-2.3.2.1.1" class="pilcrow">¶</a></p>
-</li>
-              <li class="normal" id="section-6.2-2.3.2.2">
-                <p id="section-6.2-2.3.2.2.1">An equal version with identical defined attribute values is a
-duplicate; it cannot extend freshness.<a href="#section-6.2-2.3.2.2.1" class="pilcrow">¶</a></p>
-</li>
-              <li class="normal" id="section-6.2-2.3.2.3">
-                <p id="section-6.2-2.3.2.3.1">An equal version with different defined values is a conflict.<a href="#section-6.2-2.3.2.3.1" class="pilcrow">¶</a></p>
-</li>
-            </ul>
-</li>
-          <li id="section-6.2-2.4">
-            <p id="section-6.2-2.4.1">For a higher version, reject a decreasing cutoff or <code>assertedAt</code>, or
-any transition out of retained retirement. An expired snapshot may
-advance retained state, but cannot establish active eligibility.
-A change from active to inactive, or from disabled to active, <span class="bcp14">MUST</span>
-have a strictly increased cutoff.<a href="#section-6.2-2.4.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-6.2-2.5">
-            <p id="section-6.2-2.5.1">Atomically persist the accepted state and make its issuance and
-introspection restrictions effective before reporting SCIM success.<a href="#section-6.2-2.5.1" class="pilcrow">¶</a></p>
-</li>
-        </ol>
-<p id="section-6.2-3">Equality ignores JSON member order. Receivers <span class="bcp14">MUST</span> compare SCIM attribute
-names according to SCIM rules and values according to <a href="#state-schema" class="auto internal xref">Section 5</a>.
-Unknown extension attributes do not establish new permissions.<a href="#section-6.2-3" class="pilcrow">¶</a></p>
-<p id="section-6.2-4">A lower-version SCIM write or a conflicting equal-version write receives
-<code>409</code> with a SCIM <code>detail</code> string describing the conflict and no <code>scimType</code>.
-There is no applicable registered <code>scimType</code> for a source-version conflict.<a href="#section-6.2-4" class="pilcrow">¶</a></p>
-<p id="section-6.2-5">A duplicate write returns the current resource without reapplying
-its lifecycle changes. If the same version arrived first through an
-event, the first authorized SCIM representation at that version <span class="bcp14">MAY</span>
-populate its descriptive attributes. The Receiver <span class="bcp14">MUST</span> remember that
-application; changing those attributes again requires a newer version.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
-<p id="section-6.2-6">An invalid transition or decreasing cutoff receives <code>400</code>
-with <code>invalidValue</code>. Failed HTTP conditional requests use the HTTP and
-SCIM precondition rules, independently of source versions.<a href="#section-6.2-6" class="pilcrow">¶</a></p>
-<p id="section-6.2-7">PUT <span class="bcp14">MUST</span> contain the complete extension. A supported PATCH changing any
-lifecycle attribute <span class="bcp14">MUST</span> provide a complete resulting State Record and
-consistent core <code>active</code> value in one atomic request. Omitting the
-extension or deleting a required attribute is <code>400</code> with <code>invalidValue</code>.<a href="#section-6.2-7" class="pilcrow">¶</a></p>
-<p id="section-6.2-8">Metadata changes <span class="bcp14">MUST NOT</span> bypass lifecycle version checks. If an older
-PUT includes a stale status and new display name, the entire write is
-rejected; it is not partially applied.<a href="#section-6.2-8" class="pilcrow">¶</a></p>
-<p id="section-6.2-9">An accepted event <span class="bcp14">MUST</span> update the extension and core <code>active</code> value
-visible through SCIM, including the resource's modification metadata.
-GET therefore reports applied state, not merely the most recent SCIM
-write. Pending events are not represented as successfully applied state.<a href="#section-6.2-9" class="pilcrow">¶</a></p>
+<p id="section-7.3-1">A SCIM write carrying the extension <span class="bcp14">MUST</span> submit its State Record to the
+registry under <a href="#ordering" class="auto internal xref">Section 6.1</a>. A lower version or a conflicting equal
+version receives <code>409</code> with a SCIM <code>detail</code> string and no <code>scimType</code>.
+An invalid transition or decreasing cutoff receives <code>400</code> with
+<code>invalidValue</code>. These errors reject the entire write, including any
+accompanying descriptive edits.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-2">An equal version with identical state is a lifecycle no-op, not a no-op
+for the whole SCIM request. Authorized changes to <code>displayName</code> and other
+non-lifecycle attributes <span class="bcp14">MAY</span> be applied without changing the State Record,
+renewing its lease, or emitting a lifecycle event. This also handles a
+SCIM representation arriving after an event with the same state version.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
+<p id="section-7.3-3">SCIM resource concurrency is independent of lifecycle ordering. Receivers
+<span class="bcp14">SHOULD</span> support resource ETags and <code>meta.version</code> under <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>], <a href="https://rfc-editor.org/rfc/rfc7644#section-3.14" class="relref">Section 3.14</a></span>; clients <span class="bcp14">SHOULD</span> use <code>If-Match</code> to avoid overwriting concurrent
+metadata changes. Failed conditions use the base protocol's precondition
+response. Lifecycle <code>version</code> <span class="bcp14">MUST NOT</span> substitute for an HTTP entity tag.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<p id="section-7.3-4">PUT <span class="bcp14">MUST</span> contain the complete extension. A supported PATCH changing a
+lifecycle attribute or core <code>active</code> <span class="bcp14">MUST</span> provide a complete resulting
+State Record and consistent <code>active</code> value in one atomic request. A PATCH
+changing only non-lifecycle attributes <span class="bcp14">MAY</span> omit the extension; it <span class="bcp14">MUST</span>
+leave the registry unchanged. Removing the extension or a required state
+attribute is <code>400</code> with <code>invalidValue</code>.<a href="#section-7.3-4" class="pilcrow">¶</a></p>
+<p id="section-7.3-5">The Receiver <span class="bcp14">MUST</span> make accepted registry state and its RAS restrictions
+effective before reporting SCIM success. GET <span class="bcp14">MUST</span> project that applied
+state into the extension and core <code>active</code> value, even if it arrived by
+SSF. An unapplied event cannot appear as applied SCIM state. Resource
+modification metadata, including an ETag when supported, <span class="bcp14">MUST</span> reflect
+changes to the representation through either binding.<a href="#section-7.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="retirement-and-deletion">
-<section id="section-6.3">
+<section id="section-7.4">
         <h3 id="name-retirement-and-deletion">
-<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-retirement-and-deletion" class="section-name selfRef">Retirement and Deletion</a>
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-retirement-and-deletion" class="section-name selfRef">Retirement and Deletion</a>
         </h3>
-<p id="section-6.3-1">The connector <span class="bcp14">MUST</span> deliver retired state before deleting the local
+<p id="section-7.4-1">The connector <span class="bcp14">MUST</span> deliver retired state before deleting the local
 representation. The Receiver <span class="bcp14">MUST</span> reject DELETE of a non-retired
 profile resource with <code>403</code>. This is this profile's operation restriction,
 not a DELETE rule of RFC 7644; it prevents deletion from bypassing ordered
-lifecycle processing.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
-<p id="section-6.3-2">After deletion, the Receiver <span class="bcp14">MUST</span> retain a tombstone containing the
+lifecycle processing.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+<p id="section-7.4-2">After deletion, the Receiver <span class="bcp14">MUST</span> retain a tombstone containing the
 qualified identity, terminal status, highest version, and cutoff.
 That identity <span class="bcp14">MUST NOT</span> be recreated as an active principal. A local
 administrator can remove access without retiring the enterprise identity
-by applying a Local Suspension instead.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+by applying a Local Suspension instead.<a href="#section-7.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="signals">
-<section id="section-7">
+<section id="section-8">
       <h2 id="name-lifecycle-signals">
-<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-lifecycle-signals" class="section-name selfRef">Lifecycle Signals</a>
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-lifecycle-signals" class="section-name selfRef">Lifecycle Signals</a>
       </h2>
 <div id="stream-binding">
-<section id="section-7.1">
+<section id="section-8.1">
         <h3 id="name-target-tenant-and-stream-bi">
-<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-target-tenant-and-stream-bi" class="section-name selfRef">Target Tenant and Stream Binding</a>
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-target-tenant-and-stream-bi" class="section-name selfRef">Target Tenant and Stream Binding</a>
         </h3>
-<p id="section-7.1-1">Each lifecycle stream <span class="bcp14">MUST</span> be bound by trusted administrative configuration
+<p id="section-8.1-1">Each lifecycle stream <span class="bcp14">MUST</span> be bound by trusted administrative configuration
 to exactly one governing issuer namespace and one Target Tenant at the
 Receiver. The binding is associated with the SSF stream ID and its stream
-configuration; this profile adds no SSF configuration member.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
-<p id="section-7.1-2">The configured <code>aud</code> <span class="bcp14">MUST</span> contain exactly one audience value assigned to
+configuration; this profile adds no SSF configuration member.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<p id="section-8.1-2">The configured <code>aud</code> <span class="bcp14">MUST</span> contain exactly one audience value assigned to
 that issuer-namespace and Target-Tenant pair. That value <span class="bcp14">MUST NOT</span> be reused
 for a different pair. Each SET <span class="bcp14">MUST</span> carry that audience as its sole
 audience, and the Receiver <span class="bcp14">MUST</span> check it against the bound stream before
 selecting the tenant or looking up the agent. A shared push endpoint can
 use the authenticated stream and audience mapping; the agent identifier
-alone cannot select a Target Tenant.<a href="#section-7.1-2" class="pilcrow">¶</a></p>
-<p id="section-7.1-3">The SCIM connector's authorization and endpoint context <span class="bcp14">MUST</span> resolve the
+alone cannot select a Target Tenant.<a href="#section-8.1-2" class="pilcrow">¶</a></p>
+<p id="section-8.1-3">The SCIM connector's authorization and endpoint context <span class="bcp14">MUST</span> resolve the
 same Target Tenant. Changing a stream's tenant or issuer-namespace binding
 requires a new stream and audience value; replay on another binding <span class="bcp14">MUST</span>
 be rejected. The target tenant scopes local correlation, not the canonical
-agent identity or its source version sequence.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+agent identity or its source version sequence.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="event-definition">
-<section id="section-7.2">
+<section id="section-8.2">
         <h3 id="name-event-definition">
-<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-event-definition" class="section-name selfRef">Event Definition</a>
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-event-definition" class="section-name selfRef">Event Definition</a>
         </h3>
-<p id="section-7.2-1">This document defines the SET event type:<a href="#section-7.2-1" class="pilcrow">¶</a></p>
-<p id="section-7.2-2"><code>urn:ietf:params:oauth:event-type:governed-agent-lifecycle</code><a href="#section-7.2-2" class="pilcrow">¶</a></p>
-<p id="section-7.2-3">It carries the Authority's current State Record, including validity
+<p id="section-8.2-1">This document defines the SET event type:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-2"><code>urn:ietf:params:oauth:event-type:governed-agent-lifecycle</code><a href="#section-8.2-2" class="pilcrow">¶</a></p>
+<p id="section-8.2-3">It carries the Authority's current State Record, including eligibility-lease
 renewals. It is an assertion of enterprise lifecycle state, not a command
-to grant local access.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
-<p id="section-7.2-4">The Transmitter and Receiver <span class="bcp14">MUST</span> follow <span>[<a href="#RFC8417" class="cite xref">RFC8417</a>]</span> and <span>[<a href="#SSF" class="cite xref">SSF</a>]</span>, including
+to grant local access.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+<p id="section-8.2-4">The Transmitter and Receiver <span class="bcp14">MUST</span> follow <span>[<a href="#RFC8417" class="cite xref">RFC8417</a>]</span> and <span>[<a href="#SSF" class="cite xref">SSF</a>]</span>, including
 signature validation, stream issuer, audience, and delivery authorization.
-The event <span class="bcp14">MUST</span>:<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+The event <span class="bcp14">MUST</span>:<a href="#section-8.2-4" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-7.2-5.1">
-            <p id="section-7.2-5.1.1">Use JWT type <code>secevent+jwt</code> and contain no <code>exp</code> claim, as required by
+<li class="normal" id="section-8.2-5.1">
+            <p id="section-8.2-5.1.1">Use JWT type <code>secevent+jwt</code> and contain no <code>exp</code> claim, as required by
 SSF. The State Record's <code>validUntil</code> limits active-state reliance; it
-is not SET expiration.<a href="#section-7.2-5.1.1" class="pilcrow">¶</a></p>
+is not SET expiration.<a href="#section-8.2-5.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-7.2-5.2">
-            <p id="section-7.2-5.2.1">Identify the agent using the top-level <code>sub_id</code> with the <code>iss_sub</code>
-format from <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span>.<a href="#section-7.2-5.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-8.2-5.2">
+            <p id="section-8.2-5.2.1">Identify the agent using the top-level <code>sub_id</code> with the <code>iss_sub</code>
+format from <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span>.<a href="#section-8.2-5.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-7.2-5.3">
-            <p id="section-7.2-5.3.1">Contain a <code>state</code> member whose value is a JSON object with the seven
-attributes defined in <a href="#state-schema" class="auto internal xref">Section 5</a> directly as members. It <span class="bcp14">MUST NOT</span>
+          <li class="normal" id="section-8.2-5.3">
+            <p id="section-8.2-5.3.1">Contain a <code>state</code> member whose value is the State Record object from
+<a href="#state-schema" class="auto internal xref">Section 5</a>, with its seven members directly in that object. It <span class="bcp14">MUST NOT</span>
 wrap them in a SCIM schema-URN member or include a <code>schemas</code> member.
 Required member names use the spelling in that section. Receivers <span class="bcp14">MUST</span>
-ignore other unknown members; they confer no lifecycle semantics.<a href="#section-7.2-5.3.1" class="pilcrow">¶</a></p>
+ignore other unknown members; they confer no lifecycle semantics.<a href="#section-8.2-5.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-7.2-5.4">
-            <p id="section-7.2-5.4.1">Have matching <code>sub_id.iss</code> / <code>state.issuer</code> and <code>sub_id.sub</code> /
-<code>state.subject</code> values.<a href="#section-7.2-5.4.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-8.2-5.4">
+            <p id="section-8.2-5.4.1">Have matching <code>sub_id.iss</code> / <code>state.issuer</code> and <code>sub_id.sub</code> /
+<code>state.subject</code> values.<a href="#section-8.2-5.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.2-6">The event object has no other <span class="bcp14">REQUIRED</span> members. The subject <span class="bcp14">MUST NOT</span> be
+<p id="section-8.2-6">The event object has no other <span class="bcp14">REQUIRED</span> members. The subject <span class="bcp14">MUST NOT</span> be
 placed in an event-local <code>subject</code> member. A Receiver <span class="bcp14">MUST NOT</span> infer the
-agent's governing issuer from the SET's top-level <code>iss</code>.<a href="#section-7.2-6" class="pilcrow">¶</a></p>
+agent's governing issuer from the SET's top-level <code>iss</code>.<a href="#section-8.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="delivery-and-acceptance">
-<section id="section-7.3">
+<section id="section-8.3">
         <h3 id="name-delivery-and-acceptance">
-<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-delivery-and-acceptance" class="section-name selfRef">Delivery and Acceptance</a>
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-delivery-and-acceptance" class="section-name selfRef">Delivery and Acceptance</a>
         </h3>
-<p id="section-7.3-1">Both parties <span class="bcp14">MUST</span> support SSF push delivery using <span>[<a href="#RFC8935" class="cite xref">RFC8935</a>]</span>. SSF poll
+<p id="section-8.3-1">Both parties <span class="bcp14">MUST</span> support SSF push delivery using <span>[<a href="#RFC8935" class="cite xref">RFC8935</a>]</span>. SSF poll
 delivery <span>[<a href="#RFC8936" class="cite xref">RFC8936</a>]</span> <span class="bcp14">MAY</span> additionally be supported. Mandatory push support
 is this profile's requirement, not a requirement of base SSF. The event type is
 advertised through existing SSF event capability and stream configuration
-fields; no separate discovery protocol is defined.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
-<p id="section-7.3-2">The Authority <span class="bcp14">MUST</span> arrange delivery of each new State Record through
+fields; no separate discovery protocol is defined.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+<p id="section-8.3-2">The Authority <span class="bcp14">MUST</span> arrange delivery of each new State Record through
 SCIM or SSF, and <span class="bcp14">MUST</span> enqueue a lifecycle event on every status or cutoff
-change for each configured target stream.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
-<p id="section-7.3-3">When a stream is paused or
+change for each configured target stream.<a href="#section-8.3-2" class="pilcrow">¶</a></p>
+<p id="section-8.3-3">When a stream is paused or
 delivery fails, the Transmitter retains the event for its configured
 retry period and the connector uses SCIM reconciliation. Expiration of
 that period does not remove the obligation to reconcile current state.
 SCIM and SSF do not need to arrive in the same order. Retransmitting a
-record <span class="bcp14">MUST NOT</span> change its version or validity; a fresh validity assertion
-requires a new version.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
-<p id="section-7.3-4">Receivers <span class="bcp14">MUST</span> durably deduplicate SETs by Transmitter issuer and <code>jti</code>
+record <span class="bcp14">MUST NOT</span> change its version or lease; a lease renewal requires
+a new State Record with a higher version.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
+<p id="section-8.3-4">Receivers <span class="bcp14">MUST</span> durably deduplicate SETs by Transmitter issuer and <code>jti</code>
 for the configured delivery retry period. Source-version processing
 remains necessary after the deduplication record expires and across
 SCIM delivery of the same state. Neither <code>jti</code> nor SET <code>iat</code> is a state
-ordering mechanism.<a href="#section-7.3-4" class="pilcrow">¶</a></p>
-<p id="section-7.3-5">Accepted lower-version events and exact duplicates are acknowledged
+ordering mechanism.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
+<p id="section-8.3-5">Accepted lower-version events and exact duplicates are acknowledged
 without changing state. Invalid or conflicting events use the delivery
 protocol's existing error reporting; this document defines no new
 delivery error code. Conflicting equal-version records <span class="bcp14">MUST</span> also raise
-an administrative diagnostic.<a href="#section-7.3-5" class="pilcrow">¶</a></p>
-<p id="section-7.3-6">A delivery acknowledgment confirms durable acceptance for processing,
+an administrative diagnostic.<a href="#section-8.3-5" class="pilcrow">¶</a></p>
+<p id="section-8.3-6">A delivery acknowledgment confirms durable acceptance for processing,
 not completed API enforcement. The Receiver <span class="bcp14">MUST</span> make accepted restrictions
 effective within its configured enforcement delay. It <span class="bcp14">MUST NOT</span> report
 successful SCIM application of the same version while those restrictions
-remain pending.<a href="#section-7.3-6" class="pilcrow">¶</a></p>
-<p id="section-7.3-7">An event for an unprovisioned identity <span class="bcp14">MUST NOT</span> create an enabled local
-principal. A Receiver <span class="bcp14">MUST</span> retain authorized disabled or retired state
-for that identity, so a later stale provisioning request cannot bypass
-it. For active state, it retains the version and cutoff but waits for
-authorized SCIM provisioning before permitting access.<a href="#section-7.3-7" class="pilcrow">¶</a></p>
-<p id="section-7.3-8">An authorized SCIM creation can establish the local correlation using
-the same version and identical state retained from an earlier event.
-This creates the resource without changing or refreshing the State Record.
-A stale creation attempt is rejected with <code>409</code>; the connector obtains
-the current record from its Authority before retrying.<a href="#section-7.3-8" class="pilcrow">¶</a></p>
-</section>
-</div>
-</section>
-</div>
-<div id="enforcement">
-<section id="section-8">
-      <h2 id="name-enforcement-and-freshness">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-enforcement-and-freshness" class="section-name selfRef">Enforcement and Freshness</a>
-      </h2>
-<div id="eligibility-and-existing-authorization">
-<section id="section-8.1">
-        <h3 id="name-eligibility-and-existing-au">
-<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-eligibility-and-existing-au" class="section-name selfRef">Eligibility and Existing Authorization</a>
-        </h3>
-<p id="section-8.1-1">The RAS <span class="bcp14">MUST</span> deny new grant redemption, access-token issuance, and refresh
-unless all of the following hold:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-8.1-2.1">
-            <p id="section-8.1-2.1.1">The qualified agent has an authorized local correlation.<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-8.1-2.2">
-            <p id="section-8.1-2.2.1">Its latest accepted status is <code>active</code> and its state is fresh.<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-8.1-2.3">
-            <p id="section-8.1-2.3.1">No applicable Local Suspension or terminal tombstone exists.<a href="#section-8.1-2.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-8.1-2.4">
-            <p id="section-8.1-2.4.1">The original IdP grant has a validated <code>iat</code> strictly after the current
-Authorization Cutoff.<a href="#section-8.1-2.4.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-8.1-2.5">
-            <p id="section-8.1-2.5.1">The Federation profile's client, user, tenant, authority, and actor
-authorization requirements succeed.<a href="#section-8.1-2.5.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-8.1-3">On disablement or retirement, the RAS <span class="bcp14">MUST</span> invalidate existing derived
-authorization. When the cutoff advances, it <span class="bcp14">MUST</span> invalidate authorization
-whose original grant <code>iat</code> is at or before the new cutoff. These
-invalidations are permanent: subsequent activation cannot reverse them.
-They take effect immediately at the RAS; cached decisions and offline
-access tokens cease API use within the applicable mode's bound below.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
-<p id="section-8.1-4">A token request failing these lifecycle checks uses <code>invalid_grant</code> under
-<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> and the applicable grant profile. Introspection returns
-<code>active: false</code> under <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>. Error descriptions <span class="bcp14">SHOULD</span> avoid
-disclosing lifecycle status or the existence of another tenant's agent.<a href="#section-8.1-4" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="provenance">
-<section id="section-8.2">
-        <h3 id="name-grant-validation-and-retain">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-grant-validation-and-retain" class="section-name selfRef">Grant Validation and Retained Provenance</a>
-        </h3>
-<p id="section-8.2-1">The RAS <span class="bcp14">MUST</span> reject a grant with missing <code>iat</code>, a non-numeric or fractional
-<code>iat</code>, or an issuance time inconsistent with its configured clock and
-grant-validation rules, using <code>invalid_grant</code>. The grant <span class="bcp14">MUST</span> also clear
-the current cutoff. Presence of <code>iat</code> follows ID-JAG; whole-second
-precision and the cutoff check are additional companion requirements.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
-<p id="section-8.2-2">The RAS <span class="bcp14">MUST</span> retain the canonical agent identity, authorized Target Tenant,
-and original grant <code>iat</code> with every authorization derived from the grant,
-including access tokens and refresh authorization. Refresh, rotation, and
-token issuance <span class="bcp14">MUST NOT</span> replace that provenance with a newer local timestamp.
-This is an additional RAS requirement of this companion, not an implied
-property of OAuth refresh or of an access token's own <code>iat</code>.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
-<p id="section-8.2-3">No new token claim or storage format is required. The RAS can retain the
-context in its authorization record; APIs in the offline mode do not need
-to recover the original grant time from the access token.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
-<div id="migration-of-existing-authorization">
-<section id="section-8.2.1">
-          <h4 id="name-migration-of-existing-autho">
-<a href="#section-8.2.1" class="section-number selfRef">8.2.1. </a><a href="#name-migration-of-existing-autho" class="section-name selfRef">Migration of Existing Authorization</a>
-          </h4>
-<p id="section-8.2.1-1">Before applying this profile to an existing token population, the RAS <span class="bcp14">MUST</span>
-either recover its original validated grant context or require a new
-ID-JAG and new authorization. It <span class="bcp14">MUST NOT</span> infer missing provenance from an
-access token's issue time, provisioning time, or current agent state.<a href="#section-8.2.1-1" class="pilcrow">¶</a></p>
-<p id="section-8.2.1-2">Legacy refresh authorization without recoverable provenance <span class="bcp14">MUST NOT</span> mint
-tokens in the new population. Deployments <span class="bcp14">MAY</span> drain existing access tokens
-under their previous policy before enabling the lifecycle guarantee. The
-new guarantee begins only after those tokens and any cached active results
-can no longer authorize requests. Migration does not silently grandfather
-untracked tokens into a stronger bound.<a href="#section-8.2.1-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-</section>
-</div>
-<div id="api-enforcement">
-<section id="section-8.3">
-        <h3 id="name-api-enforcement-modes">
-<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-api-enforcement-modes" class="section-name selfRef">API Enforcement Modes</a>
-        </h3>
-<p id="section-8.3-1">The RAS and API <span class="bcp14">MUST</span> configure one of the following modes for each governed
-token population. These are deployment modes, not new OAuth profile URIs
-or assurance levels. A token or validation failure <span class="bcp14">MUST NOT</span> select a weaker
-mode. All modes retain Federation's token protection and actor gate.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-4">
-          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
-<thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">Mode</th>
-              <th class="text-left" rowspan="1" colspan="1">Resource behavior</th>
-              <th class="text-left" rowspan="1" colspan="1">Additional bound after RAS enforcement</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Online introspection</td>
-              <td class="text-left" rowspan="1" colspan="1">Introspect each request; no reuse of active responses</td>
-              <td class="text-left" rowspan="1" colspan="1">T</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Bounded introspection cache</td>
-              <td class="text-left" rowspan="1" colspan="1">Reuse an active response for at most C, within token expiry</td>
-              <td class="text-left" rowspan="1" colspan="1">T + C</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Expiring JWT</td>
-              <td class="text-left" rowspan="1" colspan="1">Validate JWTs offline; bound their effective acceptance lifetime by A</td>
-              <td class="text-left" rowspan="1" colspan="1">A</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-8.3-3">Both introspection modes <span class="bcp14">MUST</span> use authenticated <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span> processing.
-Before returning <code>active: true</code>, the RAS <span class="bcp14">MUST</span> apply current eligibility and
-retained-provenance checks in addition to normal token validation. JWT or
-opaque access tokens can use these modes.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
-<div id="online-introspection">
-<section id="section-8.3.1">
-          <h4 id="name-online-introspection">
-<a href="#section-8.3.1" class="section-number selfRef">8.3.1. </a><a href="#name-online-introspection" class="section-name selfRef">Online Introspection</a>
-          </h4>
-<p id="section-8.3.1-1">The API <span class="bcp14">MUST</span> introspect the access token on every request and <span class="bcp14">MUST NOT</span>
-reuse an active response. It <span class="bcp14">MUST</span> complete the authorization decision
-within T of starting introspection; a late result requires another check
-or denial. An inactive response, failed check, or timeout cannot permit
-the request. This mode narrows Federation's permitted introspection caching.<a href="#section-8.3.1-1" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="bounded-introspection-cache">
-<section id="section-8.3.2">
-          <h4 id="name-bounded-introspection-cache">
-<a href="#section-8.3.2" class="section-number selfRef">8.3.2. </a><a href="#name-bounded-introspection-cache" class="section-name selfRef">Bounded Introspection Cache</a>
-          </h4>
-<p id="section-8.3.2-1">The API <span class="bcp14">MAY</span> reuse an active response for at most C after its receipt,
-provided that response arrived within T of starting introspection.
-It <span class="bcp14">MUST</span> check both cache age and token expiry at each authorization decision.
-The cache deadline <span class="bcp14">MUST NOT</span> extend beyond <code>exp</code>, and a response without
-<code>exp</code> <span class="bcp14">MUST NOT</span> be reused, retaining Federation's existing restriction.<a href="#section-8.3.2-1" class="pilcrow">¶</a></p>
-<p id="section-8.3.2-2">Cache hits <span class="bcp14">MUST NOT</span> restart the interval. After expiry of the cached result,
-failed revalidation or timeout cannot authorize use of stale state. A newly
-obtained inactive response <span class="bcp14">MUST</span> invalidate the cached active result.
-This mode makes Federation's configurable cache-freshness limit explicit.<a href="#section-8.3.2-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="expiring-jwt">
-<section id="section-8.3.3">
-          <h4 id="name-expiring-jwt">
-<a href="#section-8.3.3" class="section-number selfRef">8.3.3. </a><a href="#name-expiring-jwt" class="section-name selfRef">Expiring JWT</a>
-          </h4>
-<p id="section-8.3.3-1">The RAS and API <span class="bcp14">MUST</span> apply <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span> and Federation's JWT processing.
-The RAS <span class="bcp14">MUST</span> limit each token's <code>exp - iat</code> to a configured maximum J.
-The API <span class="bcp14">MUST</span> reject a token exceeding J, verify expiration at each decision,
-and apply at most its configured expiration leeway P. Refresh and repeated
-grant redemption remain subject to current lifecycle state at the RAS.<a href="#section-8.3.3-1" class="pilcrow">¶</a></p>
-<p id="section-8.3.3-2">Let A = J + 2S + P, where S bounds each party's clock error. Issuers use
-their actual issuance clock under <a href="#conformance" class="auto internal xref">Section 3</a>; future dating cannot
-extend the configured lifetime. Thus A bounds elapsed acceptance after
-issuance, including clock uncertainty and leeway.<a href="#section-8.3.3-2" class="pilcrow">¶</a></p>
-<p id="section-8.3.3-3">This mode retains Federation's offline-validation option and adds a token
-lifetime ceiling. An API may continue accepting a previously issued token
-until its bounded expiry even after RAS revocation. Neither reactivation
-nor a later cache policy change can extend that token's expiry. Direct
-event processing at APIs can shorten this interval, but its consistency
-protocol is outside this revision.<a href="#section-8.3.3-3" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="common-resource-requirements">
-<section id="section-8.3.4">
-          <h4 id="name-common-resource-requirement">
-<a href="#section-8.3.4" class="section-number selfRef">8.3.4. </a><a href="#name-common-resource-requirement" class="section-name selfRef">Common Resource Requirements</a>
-          </h4>
-<p id="section-8.3.4-1">The API <span class="bcp14">MUST</span> continue enforcing token authority, user authorization, and
-the actor gate from <span>[<a href="#FEDERATION" class="cite xref">FEDERATION</a>]</span>. An active response or valid signature
-does not itself authorize an operation. Invalid-token responses follow
-<span>[<a href="#RFC6750" class="cite xref">RFC6750</a>]</span> and the applicable access-token protection specification.<a href="#section-8.3.4-1" class="pilcrow">¶</a></p>
-<p id="section-8.3.4-2">The bounds concern new authorization decisions, not rollback of completed
-operations or cancellation of work already admitted. Long-running sessions
-need separate revalidation or cancellation rules. Where APIs use different
-modes, the deployment-wide bound is the longest applicable bound.<a href="#section-8.3.4-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-</section>
-</div>
-<div id="freshness">
-<section id="section-8.4">
-        <h3 id="name-state-freshness-and-loss-of">
-<a href="#section-8.4" class="section-number selfRef">8.4. </a><a href="#name-state-freshness-and-loss-of" class="section-name selfRef">State Freshness and Loss of Delivery</a>
-        </h3>
-<p id="section-8.4-1">An active State Record is a time-limited assertion. The Authority <span class="bcp14">MUST</span>
-renew it within the Receiver's accepted interval to maintain continuous
-eligibility. The trust assumption for a current source decision on renewal
-is stated in <a href="#conformance" class="auto internal xref">Section 3</a>.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
-<p id="section-8.4-2">For active state, the Receiver <span class="bcp14">MUST</span> set its effective reliance deadline to
-the earlier of <code>validUntil</code> and <code>assertedAt + L</code>, where L is its configured
-maximum interval. It <span class="bcp14">MUST</span> clamp an excessive interval, not reject the
-State Record or rewrite the source's stored fields. It <span class="bcp14">MUST</span> stop relying
-on active state at that deadline, accounting conservatively for clock error.<a href="#section-8.4-2" class="pilcrow">¶</a></p>
-<p id="section-8.4-3">For disabled or retired state, <code>validUntil</code> and L <span class="bcp14">MUST NOT</span> delay, prevent,
-or expire its restrictive effect. Syntax, source authorization, ordering,
-and cutoff checks still apply. Arrival time, replay, stream heartbeats,
-and reads of the Receiver's own SCIM resource cannot refresh source state.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
-<p id="section-8.4-4">Expiration blocks new RAS issuance, refresh, and active introspection until
-a newer active record has an effective deadline in the future. Cached
-results and offline tokens follow their mode's residual acceptance bound.
-The distinction is intentional: freshness loss is reversible, while
-administrative revocation is permanent. Still-valid authorization <span class="bcp14">MAY</span>
-become usable after freshness is restored if its grant clears the cutoff;
-disablement and cutoff invalidation cannot be reversed by renewal.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
-<p id="section-8.4-5">Let S bound clock error at each party and E bound enforcement delay after
-acceptance. Under the source-side assumptions in <a href="#conformance" class="auto internal xref">Section 3</a>, the
-conservative RAS stopping bound after disablement is B = L + 2S + E, even
-if the notification is lost. Applied notification can shorten this window.<a href="#section-8.4-5" class="pilcrow">¶</a></p>
-<table class="center" id="table-5">
-          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
-<thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">Enforcement mode</th>
-              <th class="text-left" rowspan="1" colspan="1">Conservative denial bound from the Authority's disablement</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Online introspection</td>
-              <td class="text-left" rowspan="1" colspan="1">B + T = L + 2S + E + T</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Bounded introspection cache</td>
-              <td class="text-left" rowspan="1" colspan="1">B + T + C</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Expiring JWT</td>
-              <td class="text-left" rowspan="1" colspan="1">B + A, with A = J + 2S + P</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-8.4-7">The JWT term includes additional clock uncertainty at token issuance and
-expiry validation; it is not merely the nominal token lifetime. All
-parameters are finite deployment limits. Deployments <span class="bcp14">MUST</span> document their
-mode, limits, timeouts, and outage behavior. They <span class="bcp14">MUST NOT</span> claim a shorter
-bound based solely on grant lifetime or successful event delivery.<a href="#section-8.4-7" class="pilcrow">¶</a></p>
+remain pending.<a href="#section-8.3-6" class="pilcrow">¶</a></p>
+<p id="section-8.3-7">State for an unprovisioned identity is retained in the registry under
+<a href="#registry" class="auto internal xref">Section 6</a>. Provisioning can later establish a local representation
+under <a href="#scim" class="auto internal xref">Section 7</a>; event receipt alone cannot enable a principal.<a href="#section-8.3-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2378,14 +2216,19 @@ record when the Receiver is behind.<a href="#section-9-6.3.1" class="pilcrow">¶
           <p id="section-9-6.4.1">Investigates a Receiver version ahead of the source; it <span class="bcp14">MUST NOT</span> reset
 the sequence or overwrite state with a lower version.<a href="#section-9-6.4.1" class="pilcrow">¶</a></p>
 </li>
+        <li id="section-9-6.5">
+          <p id="section-9-6.5.1">Reconciles descriptive attributes separately under SCIM concurrency
+rules, even when lifecycle versions match. A descriptive difference
+does not require a new State Record.<a href="#section-9-6.5.1" class="pilcrow">¶</a></p>
+</li>
       </ol>
 <p id="section-9-7">An absent identity in a partial inventory <span class="bcp14">MUST NOT</span> be treated as retired.
 The Authority <span class="bcp14">MUST</span> retain explicit retirement records and retry them
 until affected receivers have applied them. Retirement tombstones also
 protect against older backups and late provisioning requests.<a href="#section-9-7" class="pilcrow">¶</a></p>
-<p id="section-9-8">SCIM records, pending event state, and tombstones participate in the same
-version comparison. Applying version 43 does not require delivery of
-version 42 because snapshots include the nondecreasing cutoff. A Receiver
+<p id="section-9-8">The registry compares state from both bindings against retained and pending
+state, including retirement tombstones. Applying version 43 does not
+require delivery of version 42 because snapshots include the nondecreasing cutoff. A Receiver
 <span class="bcp14">MUST NOT</span> depend on observing every intermediate transition.<a href="#section-9-8" class="pilcrow">¶</a></p>
 <p id="section-9-9">After loss of correlation or lifecycle state, the Receiver <span class="bcp14">MUST</span> deny
 affected authorization until trusted reconciliation completes. Restoring
@@ -2394,15 +2237,286 @@ retirement protections. Restoring an Authority without its version and
 issuance watermark requires administrative recovery, not a sequence reset.<a href="#section-9-9" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="relationship-changes">
+<div id="enforcement">
 <section id="section-10">
-      <h2 id="name-relationship-specific-chang">
-<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-relationship-specific-chang" class="section-name selfRef">Relationship-Specific Changes</a>
+      <h2 id="name-oauth-enforcement-layer">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-oauth-enforcement-layer" class="section-name selfRef">OAuth Enforcement Layer</a>
       </h2>
-<p id="section-10-1">Agent-wide lifecycle state is deliberately distinct from changes to an
-individual relationship:<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-10-1">This layer interprets lifecycle state for ID-JAG and derived OAuth
+authorization. It defines the issuance-time contract, retained provenance,
+and resource denial bounds. The distribution layer above does not itself
+validate grants, revoke tokens, or decide whether an operation is allowed.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<div id="cutoff">
+<section id="section-10.1">
+        <h3 id="name-authorization-cutoff-and-is">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-authorization-cutoff-and-is" class="section-name selfRef">Authorization Cutoff and Issuance</a>
+        </h3>
+<p id="section-10.1-1">An Authorization Cutoff invalidates grants and retained authorization
+issued at or before it, even if a Receiver missed the disabled state.
+It <span class="bcp14">MUST</span> never decrease.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+<p id="section-10.1-2">Every ID-JAG issued under this companion <span class="bcp14">MUST</span> contain <code>iat</code>, as already
+required by <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>. This profile additionally requires a
+whole-second NumericDate <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> representing its issuance time.<a href="#section-10.1-2" class="pilcrow">¶</a></p>
+<p id="section-10.1-3">Let D be the configured maximum number of whole seconds by which any
+grant issuer can be ahead of the Authority, including clock error and
+rounding. If each clock is within S seconds of a common time source,
+D must cover at least 2S, rounded up. This is a difference between clocks,
+not just one clock's error.<a href="#section-10.1-3" class="pilcrow">¶</a></p>
+<p id="section-10.1-4">When advancing the cutoff, the Authority <span class="bcp14">MUST</span> set it to its current
+whole-second time plus D, strictly above the previous cutoff. This covers
+all grants issued before the committed transition without tracking the
+greatest <code>iat</code> across issuing nodes. The source-side assumptions in
+<a href="#conformance" class="auto internal xref">Section 3</a> still require the issuance gate to close before publication.<a href="#section-10.1-4" class="pilcrow">¶</a></p>
+<p id="section-10.1-5">After activation, the issuer <span class="bcp14">MUST</span> issue only grants with <code>iat</code> strictly
+later than the cutoff. Until its actual clock clears the cutoff, issuance
+waits or fails. A cutoff ahead of the Authority's clock therefore creates
+a bounded activation delay; it does not justify postdating grants.
+Receivers <span class="bcp14">MUST NOT</span> apply positive clock-skew tolerance when comparing
+the validated grant <code>iat</code> with the cutoff.<a href="#section-10.1-5" class="pilcrow">¶</a></p>
+<p id="section-10.1-6">The issuance-time contract is an additional requirement of this companion;
+the presence of <code>iat</code> is inherited from ID-JAG. No new grant or access-token
+claim is defined. Shared lifecycle decisions and bounded clocks remain
+necessary; a connector unable to obtain them is non-conformant.<a href="#section-10.1-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="eligibility-and-existing-authorization">
+<section id="section-10.2">
+        <h3 id="name-eligibility-and-existing-au">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-eligibility-and-existing-au" class="section-name selfRef">Eligibility and Existing Authorization</a>
+        </h3>
+<p id="section-10.2-1">The RAS <span class="bcp14">MUST</span> deny new grant redemption, access-token issuance, and refresh
+unless all of the following hold:<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.2-2.1">
+            <p id="section-10.2-2.1.1">The qualified agent has an authorized local correlation.<a href="#section-10.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.2-2.2">
+            <p id="section-10.2-2.2.1">Its latest accepted status is <code>active</code> and its state is fresh.<a href="#section-10.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.2-2.3">
+            <p id="section-10.2-2.3.1">No applicable Local Suspension or terminal tombstone exists.<a href="#section-10.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.2-2.4">
+            <p id="section-10.2-2.4.1">The original IdP grant has a validated <code>iat</code> strictly after the current
+Authorization Cutoff.<a href="#section-10.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.2-2.5">
+            <p id="section-10.2-2.5.1">The Federation profile's client, user, tenant, authority, and actor
+authorization requirements succeed.<a href="#section-10.2-2.5.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-10.2-3">On disablement or retirement, the RAS <span class="bcp14">MUST</span> invalidate existing derived
+authorization. When the cutoff advances, it <span class="bcp14">MUST</span> invalidate authorization
+whose original grant <code>iat</code> is at or before the new cutoff. These
+invalidations are permanent: subsequent activation cannot reverse them.
+They take effect immediately at the RAS; cached decisions and offline
+access tokens cease API use within the applicable mode's bound below.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+<p id="section-10.2-4">A token request failing these lifecycle checks uses <code>invalid_grant</code> under
+<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> and the applicable grant profile. Introspection returns
+<code>active: false</code> under <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>. Error descriptions <span class="bcp14">SHOULD</span> avoid
+disclosing lifecycle status or the existence of another tenant's agent.<a href="#section-10.2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="provenance">
+<section id="section-10.3">
+        <h3 id="name-grant-validation-and-retain">
+<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-grant-validation-and-retain" class="section-name selfRef">Grant Validation and Retained Provenance</a>
+        </h3>
+<p id="section-10.3-1">The RAS <span class="bcp14">MUST</span> reject a grant with missing <code>iat</code>, a non-numeric or fractional
+<code>iat</code>, or an issuance time inconsistent with its configured clock and
+grant-validation rules, using <code>invalid_grant</code>. The grant <span class="bcp14">MUST</span> also clear
+the current cutoff. Presence of <code>iat</code> follows ID-JAG; whole-second
+precision and the cutoff check are additional companion requirements.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.3-2">The RAS <span class="bcp14">MUST</span> retain the canonical agent identity, authorized Target Tenant,
+and original grant <code>iat</code> with every authorization derived from the grant,
+including access tokens and refresh authorization. Refresh, rotation, and
+token issuance <span class="bcp14">MUST NOT</span> replace that provenance with a newer local timestamp.
+This is an additional RAS requirement of this companion, not an implied
+property of OAuth refresh or of an access token's own <code>iat</code>.<a href="#section-10.3-2" class="pilcrow">¶</a></p>
+<p id="section-10.3-3">No new token claim or storage format is required. The RAS can retain the
+context in its authorization record; APIs in the offline mode do not need
+to recover the original grant time from the access token.<a href="#section-10.3-3" class="pilcrow">¶</a></p>
+<div id="migration-of-existing-authorization">
+<section id="section-10.3.1">
+          <h4 id="name-migration-of-existing-autho">
+<a href="#section-10.3.1" class="section-number selfRef">10.3.1. </a><a href="#name-migration-of-existing-autho" class="section-name selfRef">Migration of Existing Authorization</a>
+          </h4>
+<p id="section-10.3.1-1">Before applying this profile to an existing token population, the RAS <span class="bcp14">MUST</span>
+either recover its original validated grant context or require a new
+ID-JAG and new authorization. It <span class="bcp14">MUST NOT</span> infer missing provenance from an
+access token's issue time, provisioning time, or current agent state.<a href="#section-10.3.1-1" class="pilcrow">¶</a></p>
+<p id="section-10.3.1-2">Legacy refresh authorization without recoverable provenance <span class="bcp14">MUST NOT</span> mint
+tokens in the new population. Deployments <span class="bcp14">MAY</span> drain existing access tokens
+under their previous policy before enabling the lifecycle guarantee. The
+new guarantee begins only after those tokens and any cached active results
+can no longer authorize requests. Migration does not silently grandfather
+untracked tokens into a stronger bound.<a href="#section-10.3.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="api-enforcement">
+<section id="section-10.4">
+        <h3 id="name-api-enforcement-modes">
+<a href="#section-10.4" class="section-number selfRef">10.4. </a><a href="#name-api-enforcement-modes" class="section-name selfRef">API Enforcement Modes</a>
+        </h3>
+<p id="section-10.4-1">The RAS and API <span class="bcp14">MUST</span> configure one of the following modes for each governed
+token population. These are deployment modes, not new OAuth profile URIs
+or assurance levels. A token or validation failure <span class="bcp14">MUST NOT</span> select a weaker
+mode. All modes retain Federation's token protection and actor gate.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-5">
+          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Mode</th>
+              <th class="text-left" rowspan="1" colspan="1">Resource behavior</th>
+              <th class="text-left" rowspan="1" colspan="1">Additional bound after RAS enforcement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Online introspection</td>
+              <td class="text-left" rowspan="1" colspan="1">Introspect each request; no reuse of active responses</td>
+              <td class="text-left" rowspan="1" colspan="1">T</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Bounded introspection cache</td>
+              <td class="text-left" rowspan="1" colspan="1">Reuse an active response for at most C, within token expiry</td>
+              <td class="text-left" rowspan="1" colspan="1">T + C</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Expiring JWT</td>
+              <td class="text-left" rowspan="1" colspan="1">Validate JWTs offline; bound their effective acceptance lifetime by A</td>
+              <td class="text-left" rowspan="1" colspan="1">A</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-10.4-3">Both introspection modes <span class="bcp14">MUST</span> use authenticated <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span> processing.
+Before returning <code>active: true</code>, the RAS <span class="bcp14">MUST</span> apply current eligibility and
+retained-provenance checks in addition to normal token validation. JWT or
+opaque access tokens can use these modes.<a href="#section-10.4-3" class="pilcrow">¶</a></p>
+<div id="online-introspection">
+<section id="section-10.4.1">
+          <h4 id="name-online-introspection">
+<a href="#section-10.4.1" class="section-number selfRef">10.4.1. </a><a href="#name-online-introspection" class="section-name selfRef">Online Introspection</a>
+          </h4>
+<p id="section-10.4.1-1">The API <span class="bcp14">MUST</span> introspect the access token on every request and <span class="bcp14">MUST NOT</span>
+reuse an active response. It <span class="bcp14">MUST</span> complete the authorization decision
+within T of starting introspection; a late result requires another check
+or denial. An inactive response, failed check, or timeout cannot permit
+the request. This mode narrows Federation's permitted introspection caching.<a href="#section-10.4.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="bounded-introspection-cache">
+<section id="section-10.4.2">
+          <h4 id="name-bounded-introspection-cache">
+<a href="#section-10.4.2" class="section-number selfRef">10.4.2. </a><a href="#name-bounded-introspection-cache" class="section-name selfRef">Bounded Introspection Cache</a>
+          </h4>
+<p id="section-10.4.2-1">The API <span class="bcp14">MAY</span> reuse an active response for at most C after its receipt,
+provided that response arrived within T of starting introspection.
+It <span class="bcp14">MUST</span> check both cache age and token expiry at each authorization decision.
+The cache deadline <span class="bcp14">MUST NOT</span> extend beyond <code>exp</code>, and a response without
+<code>exp</code> <span class="bcp14">MUST NOT</span> be reused, retaining Federation's existing restriction.<a href="#section-10.4.2-1" class="pilcrow">¶</a></p>
+<p id="section-10.4.2-2">Cache hits <span class="bcp14">MUST NOT</span> restart the interval. After expiry of the cached result,
+failed revalidation or timeout cannot authorize use of stale state. A newly
+obtained inactive response <span class="bcp14">MUST</span> invalidate the cached active result.
+This mode makes Federation's configurable cache-freshness limit explicit.<a href="#section-10.4.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="expiring-jwt">
+<section id="section-10.4.3">
+          <h4 id="name-expiring-jwt">
+<a href="#section-10.4.3" class="section-number selfRef">10.4.3. </a><a href="#name-expiring-jwt" class="section-name selfRef">Expiring JWT</a>
+          </h4>
+<p id="section-10.4.3-1">The RAS and API <span class="bcp14">MUST</span> apply <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span> and Federation's JWT processing.
+The RAS <span class="bcp14">MUST</span> limit each token's <code>exp - iat</code> to a configured maximum J.
+The API <span class="bcp14">MUST</span> reject a token exceeding J, verify expiration at each decision,
+and apply at most its configured expiration leeway P. Refresh and repeated
+grant redemption remain subject to current lifecycle state at the RAS.<a href="#section-10.4.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.4.3-2">Let A = J + 2S + P, where S bounds each party's clock error. Issuers use
+their actual issuance clock under <a href="#conformance" class="auto internal xref">Section 3</a>; future dating cannot
+extend the configured lifetime. Thus A bounds elapsed acceptance after
+issuance, including clock uncertainty and leeway.<a href="#section-10.4.3-2" class="pilcrow">¶</a></p>
+<p id="section-10.4.3-3">This mode retains Federation's offline-validation option and adds a token
+lifetime ceiling. An API may continue accepting a previously issued token
+until its bounded expiry even after RAS revocation. Neither reactivation
+nor a later cache policy change can extend that token's expiry. Direct
+event processing at APIs can shorten this interval, but its consistency
+protocol is outside this revision.<a href="#section-10.4.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="common-resource-requirements">
+<section id="section-10.4.4">
+          <h4 id="name-common-resource-requirement">
+<a href="#section-10.4.4" class="section-number selfRef">10.4.4. </a><a href="#name-common-resource-requirement" class="section-name selfRef">Common Resource Requirements</a>
+          </h4>
+<p id="section-10.4.4-1">The API <span class="bcp14">MUST</span> continue enforcing token authority, user authorization, and
+the actor gate from <span>[<a href="#FEDERATION" class="cite xref">FEDERATION</a>]</span>. An active response or valid signature
+does not itself authorize an operation. Invalid-token responses follow
+<span>[<a href="#RFC6750" class="cite xref">RFC6750</a>]</span> and the applicable access-token protection specification.<a href="#section-10.4.4-1" class="pilcrow">¶</a></p>
+<p id="section-10.4.4-2">The bounds concern new authorization decisions, not rollback of completed
+operations or cancellation of work already admitted. Long-running sessions
+need separate revalidation or cancellation rules. Where APIs use different
+modes, the deployment-wide bound is the longest applicable bound.<a href="#section-10.4.4-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="freshness">
+<section id="section-10.5">
+        <h3 id="name-denial-bounds-and-loss-of-d">
+<a href="#section-10.5" class="section-number selfRef">10.5. </a><a href="#name-denial-bounds-and-loss-of-d" class="section-name selfRef">Denial Bounds and Loss of Delivery</a>
+        </h3>
+<p id="section-10.5-1">An expired eligibility lease blocks new RAS issuance, refresh, and active
+introspection. Cached results and offline tokens follow their configured
+mode's residual acceptance bound. When a newer active lease restores
+eligibility, still-valid authorization <span class="bcp14">MAY</span> be used only if its original
+grant clears the cutoff and has not otherwise been revoked.<a href="#section-10.5-1" class="pilcrow">¶</a></p>
+<p id="section-10.5-2">Let S bound clock error at each party and E bound enforcement delay after
+acceptance. Under the source-side assumptions in <a href="#conformance" class="auto internal xref">Section 3</a>, the
+conservative RAS stopping bound after disablement is B = L + 2S + E, even
+if the notification is lost. Applied notification can shorten this window.<a href="#section-10.5-2" class="pilcrow">¶</a></p>
 <table class="center" id="table-6">
-        <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
+          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Enforcement mode</th>
+              <th class="text-left" rowspan="1" colspan="1">Conservative denial bound from the Authority's disablement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Online introspection</td>
+              <td class="text-left" rowspan="1" colspan="1">B + T = L + 2S + E + T</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Bounded introspection cache</td>
+              <td class="text-left" rowspan="1" colspan="1">B + T + C</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Expiring JWT</td>
+              <td class="text-left" rowspan="1" colspan="1">B + A, with A = J + 2S + P</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-10.5-4">The JWT term includes additional clock uncertainty at token issuance and
+expiry validation; it is not merely the nominal token lifetime. All
+parameters are finite deployment limits. Deployments <span class="bcp14">MUST</span> document their
+mode, limits, timeouts, and outage behavior. They <span class="bcp14">MUST NOT</span> claim a shorter
+bound based solely on grant lifetime or successful event delivery.<a href="#section-10.5-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="relationship-changes">
+<section id="section-11">
+      <h2 id="name-relationship-specific-chang">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-relationship-specific-chang" class="section-name selfRef">Relationship-Specific Changes</a>
+      </h2>
+<p id="section-11-1">Agent-wide lifecycle state is deliberately distinct from changes to an
+individual relationship:<a href="#section-11-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-7">
+        <caption><a href="#table-7" class="selfRef">Table 7</a></caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">Change</th>
@@ -2432,86 +2546,86 @@ individual relationship:<a href="#section-10-1" class="pilcrow">¶</a></p>
           </tr>
         </tbody>
       </table>
-<p id="section-10-3">The IdP applies the first three boundaries under <span>[<a href="#FEDERATION" class="cite xref">FEDERATION</a>]</span>.
+<p id="section-11-3">The IdP applies the first three boundaries under <span>[<a href="#FEDERATION" class="cite xref">FEDERATION</a>]</span>.
 This companion does not define portable events identifying those
 relationships. Selective revocation of their existing downstream tokens
 needs issuance provenance and an agreed relationship identifier;
-the agent's <code>act</code> identity alone is insufficient.<a href="#section-10-3" class="pilcrow">¶</a></p>
-<p id="section-10-4">OAuth token revocation <span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span> remains available to revoke a known
+the agent's <code>act</code> identity alone is insufficient.<a href="#section-11-3" class="pilcrow">¶</a></p>
+<p id="section-11-4">OAuth token revocation <span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span> remains available to revoke a known
 token at its issuing server. It neither identifies every authorization
 derived from a Governed Agent nor distributes principal lifecycle state
 across domains. It complements this profile; it does not replace its
-cutoff, ordering, or propagation contract.<a href="#section-10-4" class="pilcrow">¶</a></p>
-<p id="section-10-5">A WISE or other upstream signal <span class="bcp14">MAY</span> inform the Authority's decision.
+cutoff, ordering, or propagation contract.<a href="#section-11-4" class="pilcrow">¶</a></p>
+<p id="section-11-5">A WISE or other upstream signal <span class="bcp14">MAY</span> inform the Authority's decision.
 The Authority <span class="bcp14">MUST</span> evaluate its source, affected credential or workload,
 and Identity Bindings before producing agent-wide lifecycle state.
 Receivers <span class="bcp14">MUST NOT</span> reinterpret such upstream subjects as governed
-identifiers without the federation mapping.<a href="#section-10-5" class="pilcrow">¶</a></p>
+identifiers without the federation mapping.<a href="#section-11-5" class="pilcrow">¶</a></p>
 <div id="self-acting">
-<section id="section-10.1">
+<section id="section-11.1">
         <h3 id="name-self-acting-access">
-<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-self-acting-access" class="section-name selfRef">Self-Acting Access</a>
+<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-self-acting-access" class="section-name selfRef">Self-Acting Access</a>
         </h3>
-<p id="section-10.1-1">The lifecycle identity is independent of the authorization flow. The
+<p id="section-11.1-1">The lifecycle identity is independent of the authorization flow. The
 intended <span>[<a href="#WAG" class="cite xref">WAG</a>]</span> composition correlates the same Governed Agent with the
-same local agent principal used for delegated access.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
-<p id="section-10.1-2">Delegated access preserves the IdP-qualified actor in <code>act</code>; self-acting
+same local agent principal used for delegated access.<a href="#section-11.1-1" class="pilcrow">¶</a></p>
+<p id="section-11.1-2">Delegated access preserves the IdP-qualified actor in <code>act</code>; self-acting
 access represents the correlated local principal as the resource-domain
-subject. These representations do not make their authority interchangeable.<a href="#section-10.1-2" class="pilcrow">¶</a></p>
-<p id="section-10.1-3">This revision claims no WAG wire conformance. A future composition needs
+subject. These representations do not make their authority interchangeable.<a href="#section-11.1-2" class="pilcrow">¶</a></p>
+<p id="section-11.1-3">This revision claims no WAG wire conformance. A future composition needs
 an authenticated governed subject and issuance time to apply the same
-cutoff and provenance checks. It does not need a separate agent lifecycle.<a href="#section-10.1-3" class="pilcrow">¶</a></p>
+cutoff and provenance checks. It does not need a separate agent lifecycle.<a href="#section-11.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="security-considerations">
-<section id="section-11">
+<section id="section-12">
       <h2 id="name-security-considerations">
-<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
 <div id="lifecycle-writers-and-token-confusion">
-<section id="section-11.1">
+<section id="section-12.1">
         <h3 id="name-lifecycle-writers-and-token">
-<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-lifecycle-writers-and-token" class="section-name selfRef">Lifecycle Writers and Token Confusion</a>
+<a href="#section-12.1" class="section-number selfRef">12.1. </a><a href="#name-lifecycle-writers-and-token" class="section-name selfRef">Lifecycle Writers and Token Confusion</a>
         </h3>
-<p id="section-11.1-1">A lifecycle writer can disable agents or assert renewed eligibility.
+<p id="section-12.1-1">A lifecycle writer can disable agents or assert renewed eligibility.
 Receivers <span class="bcp14">MUST</span> restrict writers to explicitly authorized issuer and target
 tenant relationships. They <span class="bcp14">MUST NOT</span> derive that permission from an
 unverified payload, a supplied URL, or a display name. Channel credentials
-and SET keys follow their underlying protocols' validation requirements.<a href="#section-11.1-1" class="pilcrow">¶</a></p>
-<p id="section-11.1-2">SETs are not OAuth grants or access tokens. Receivers <span class="bcp14">MUST</span> keep lifecycle
+and SET keys follow their underlying protocols' validation requirements.<a href="#section-12.1-1" class="pilcrow">¶</a></p>
+<p id="section-12.1-2">SETs are not OAuth grants or access tokens. Receivers <span class="bcp14">MUST</span> keep lifecycle
 event validation separate from those token classes. The <code>secevent+jwt</code>
 type and absence of <code>exp</code> support this separation; they do not replace
-signature, issuer, audience, and writer authorization checks.<a href="#section-11.1-2" class="pilcrow">¶</a></p>
+signature, issuer, audience, and writer authorization checks.<a href="#section-12.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="rollback-reactivation-and-compromised-authorities">
-<section id="section-11.2">
+<section id="section-12.2">
         <h3 id="name-rollback-reactivation-and-c">
-<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-rollback-reactivation-and-c" class="section-name selfRef">Rollback, Reactivation, and Compromised Authorities</a>
+<a href="#section-12.2" class="section-number selfRef">12.2. </a><a href="#name-rollback-reactivation-and-c" class="section-name selfRef">Rollback, Reactivation, and Compromised Authorities</a>
         </h3>
-<p id="section-11.2-1">Durable source versions prevent delivery rollback. The cutoff prevents
+<p id="section-12.2-1">Durable source versions prevent delivery rollback. The cutoff prevents
 reactivation from reviving old authorization, including when a Receiver
 missed disablement. Both properties depend on retained state. A higher
-version does not make a decreasing cutoff acceptable.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
-<p id="section-11.2-2">An authorized source that lies about status, issuance times, or freshness
+version does not make a decreasing cutoff acceptable.<a href="#section-12.2-1" class="pilcrow">¶</a></p>
+<p id="section-12.2-2">An authorized source that lies about status, issuance times, or freshness
 can defeat the enterprise lifecycle guarantee. Local restrictions remain
 independent and <span class="bcp14">SHOULD</span> be available for incident containment. This profile
-does not protect against compromise of the governing IdP itself.<a href="#section-11.2-2" class="pilcrow">¶</a></p>
+does not protect against compromise of the governing IdP itself.<a href="#section-12.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="availability-and-administrative-evidence">
-<section id="section-11.3">
+<section id="section-12.3">
         <h3 id="name-availability-and-administra">
-<a href="#section-11.3" class="section-number selfRef">11.3. </a><a href="#name-availability-and-administra" class="section-name selfRef">Availability and Administrative Evidence</a>
+<a href="#section-12.3" class="section-number selfRef">12.3. </a><a href="#name-availability-and-administra" class="section-name selfRef">Availability and Administrative Evidence</a>
         </h3>
-<p id="section-11.3-1">Short validity intervals and online introspection limit stale access
+<p id="section-12.3-1">Short validity intervals and online introspection limit stale access
 but increase load and sensitivity to outages. Cached introspection and
 expiring JWTs trade longer residual access for fewer online checks.
 Operators <span class="bcp14">SHOULD</span> choose the mode, state interval, and delivery capacity
-together, and monitor renewal lag, conflicts, and enforcement delays.<a href="#section-11.3-1" class="pilcrow">¶</a></p>
-<p id="section-11.3-2">Maintaining N active agents with validity interval L requires more than
+together, and monitor renewal lag, conflicts, and enforcement delays.<a href="#section-12.3-1" class="pilcrow">¶</a></p>
+<p id="section-12.3-2">Maintaining N active agents with validity interval L requires more than
 N/L fresh state assertions per second when allowing delivery margin.
 For 100,000 agents and five minutes, the nominal minimum is about 333
 per second per target domain, before retries. SSF delivery uses signed
@@ -2519,116 +2633,116 @@ SETs; SCIM renewals can use existing Bulk support when available. Neither
 delivery choice removes the need for a current source eligibility decision.
 Staggering renewals avoids synchronized bursts. Longer intervals reduce
 traffic but increase the stated disablement bound; a transmitter heartbeat
-alone cannot renew every agent's eligibility.<a href="#section-11.3-2" class="pilcrow">¶</a></p>
-<p id="section-11.3-3">Audit records <span class="bcp14">SHOULD</span> distinguish source decision, receipt, application,
+alone cannot renew every agent's eligibility.<a href="#section-12.3-2" class="pilcrow">¶</a></p>
+<p id="section-12.3-3">Audit records <span class="bcp14">SHOULD</span> distinguish source decision, receipt, application,
 and API denial times. A transport acknowledgment is not evidence that
-every API has stopped accepting affected authorization.<a href="#section-11.3-3" class="pilcrow">¶</a></p>
+every API has stopped accepting affected authorization.<a href="#section-12.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="privacy-considerations">
-<section id="section-12">
+<section id="section-13">
       <h2 id="name-privacy-considerations">
-<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-privacy-considerations" class="section-name selfRef">Privacy Considerations</a>
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-privacy-considerations" class="section-name selfRef">Privacy Considerations</a>
       </h2>
-<p id="section-12-1">Stable governed identifiers enable correlation across users, resources,
+<p id="section-13-1">Stable governed identifiers enable correlation across users, resources,
 and time. Lifecycle streams <span class="bcp14">SHOULD</span> be limited to resource domains that
 have provisioned or otherwise authorized correlation for the agent.
-Writers <span class="bcp14">MUST</span> be authorized for the target tenant before disclosure.<a href="#section-12-1" class="pilcrow">¶</a></p>
-<p id="section-12-2">This profile does not require transmitting external workload identifiers,
+Writers <span class="bcp14">MUST</span> be authorized for the target tenant before disclosure.<a href="#section-13-1" class="pilcrow">¶</a></p>
+<p id="section-13-2">This profile does not require transmitting external workload identifiers,
 credential identifiers, user delegations, owner email addresses, or incident
 details in events. Implementations <span class="bcp14">SHOULD</span> minimize such additional data.
 Retirement tombstones retain only the identity and synchronization data
-needed to prevent reuse; other attributes can follow local retention policy.<a href="#section-12-2" class="pilcrow">¶</a></p>
+needed to prevent reuse; other attributes can follow local retention policy.<a href="#section-13-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-considerations">
-<section id="section-13">
+<section id="section-14">
       <h2 id="name-iana-considerations">
-<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
 <div id="scim-schema-registration">
-<section id="section-13.1">
+<section id="section-14.1">
         <h3 id="name-scim-schema-registration">
-<a href="#section-13.1" class="section-number selfRef">13.1. </a><a href="#name-scim-schema-registration" class="section-name selfRef">SCIM Schema Registration</a>
+<a href="#section-14.1" class="section-number selfRef">14.1. </a><a href="#name-scim-schema-registration" class="section-name selfRef">SCIM Schema Registration</a>
         </h3>
-<p id="section-13.1-1">This document requests registration in the SCIM Schema URIs registry
+<p id="section-14.1-1">This document requests registration in the SCIM Schema URIs registry
 under the procedure in <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>], <a href="https://rfc-editor.org/rfc/rfc7643#section-10.3" class="relref">Section 10.3</a></span>. The registration template
-is in <a href="#schema-registration" class="auto internal xref">Section 14</a>.<a href="#section-13.1-1" class="pilcrow">¶</a></p>
+is in <a href="#schema-registration" class="auto internal xref">Section 15</a>.<a href="#section-14.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="oauth-uri-registration">
-<section id="section-13.2">
+<section id="section-14.2">
         <h3 id="name-oauth-uri-registration">
-<a href="#section-13.2" class="section-number selfRef">13.2. </a><a href="#name-oauth-uri-registration" class="section-name selfRef">OAuth URI Registration</a>
+<a href="#section-14.2" class="section-number selfRef">14.2. </a><a href="#name-oauth-uri-registration" class="section-name selfRef">OAuth URI Registration</a>
         </h3>
-<p id="section-13.2-1">This document requests registration in the OAuth URI registry under
-<span>[<a href="#RFC6755" class="cite xref">RFC6755</a>]</span>:<a href="#section-13.2-1" class="pilcrow">¶</a></p>
+<p id="section-14.2-1">This document requests registration in the OAuth URI registry under
+<span>[<a href="#RFC6755" class="cite xref">RFC6755</a>]</span>:<a href="#section-14.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-13.2-2.1">
-            <p id="section-13.2-2.1.1">URN: <code>urn:ietf:params:oauth:event-type:governed-agent-lifecycle</code><a href="#section-13.2-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-14.2-2.1">
+            <p id="section-14.2-2.1.1">URN: <code>urn:ietf:params:oauth:event-type:governed-agent-lifecycle</code><a href="#section-14.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-13.2-2.2">
-            <p id="section-13.2-2.2.1">Common Name: Governed Agent Lifecycle Security Event<a href="#section-13.2-2.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-14.2-2.2">
+            <p id="section-14.2-2.2.1">Common Name: Governed Agent Lifecycle Security Event<a href="#section-14.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-13.2-2.3">
-            <p id="section-13.2-2.3.1">Change Controller: IETF<a href="#section-13.2-2.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-14.2-2.3">
+            <p id="section-14.2-2.3.1">Change Controller: IETF<a href="#section-14.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-13.2-2.4">
-            <p id="section-13.2-2.4.1">Specification Document: <a href="#signals" class="auto internal xref">Section 7</a> of this document.<a href="#section-13.2-2.4.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-14.2-2.4">
+            <p id="section-14.2-2.4.1">Specification Document: <a href="#signals" class="auto internal xref">Section 8</a> of this document.<a href="#section-14.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-13.2-3">The URI identifies a SET event, not a grant type or access-token type.
+<p id="section-14.2-3">The URI identifies a SET event, not a grant type or access-token type.
 This registration deliberately introduces the <code>event-type</code> class under
 the OAuth URN namespace; it is a proposed use of the registration procedure
 in RFC 6755, not an existing event-type subregistry or a new registry.
-Both identifiers are proposed registrations, not completed assignments.<a href="#section-13.2-3" class="pilcrow">¶</a></p>
+Both identifiers are proposed registrations, not completed assignments.<a href="#section-14.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="schema-registration">
-<section id="section-14">
+<section id="section-15">
       <h2 id="name-scim-schema-registration-te">
-<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-scim-schema-registration-te" class="section-name selfRef">SCIM Schema Registration Template</a>
+<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-scim-schema-registration-te" class="section-name selfRef">SCIM Schema Registration Template</a>
       </h2>
-<p id="section-14-1">The registration template required by <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>], <a href="https://rfc-editor.org/rfc/rfc7643#section-10.3.2" class="relref">Section 10.3.2</a></span> is:<a href="#section-14-1" class="pilcrow">¶</a></p>
+<p id="section-15-1">The registration template required by <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>], <a href="https://rfc-editor.org/rfc/rfc7643#section-10.3.2" class="relref">Section 10.3.2</a></span> is:<a href="#section-15-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-14-2.1">
-          <p id="section-14-2.1.1">Schema URI:
-<code>urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent</code><a href="#section-14-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-15-2.1">
+          <p id="section-15-2.1.1">Schema URI:
+<code>urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent</code><a href="#section-15-2.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-14-2.2">
-          <p id="section-14-2.2.1">Schema Name: Governed Agent Lifecycle Extension<a href="#section-14-2.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-15-2.2">
+          <p id="section-15-2.2.1">Schema Name: Governed Agent Lifecycle Extension<a href="#section-15-2.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-14-2.3">
-          <p id="section-14-2.3.1">Intended or Associated Resource Type: Agent<a href="#section-14-2.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-15-2.3">
+          <p id="section-15-2.3.1">Intended or Associated Resource Type: Agent<a href="#section-15-2.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-14-2.4">
-          <p id="section-14-2.4.1">Purpose: Carry the canonical governed identity and authoritative
-lifecycle state used for provisioning and OAuth enforcement.<a href="#section-14-2.4.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-15-2.4">
+          <p id="section-15-2.4.1">Purpose: Carry the canonical governed identity and authoritative
+lifecycle state used for provisioning and OAuth enforcement.<a href="#section-15-2.4.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-14-2.5">
-          <p id="section-14-2.5.1">Single-value Attributes: <code>issuer</code>, <code>subject</code>, <code>version</code>, <code>status</code>,
-<code>authorizationNotBefore</code>, <code>assertedAt</code>, <code>validUntil</code>, as defined in
-<a href="#state-schema" class="auto internal xref">Section 5</a>.<a href="#section-14-2.5.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-15-2.5">
+          <p id="section-15-2.5.1">Single-value Attributes: <code>issuer</code>, <code>subject</code>, <code>version</code>, <code>status</code>,
+<code>authorizationCutoff</code>, <code>assertedAt</code>, <code>validUntil</code>, as defined in
+<a href="#state-schema" class="auto internal xref">Section 5</a> and mapped to SCIM types in <a href="#scim-schema" class="auto internal xref">Section 7.1</a>.<a href="#section-15-2.5.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-14-2.6">
-          <p id="section-14-2.6.1">Multi-valued Attributes: None.<a href="#section-14-2.6.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-15-2.6">
+          <p id="section-15-2.6.1">Multi-valued Attributes: None.<a href="#section-15-2.6.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
 </div>
 <div id="sec-combined-references">
-<section id="section-15">
+<section id="section-16">
       <h2 id="name-references">
-<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-references" class="section-name selfRef">References</a>
+<a href="#section-16" class="section-number selfRef">16. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-15.1">
+<section id="section-16.1">
         <h3 id="name-normative-references">
-<a href="#section-15.1" class="section-number selfRef">15.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-16.1" class="section-number selfRef">16.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
 <dt id="FEDERATION">[FEDERATION]</dt>
@@ -2646,6 +2760,10 @@ lifecycle state used for provisioning and OAuth enforcement.<a href="#section-14
 <dt id="SSF">[SSF]</dt>
         <dd>
 <span class="refAuthor">OpenID Foundation</span>, <span class="refTitle">"OpenID Shared Signals Framework Specification 1.0"</span>, <time datetime="2025-08-29" class="refDate">29 August 2025</time>, <span>&lt;<a href="https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html">https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC3339">[RFC3339]</dt>
+        <dd>
+<span class="refAuthor">Klyne, G.</span> and <span class="refAuthor">C. Newman</span>, <span class="refTitle">"Date and Time on the Internet: Timestamps"</span>, <span class="seriesInfo">RFC 3339</span>, <span class="seriesInfo">DOI 10.17487/RFC3339</span>, <time datetime="2002-07" class="refDate">July 2002</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3339">https://www.rfc-editor.org/rfc/rfc3339</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC6749">[RFC6749]</dt>
         <dd>
@@ -2670,6 +2788,10 @@ lifecycle state used for provisioning and OAuth enforcement.<a href="#section-14
 <dt id="RFC7662">[RFC7662]</dt>
         <dd>
 <span class="refAuthor">Richer, J., Ed.</span>, <span class="refTitle">"OAuth 2.0 Token Introspection"</span>, <span class="seriesInfo">RFC 7662</span>, <span class="seriesInfo">DOI 10.17487/RFC7662</span>, <time datetime="2015-10" class="refDate">October 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7662">https://www.rfc-editor.org/rfc/rfc7662</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8259">[RFC8259]</dt>
+        <dd>
+<span class="refAuthor">Bray, T., Ed.</span>, <span class="refTitle">"The JavaScript Object Notation (JSON) Data Interchange Format"</span>, <span class="seriesInfo">STD 90</span>, <span class="seriesInfo">RFC 8259</span>, <span class="seriesInfo">DOI 10.17487/RFC8259</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8259">https://www.rfc-editor.org/rfc/rfc8259</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8417">[RFC8417]</dt>
         <dd>
@@ -2705,9 +2827,9 @@ lifecycle state used for provisioning and OAuth enforcement.<a href="#section-14
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-15.2">
+<section id="section-16.2">
         <h3 id="name-informative-references">
-<a href="#section-15.2" class="section-number selfRef">15.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#section-16.2" class="section-number selfRef">16.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
 <dt id="RFC6755">[RFC6755]</dt>
@@ -2786,7 +2908,7 @@ Content-Type: application/scim+json
     "subject": "agent-42",
     "version": "40",
     "status": "disabled",
-    "authorizationNotBefore": "2026-09-17T12:00:02Z",
+    "authorizationCutoff": "2026-09-17T12:00:02Z",
     "assertedAt": "2026-09-17T12:00:00Z",
     "validUntil": "2026-09-17T12:05:00Z"
   }
@@ -2844,7 +2966,7 @@ with the negotiated signing algorithm and key identifier, and this payload:<a hr
         "subject": "agent-42",
         "version": "42",
         "status": "disabled",
-        "authorizationNotBefore": "2026-09-17T12:02:02Z",
+        "authorizationCutoff": "2026-09-17T12:02:02Z",
         "assertedAt": "2026-09-17T12:02:00Z",
         "validUntil": "2026-09-17T12:07:00Z"
       }
@@ -2863,8 +2985,8 @@ with the negotiated signing algorithm and key identifier, and this payload:<a hr
         <h3 id="name-delayed-delivery-and-reacti">
 <a href="#appendix-A.4" class="section-number selfRef">A.4. </a><a href="#name-delayed-delivery-and-reacti" class="section-name selfRef">Delayed Delivery and Reactivation</a>
         </h3>
-<table class="center" id="table-7">
-          <caption><a href="#table-7" class="selfRef">Table 7</a></caption>
+<table class="center" id="table-8">
+          <caption><a href="#table-8" class="selfRef">Table 8</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Subsequent input</th>
@@ -2878,8 +3000,17 @@ with the negotiated signing algorithm and key identifier, and this payload:<a hr
                 <code>409</code>; disabled version 42 remains in effect</td>
             </tr>
             <tr>
+              <td class="text-left" rowspan="1" colspan="1">Authorized SCIM PUT with identical state 42 and a new display name</td>
+              <td class="text-left" rowspan="1" colspan="1">Descriptive edit applies; lifecycle version, cutoff, and lease remain unchanged</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Descriptive edit with a stale <code>If-Match</code>, when ETags are supported</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>412</code>; no change</td>
+            </tr>
+            <tr>
               <td class="text-left" rowspan="1" colspan="1">Retransmission of event 42</td>
-              <td class="text-left" rowspan="1" colspan="1">Acknowledged without extending validity or changing state</td>
+              <td class="text-left" rowspan="1" colspan="1">Acknowledged without renewing the lease or changing state</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Different state using version 42</td>
@@ -2895,7 +3026,7 @@ with the negotiated signing algorithm and key identifier, and this payload:<a hr
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">No update or renewal after active version 41</td>
-              <td class="text-left" rowspan="1" colspan="1">Authorization is denied when its finite validity ends</td>
+              <td class="text-left" rowspan="1" colspan="1">Authorization is denied when its eligibility lease ends</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Retired version 44 followed by an active version 45</td>
@@ -2906,7 +3037,7 @@ with the negotiated signing algorithm and key identifier, and this payload:<a hr
 <p id="appendix-A.4-2">In bounded-cache mode an earlier active introspection result may still
 be used within C; in expiring-JWT mode the API can accept the old token
 until its bounded expiry. Neither mode allows RAS refresh after the
-disablement is applied. Their longer bounds are explicit in <a href="#freshness" class="auto internal xref">Section 8.4</a>.<a href="#appendix-A.4-2" class="pilcrow">¶</a></p>
+disablement is applied. Their longer bounds are explicit in <a href="#freshness" class="auto internal xref">Section 10.5</a>.<a href="#appendix-A.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2921,8 +3052,8 @@ disablement is applied. Their longer bounds are explicit in <a href="#freshness"
 appropriate schema and event bindings.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
 <p id="appendix-B-2">This profile deliberately reuses the Agent resource, SCIM operations,
 SET subject identifiers, and SSF delivery. The new material is the
-qualified identity extension, shared source ordering, finite state
-validity, issuance cutoff, and enforcement contract.<a href="#appendix-B-2" class="pilcrow">¶</a></p>
+transport-independent lifecycle state, shared ordering, eligibility lease,
+authorization cutoff, and OAuth enforcement contract.<a href="#appendix-B-2" class="pilcrow">¶</a></p>
 <p id="appendix-B-3">The account-disabled, account-enabled, and account-purged events in
 <span>[<a href="#RISC" class="cite xref">RISC</a>]</span> report account transitions. They do not define this profile's
 shared source version, issuance cutoff, or finite active-state validity.

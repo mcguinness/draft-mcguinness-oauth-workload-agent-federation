@@ -3242,12 +3242,12 @@ Table of Contents
 15.2.  Informative References
 
    [AGENT-LIFECYCLE]
-              McGuinness, K., "A SCIM and Shared Signals Profile for
-              Governed Agent Lifecycle", Work in Progress, Internet-
-              Draft, draft-mcguinness-oauth-governed-agent-lifecycle,
-              n.d., <https://mcguinness.github.io/draft-mcguinness-
-              oauth-workload-agent-federation/draft-mcguinness-oauth-
-              governed-agent-lifecycle.html>.
+              McGuinness, K., "Governed Agent Lifecycle State and OAuth
+              Enforcement", Work in Progress, Internet-Draft, draft-
+              mcguinness-oauth-governed-agent-lifecycle, n.d.,
+              <https://mcguinness.github.io/draft-mcguinness-oauth-
+              workload-agent-federation/draft-mcguinness-oauth-governed-
+              agent-lifecycle.html>.
 
    [EMA]      Model Context Protocol, "Enterprise-Managed
               Authorization", n.d.,
