@@ -55,6 +55,13 @@ normative:
   RFC9449:
   RFC9700:
 informative:
+  AGENT-LIFECYCLE:
+    title: "A SCIM and Shared Signals Profile for Governed Agent Lifecycle"
+    target: https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html
+    author:
+      - name: Karl McGuinness
+    seriesinfo:
+      Internet-Draft: draft-mcguinness-oauth-governed-agent-lifecycle
   EMA:
     title: "Enterprise-Managed Authorization"
     target: https://github.com/modelcontextprotocol/ext-auth/blob/main/specification/stable/enterprise-managed-authorization.mdx
@@ -1645,7 +1652,11 @@ In that case:
   cannot outlive an expiration unknown to the API.
 
 The processing in {{api-processing}} applies to the introspected
-context exactly as to JWT claims.
+context exactly as to JWT claims. Deployments also applying
+{{AGENT-LIFECYCLE}} use that companion's configured enforcement mode:
+online introspection forbids active-response reuse, while bounded
+introspection caching imposes an explicit cache interval in addition
+to the limits above.
 
 ### RAS Refresh Tokens {#ras-refresh}
 
@@ -1830,6 +1841,12 @@ and MUST enforce the following requirements:
   {{access-token-response}} and verify that it matches the tenant of
   the requested operation. Missing, ambiguous, or conflicting tenant
   context MUST result in denial.
+
+{{AGENT-LIFECYCLE}} adds lifecycle enforcement when that companion is
+configured. Its expiring-JWT mode retains offline validation with an
+explicit token-lifetime ceiling; its introspection modes bound the
+time an active response can be relied upon. This document alone does
+not impose those additional modes or their disablement guarantees.
 
 If the API delegates authorization evaluation to a policy decision
 service, it MUST preserve the distinction between the user, the
@@ -2224,6 +2241,12 @@ Cross-system disablement and revocation need the mechanisms in
 {{lifecycle-gap}}; without a signal or online check, issued tokens
 remain usable until expiration.
 
+For deployments applying {{AGENT-LIFECYCLE}}, that companion defines
+ordered state propagation, reactivation cutoffs, and mode-specific
+denial bounds. Its RAS enforcement stops issuance and refresh; cached
+introspection results or offline JWTs may remain usable within the
+configured mode's explicit bound.
+
 The following table summarizes the effect after a change is applied at
 the enforcing server; it defines no new propagation mechanism:
 
@@ -2418,9 +2441,11 @@ blocks, not a lifecycle propagation contract.
 Consistent record correlation and disablement across IdP and RAS need a
 lifecycle specification defining issuer-qualified correlation,
 authoritative properties, update ordering, freshness bounds,
-missed-event recovery, and the effect on outstanding tokens. Until then,
-{{agent-correlation}} and {{status-changes}} state what this profile
-guarantees.
+missed-event recovery, and the effect on outstanding tokens. The companion
+{{AGENT-LIFECYCLE}} defines a proposed SCIM and Shared Signals composition
+for those requirements. It is not required for conformance to this
+federation profile; {{agent-correlation}} and {{status-changes}} state
+the guarantees of this document alone.
 
 # Walkthrough: Dedicated Client {#walkthrough}
 

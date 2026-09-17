@@ -2,7 +2,8 @@
 
 # OAuth 2.0 Profile for Governed Agent Federation
 
-This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Governed Agent Federation".
+This is the working area for "OAuth 2.0 Profile for Governed Agent Federation"
+and its companion, "A SCIM and Shared Signals Profile for Governed Agent Lifecycle".
 
 The draft defines how an IdP resolves dedicated OAuth client identities or
 independently validated workload identities to stable Governed Agents.
@@ -39,6 +40,25 @@ Continuation Assertion compositions remain deferred.
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-workload-agent-federation)
 * [Compare Editor's Copy to Individual Draft](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.diff)
 
+## Provisioning and Lifecycle Companion
+
+The companion profiles SCIM Agent resources and Shared Signals for the same
+IdP-qualified Governed Agent identity. It defines local-principal correlation,
+disablement, reactivation, retirement, ordered state updates, and recovery.
+The lifecycle contract covers grant redemption, refresh, and existing API
+access without adding a workload credential or changing the Federation
+draft's grant profiles.
+
+The design uses finite validity for active lifecycle state and a bounded-clock
+issuance cutoff that prevents reactivation of old authorization. APIs can use
+online introspection, bounded introspection caching, or expiring JWTs, each
+with an explicit disablement bound. Streams bind the governed issuer namespace
+to a Target Tenant. WAG remains a future wire composition using the same
+principal lifecycle.
+
+* [Companion source](draft-mcguinness-oauth-governed-agent-lifecycle.md)
+* [Companion editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html)
+
 
 ## Contributing
 
@@ -50,7 +70,7 @@ don't already know how to do that.
 
 ## Command Line Usage
 
-Formatted text and HTML versions of the draft can be built using `make`.
+Formatted text and HTML versions of both drafts can be built using `make`.
 
 ```sh
 $ make
