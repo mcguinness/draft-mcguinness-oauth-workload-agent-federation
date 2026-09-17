@@ -49,6 +49,11 @@ normative:
   RFC9449:
   RFC9700:
 informative:
+  EMA:
+    title: "Enterprise-Managed Authorization"
+    target: https://github.com/modelcontextprotocol/ext-auth/blob/main/specification/stable/enterprise-managed-authorization.mdx
+    author:
+      - org: Model Context Protocol
   AUTHZEN:
     title: "Authorization API 1.0"
     target: https://openid.net/specs/authorization-api-1_0.html
@@ -116,8 +121,9 @@ SPIFFE JWT-SVID as the common interoperability input.
 
 For user-delegated access, it profiles the Identity Assertion JWT
 Authorization Grant (ID-JAG), carrying the user as subject and the
-Governed Agent as actor in a sender-constrained grant. For self-acting
-access, it states federation requirements for the Workload Authorization
+Governed Agent as actor. Two adoption profiles share the governance
+requirements; the full profile additionally requires sender-constrained
+grants. For self-acting access, it states federation requirements for the Workload Authorization
 Grant (WAG); the WAG wire profile remains pending upstream changes.
 
 --- middle
@@ -276,7 +282,27 @@ that user, within the grant's constraints and resource policy
 
 ## Scope and Conformance {#scope}
 
-Conformance applies per implemented role and selected grant:
+The adoption path preserves existing Enterprise-Managed Authorization
+{{EMA}} deployments and adds agent governance before requiring grant
+binding. The level numbers below are explanatory labels, not security
+assurance ratings or protocol values.
+
+| Adoption profile | Required addition | Grant protection |
+|---|---|---|
+| Enterprise access (Level 1) | Existing EMA and base ID-JAG; no separate Governed Agent required | Existing deployment policy |
+| Governed agent access (Level 2) | Workload evidence, Identity Binding, Client Association, governed actor, tenant enforcement, and downstream actor gate | Grants without sender constraint permitted only by explicit policy; any binding present is enforced |
+| Bound governed agent access (Level 3) | All governed agent requirements plus DPoP at grant issuance and redemption | `cnf.jkt` and same-key continuity required |
+
+Enterprise access is a migration baseline, not conformance to this
+document's governed profiles. Existing EMA deployments need no changes
+to continue on that path. Adding `act` alone does not establish governed
+agent conformance: identity resolution and actor authorization are also
+required. These adoption profiles apply to delegated ID-JAG, not WAG.
+
+Unless explicitly limited to bound grants or a named profile, the
+requirements below apply to both governed profiles. Conformance claims
+MUST identify the supported profile by its URI ({{metadata}}),
+implemented role, and supported inputs:
 
 * **ID-JAG:** The IdP, RAS, and client MUST implement their respective
   requirements in {{model}} through {{authorization}}, {{delegated-flow}},
@@ -287,7 +313,8 @@ Conformance applies per implemented role and selected grant:
     one actor input, identify them in its conformance claim, and satisfy
     their requirements.
   * The client and RAS MUST implement `private_key_jwt` for redemption.
-    DPoP is required at both token endpoints ({{flow-configuration}}).
+    DPoP support and use are REQUIRED for bound governed agent access;
+    governed agent access follows {{grant-protection}}.
   * Access tokens are JWTs under {{RFC9068}} or opaque tokens whose
     introspection response carries the same context under
     {{introspection}}.
@@ -301,6 +328,13 @@ Conformance applies per implemented role and selected grant:
 Implementations MAY support other flows but MUST NOT retry the same
 request under another flow, grant type, or credential class after
 validation or authorization fails under this profile.
+
+Grant protection, workload-evidence protection, and access-token
+protection are separate choices. Even bound governed agent access can
+use bearer workload evidence and, under explicit resource policy,
+bearer access tokens. {{grant-protection}} and {{discovery}} define
+selection and downgrade prevention; {{access-token-protection}} defines
+protection on the API hop.
 
 Not in this revision: continuation composition, provisioning protocols
 and account administration, multi-agent delegation chains, instance
@@ -352,7 +386,7 @@ from the underlying protocols are summarized in {{profile-additions}}.
 | Implementer | Requirement | Defined in |
 |---|---|---|
 | Platform | Supply an existing credential accepted by the selected input profile | {{evidence}} |
-| Client | Select supported inputs, authenticate, prove the grant key, and retain token context | {{scope}}, {{flow-configuration}}, {{exchange-request}}, {{redemption}}, {{client-token-reuse}} |
+| Client | Select supported inputs, authenticate, satisfy the selected grant protection, and retain token context | {{scope}}, {{grant-protection}}, {{exchange-request}}, {{redemption}}, {{client-token-reuse}} |
 | IdP | Validate evidence, resolve the agent, enforce the Client Association, and authorize delegation | {{inputs}}, {{identity}}, {{authorization}} |
 | IdP | Construct the governed actor and issue the bounded grant | {{actor-construction}}, {{grant-issuance}} |
 | IdP and RAS | Resolve and link the user in the target namespace | {{subject-resolution}} |
@@ -404,6 +438,7 @@ interface for these relationships. Configuration includes:
 | Target: RAS issuer, resources, Target Tenant, subject namespace, `aud_sub` authority | IdP administrator | IdP | RAS metadata under {{RFC8414}} confirms grant and profile support |
 | Delegation authorization: agent, user, client, tenant, RAS, resource, authority | IdP policy or consent | IdP | No |
 | Local agent principal and user links | RAS, via provisioning or directory synchronization | RAS, API | No |
+| Selected profile and minimum per client, trust relationship, and resource | Client, IdP, RAS, and resource policy | Client, IdP, RAS, API | Metadata advertises capability, not acceptance policy ({{discovery}}) |
 | Access-token protection per resource | RAS and client | RAS, API, client | Trusted configuration under {{access-token-protection}}; `token_type` distinguishes DPoP, but not mutual TLS from bearer |
 
 Existing workload-identity-federation configuration can supply the
@@ -518,9 +553,9 @@ and agent resolution without making the client and agent the same
 principal.
 
 This input retains JWT-SVID's existing format and bearer semantics; it
-requires no new `typ` value or issuer-bound key. DPoP binds the issued
-grant to the grant proof key, not the JWT-SVID to its presenter. A
-policy requiring issuer-bound presenter proof MUST reject this bearer
+requires no new `typ` value or issuer-bound key. When used, DPoP binds
+the issued grant to the grant proof key, not the JWT-SVID to its
+presenter. A policy requiring issuer-bound presenter proof MUST reject this bearer
 input rather than treat DPoP as that proof ({{credential-requirements}}).
 
 # Governed Agent Resolution {#identity}
@@ -755,13 +790,13 @@ referenced sections define the requirements.
 |---|---|---|
 | Actor extension | Resolve external evidence through an Identity Binding; authorize client use through a separate Client Association | {{identity-binding}} |
 | Actor representation | One actor with the Governed Agent as `act.sub` and the IdP as `act.iss`; replaces Actor Profile's credential-to-actor copying | {{actor-construction}} |
-| Request narrowing | Actor evidence, explicit resource, non-empty scope, and DPoP required; no incoming actor chain | {{root-request}}, {{actor-inputs}} |
+| Request narrowing | Actor evidence, explicit resource, and non-empty scope required; no incoming actor chain | {{root-request}}, {{actor-inputs}} |
 | Identity and client binding | Resolve users and agents separately; derive downstream `client_id` from an authoritative client-registration association | {{subject-resolution}}, {{agent-correlation}}, {{flow-configuration}} |
-| Grant narrowing | Require `cnf.jkt`, resource and scope constraints, and expiration bounded by evidence and policy | {{grant-issuance}} |
+| Grant narrowing | Resource and scope constraints, and expiration bounded by evidence and policy; bound profile additionally requires DPoP and `cnf.jkt` | {{grant-issuance}}, {{grant-protection}} |
 | Resource processing | Preserve actor and tenant context; enforce the user authority and actor gate with the selected token protection | {{access-token-response}}, {{api-processing}} |
-| Refresh narrowing | Explicit policy, client and DPoP binding, and a finite absolute authorization expiration | {{ras-refresh}} |
+| Refresh narrowing | Explicit policy, client binding, preservation of proof binding and profile, and a finite absolute authorization expiration | {{ras-refresh}} |
 | Error processing | Actor-credential failures use `invalid_grant` rather than RFC 8693's default `invalid_request`; actor authorization denial uses `actor_unauthorized` | {{errors}} |
-| Profile discovery | Add this profile's URI to existing ID-JAG metadata | {{metadata}} |
+| Profile discovery | Identify supported governed profiles in existing ID-JAG metadata; trusted policy sets the minimum | {{metadata}} |
 
 Deployment policy selects trusted credential authorities, bindings,
 delegation rules, local principal links, and resource protection. The
@@ -777,6 +812,7 @@ Before issuance, the IdP MUST have trusted configuration for:
 * That client's registration and the user's subject namespace at the
   target RAS ({{subject-resolution}}).
 * The Governance Tenant, Target Tenant, RAS issuer, and permitted resource.
+* The selected adoption profile and minimum requirements under {{discovery}}.
 
 The IdP MUST derive the ID-JAG `client_id` from an authoritative
 association between the authenticated IdP client and that client's
@@ -785,8 +821,8 @@ identifier MUST NOT select or override that association. This
 association is distinct from the Client Association that permits use
 of an Identity Binding.
 
-The IdP and RAS MUST apply this profile whenever it is configured for
-the client and trust relationship, even if `actor_token`, `act`, or
+The IdP and RAS MUST apply the selected profile whenever it is configured
+for the client and trust relationship, even if `actor_token`, `act`, or
 `cnf` is omitted from a request or grant.
 
 Each authorization server establishes authoritative client metadata
@@ -812,12 +848,11 @@ for JWT-SVID validation. Other algorithms permitted by the selected
 credential specification MAY be selected through trusted configuration
 and metadata; this profile does not change native credential formats.
 
-The ID-JAG is bound to the DPoP key proven at issuance and MUST be
-redeemed with that key, so the component that obtains the grant
-controls the key that redeems it. This revision defines no key
-transition; a distributed platform MUST route issuance and redemption
-through the same key holder. This excludes a broker that obtains grants
-for a pool of workers unless the broker also redeems them.
+An ID-JAG containing `cnf.jkt` is bound to the DPoP key proven at issuance
+and MUST be redeemed with that key. This revision defines no key
+transition for bound grants; a distributed platform MUST route their
+issuance and redemption through the same key holder. A broker obtaining
+bound grants for workers therefore also redeems those grants.
 
 Before deployment, implementers confirm the following configuration
 (a non-normative onboarding checklist):
@@ -825,7 +860,8 @@ Before deployment, implementers confirm the following configuration
 * **Platform and IdP:** available workload evidence, supported user
   credential, credential trust, Identity Binding, and Client Association.
 * **Client and both servers:** registrations, authentication methods,
-  downstream client mapping, and the component retaining the DPoP key.
+  downstream client mapping, and, for bound grants, the component retaining
+  the DPoP key.
 * **IdP and RAS:** user and agent links, Target Tenant, delegation
   policy, and any continued-access deadline ({{authorization-lifetime}}).
 * **RAS and API:** tenant representation, actor gate, token protection,
@@ -833,14 +869,49 @@ Before deployment, implementers confirm the following configuration
 * **Client and servers:** renewal strategy for unattended work and
   recovery when fresh user authorization is required.
 
+## Grant Protection {#grant-protection}
+
+The selected profile determines whether an ID-JAG without sender
+constraint is acceptable. Client authentication and all governance
+requirements remain mandatory in either profile.
+
+* **Bound governed agent access:** The client MUST supply a DPoP proof
+  at issuance. The IdP MUST validate it and bind the grant with `cnf.jkt`.
+  The RAS MUST require that binding and a proof from the same key at
+  redemption. An issuance request without the required proof MUST fail
+  with `invalid_request`; a grant without the required binding MUST fail
+  with `invalid_grant`.
+* **Governed agent access:** The IdP and RAS MAY issue and accept grants
+  without `cnf` only when trusted policy explicitly permits them for
+  the client, trust relationship, and requested resources. DPoP support
+  is OPTIONAL. If the issuance request includes a DPoP proof, the IdP
+  MUST validate it and bind the grant under {{ID-JAG, Section 9.8.1.1}}.
+
+The following rules apply to both profiles:
+
+* A supplied DPoP proof MUST be validated under {{RFC9449}}. An endpoint
+  that does not support DPoP MUST reject a request containing such a
+  proof with `invalid_request`; it MUST NOT silently ignore the proof.
+* A grant containing `cnf` MUST have a valid, supported `jkt` binding.
+  The RAS MUST require a fresh DPoP proof whose public-key thumbprint
+  matches exactly. Missing proof, missing required binding, unsupported
+  confirmation, or key mismatch MUST fail with `invalid_grant`.
+* When policy permits a grant without `cnf`, the client MAY present a
+  DPoP proof only at redemption to obtain a DPoP-bound access token.
+  That proof protects the resulting token; it does not retroactively
+  bind the grant. Access-token protection follows {{access-token-protection}}.
+* Credential-specific proof requirements still apply. Selecting governed
+  agent access MUST NOT disable proof required by the actor input or
+  client authentication method.
+
 ## Token Exchange {#exchange-request}
 
 ### Request {#root-request}
 
 The client sends an HTTPS POST to the IdP token endpoint, using
 `application/x-www-form-urlencoded`, authenticates as the configured
-client, and supplies a DPoP proof for that endpoint. The following
-parameters are REQUIRED:
+client, and supplies any proof required by {{grant-protection}}.
+The following parameters are REQUIRED:
 
 | Parameter | Value |
 |---|---|
@@ -855,15 +926,15 @@ parameters are REQUIRED:
 | `scope` | Non-empty scope string for the requested resources |
 
 This profile narrows ID-JAG by requiring actor evidence, an explicit
-resource, a non-empty scope, and DPoP; `authorization_details` MAY
+resource, and a non-empty scope; `authorization_details` MAY
 accompany `scope` and is processed under ID-JAG. Requiring scope gives
 this revision a common authorization mechanism through grant issuance,
 redemption, refresh, and API enforcement. Resource-specific
 authorization details can supplement it; RAR-only authorization is
 outside this revision ({{rar-gap}}).
 
-The IdP MUST validate the DPoP proof under {{RFC9449}} and
-{{ID-JAG, Section 9.8.1.1}}.
+DPoP processing and the bound profile's additional requirement follow
+{{grant-protection}}.
 
 ### Subject Token Validation {#subject-token-validation}
 
@@ -921,7 +992,7 @@ than one class with `invalid_request`. Classification selects validation
 rules; unverified claims do not establish trust. A validation failure
 MUST NOT cause retry under another class.
 
-For Client Attestation with `attest_jwt_client_auth`, the grant proof
+For Client Attestation with `attest_jwt_client_auth`, any grant proof
 key MUST match the attestation's confirmation key, narrowing ATTEST's
 allowance for a separate DPoP key; with `attest_jwt_client_auth_dpop`
 the keys are already one and its DPoP proof serves both roles. ATTEST's
@@ -959,7 +1030,7 @@ and additionally satisfy:
 |---|---|
 | `sub` | Same user as the validated subject credential, expressed in the IdP's subject namespace for the RAS |
 | `act` | Governed Agent actor constructed under {{actor-construction}} |
-| `cnf.jkt` | Thumbprint of the grant proof key |
+| `cnf.jkt` | Thumbprint of the grant proof key when DPoP is used at issuance; REQUIRED for bound governed agent access ({{grant-protection}}) |
 | `resource` | The authorized resource URI or URIs, as a string or array |
 | `scope` | Non-empty authorized scope string, no broader than the approved request |
 | `client_id` | The client's registration identifier at the RAS, derived under {{flow-configuration}} |
@@ -985,16 +1056,17 @@ access under {{authorization-lifetime}}.
 
 The response follows {{ID-JAG, Section 4.3.4}}, with `issued_token_type`
 of `urn:ietf:params:oauth:token-type:id-jag` and `token_type` of `N_A`.
-The client MUST retain the DPoP key for redemption and MAY inspect the
-grant, for example to confirm `cnf.jkt`.
+For a bound grant, the client MUST retain the DPoP key for redemption
+and MAY inspect the grant, for example to confirm `cnf.jkt`.
 
 ## ID-JAG Redemption {#redemption}
 
 ### Request {#redemption-request}
 
 The client sends an authenticated HTTPS POST to the RAS token endpoint
-using `application/x-www-form-urlencoded`, with a fresh DPoP proof from
-the grant proof key. These parameters are REQUIRED unless marked OPTIONAL:
+using `application/x-www-form-urlencoded`, with the proof required by
+{{grant-protection}} and the selected access-token protection. These
+parameters are REQUIRED unless marked OPTIONAL:
 
 | Parameter | Value |
 |---|---|
@@ -1014,11 +1086,9 @@ The RAS MUST perform ID-JAG validation and additionally:
    * Require non-empty `iss` and `sub`, with no nested `act`.
    * Require `act.iss` to equal the ID-JAG issuer and configured trust
      to authorize assertion of that namespace.
-2. **Proof and client:** Require `cnf.jkt`. Validate the DPoP proof under
-   RFC 9449 and require its public key thumbprint to match `cnf.jkt`
-   exactly. A missing proof or key mismatch MUST fail with
-   `invalid_grant`. Independently authenticate the client identified
-   by `client_id`.
+2. **Proof and client:** Enforce {{grant-protection}}, including the
+   configured minimum profile even when `cnf` is absent. Independently
+   authenticate the client identified by `client_id`.
 3. **Authority:** Require the grant's resource and scope constraints.
    Validate the requested resource and any scope reduction, and apply
    ID-JAG's processing for any `authorization_details` present.
@@ -1055,8 +1125,8 @@ with these claims under {{RFC9068}}, or equivalent context through
 The response follows {{ID-JAG, Section 4.4.2}}; the client MUST reject
 an output that does not satisfy its configured protection requirement.
 Refresh-token issuance follows {{ras-refresh}}. An unexpired ID-JAG
-remains reusable under ID-JAG, each redemption requiring fresh proof
-validation and current RAS policy.
+remains reusable under ID-JAG, each redemption requiring validation of
+any required proof and current RAS policy.
 
 ### Access-Token Protection {#access-token-protection}
 
@@ -1068,21 +1138,21 @@ failure MUST NOT trigger a weaker mode.
 
 | Selected protection | Access token | Token response and API use |
 |---|---|---|
-| DPoP | `cnf.jkt` equals the redeemed grant's key thumbprint | `token_type=DPoP`; RFC 9449 proof and resource processing |
+| DPoP | `cnf.jkt` identifies the validated redemption proof key, which also matches the grant binding when present | `token_type=DPoP`; RFC 9449 proof and resource processing |
 | Mutual TLS | `cnf.x5t#S256` identifies the client certificate validated at redemption | `token_type=Bearer`; certificate binding and presentation under RFC 8705 |
 | Bearer | No `cnf` | `token_type=Bearer`; RFC 6750 presentation, explicitly permitted by policy |
 
-For mutual TLS, the client MUST also prove possession of the grant's
-DPoP key in the same redemption request; certificate possession alone
-does not redeem the grant. In this mode the grant proof key protects
+For mutual TLS with a bound grant, the client MUST also prove possession
+of the grant's DPoP key in the same redemption request; certificate
+possession alone does not redeem the grant. In this mode the grant proof key protects
 grant redemption and any DPoP-bound refresh token; the mutual-TLS key
 protects subsequent access-token use. A native mutual-TLS-bound grant
 is future work ({{mtls-grant-gap}}).
 
 Bearer issuance accommodates resources without sender-constraint
-support; grant proof validation remains
-mandatory. The RAS MUST NOT copy the grant's `cnf` into an access token
-whose binding will not be enforced, and clients and APIs MUST NOT treat
+support; the RAS MUST still enforce any grant binding. The RAS MUST NOT
+copy the grant's `cnf` into an access token whose binding will not be
+enforced, and clients and APIs MUST NOT treat
 a constrained token as an unconstrained bearer token or bypass an
 unrecognized confirmation method.
 
@@ -1120,11 +1190,27 @@ The RAS SHOULD NOT issue refresh tokens, retaining {{ID-JAG, Section
 policy. The RAS MUST enforce:
 
 * **Binding:** Bind the refresh token to the authenticated client and
-  the redeemed grant's DPoP key, and validate both on every refresh.
+  authenticate that client on every refresh. Additionally:
+  * For a bound grant, retain its DPoP key binding and require proof
+    of that key on every refresh, regardless of access-token protection.
+  * For a grant without `cnf`, bind the refresh token to the DPoP key
+    used at redemption, or, when no DPoP proof was used and access tokens
+    are certificate-bound, to the validated mutual-TLS certificate.
+    Enforce that binding on every refresh under RFC 9449 or RFC 8705.
+  * With neither sender binding, issuance requires explicit policy
+    permitting client-bound refresh tokens without sender constraint.
+    Apply refresh-token rotation under {{RFC9700, Section 4.14}}.
+  * Do not drop or replace a sender binding on refresh. Changing keys
+    requires a new grant in this revision.
 * **Context:** Preserve the user, qualified actor, Target Tenant,
   resource, and delegation ceiling, including any effective
   `authorization_details`. Apply current local user and actor policy
   and {{RFC9396, Section 6}} when narrowing authorization details.
+* **Profile:** Retain the profile under which the grant was accepted
+  and enforce current minimum-profile policy on every refresh. If that
+  profile no longer meets policy, reject with `invalid_grant`; obtaining
+  a new grant under the required profile is necessary. Adding a proof
+  to a refresh request does not upgrade its authorization profile.
 * **Lifetime:** Set a finite absolute expiration for the refresh
   authorization and an inactivity limit under {{RFC9700}}. The absolute
   expiration MUST NOT exceed a continued-access deadline under
@@ -1151,11 +1237,13 @@ before authorization. This profile specifies the following outcomes:
 | Invalid subject or actor credential, disallowed inbound actor chain, or invalid ID-JAG | `invalid_grant` |
 | User cannot be resolved, user or required link is disabled, or subject identifiers conflict | `invalid_grant`; no token or automatic linking fallback |
 | Valid identity evidence but absent, disabled, or ambiguous Identity Binding; no Client Association for the authenticated client; or unauthorized delegation | `actor_unauthorized`, as defined by Actor Profile, with HTTP 400 |
-| Missing redemption proof, mismatch with grant `cnf.jkt`, or authenticated client differing from the grant's `client_id` | `invalid_grant` under ID-JAG confirmation processing |
+| Missing required grant binding or redemption proof, unsupported confirmation, mismatch with grant `cnf.jkt`, or authenticated client differing from the grant's `client_id` | `invalid_grant` under {{grant-protection}} and ID-JAG client processing |
 
 Actor-credential failures use `invalid_grant` instead of the default
 `invalid_request` described by RFC 8693; this narrowing is intentional.
-DPoP proof and nonce errors follow {{RFC9449}} at both endpoints.
+When DPoP is used, proof and nonce errors follow {{RFC9449}} at both
+endpoints; unsupported DPoP and missing required issuance proof follow
+{{grant-protection}}.
 
 Client authentication failures use the authentication method's error,
 including when the same JWT supplies actor evidence. Error descriptions
@@ -1171,7 +1259,7 @@ Deployments select a renewal model before scheduling unattended work:
 
 | Mechanism | Conditions |
 |---|---|
-| Redeem an existing ID-JAG | Grant remains valid; fresh proof and current RAS policy apply ({{redemption}}) |
+| Redeem an existing ID-JAG | Grant remains valid; any required proof and current RAS policy apply ({{redemption}}) |
 | Obtain a new ID-JAG | Valid subject credential, current actor evidence, and a fresh IdP authorization decision ({{exchange-request}}) |
 | RAS refresh | Preserves authorization at the same RAS within its lifetime and policy limits ({{ras-refresh}}) |
 
@@ -1186,9 +1274,10 @@ duration. Cross-domain continuity using Identity Continuation Assertion
 The client MUST associate each cached grant, access token, and refresh
 token with its authorized user, Governed Agent, Governance and Target
 Tenants, OAuth client registrations, target RAS and resource, authority,
-and proof-binding context. It MUST reuse a token or grant only when
-that context authorizes the operation. A shared client identifier or
-matching scope alone MUST NOT permit reuse across agents, users, or tenants.
+selected profile, and proof-binding context. It MUST reuse a token or
+grant only when that context authorizes the operation. A shared client
+identifier or matching scope alone MUST NOT permit reuse across agents,
+users, or tenants.
 
 The association can use trusted request and configuration context;
 clients need not parse opaque tokens. If the client cannot establish
@@ -1259,10 +1348,10 @@ actor-specific rejection details outside the trust domain.
 
 ## Walkthrough: Shared Platform Client {#walkthrough}
 
-This non-normative walkthrough completes {{identity-example}} with
-DPoP-protected access to the API. Key coordinates, thumbprints, token
-hashes, and compact JWTs are labeled placeholders, not cryptographic
-test vectors.
+This non-normative walkthrough completes {{identity-example}} using
+bound governed agent access (Level 3) and DPoP-protected access to the
+API. Key coordinates, thumbprints, token hashes, and compact JWTs are
+labeled placeholders, not cryptographic test vectors.
 
 ### SPIFFE Workload Evidence
 
@@ -1487,7 +1576,27 @@ permissions there. The platform caches this token for Alice and
 For explicitly configured bearer access, the response instead uses
 `token_type=Bearer`, the access token has no `cnf`, and the API request
 uses `Authorization: Bearer API_ACCESS_TOKEN` without a DPoP proof.
-DPoP at grant issuance and redemption remains required.
+DPoP at grant issuance and redemption remains required in this bound
+profile, including when the API accepts bearer tokens.
+
+### Intermediate Adoption Variant
+
+To adopt governed agent access (Level 2), the parties instead configure
+`urn:ietf:params:oauth:grant-profile:id-jag-governed-agent` and explicitly
+permit grants without sender constraint. With bearer access also
+permitted for this resource, the preceding messages change only as follows:
+
+| Message | Change |
+|---|---|
+| Exchange request and ID-JAG | Omit the DPoP header; the issued grant has no `cnf` |
+| Redemption request | Omit the DPoP header; retain client authentication and all request parameters |
+| Access-token response and API request | Use the bearer variant above |
+
+The JWT-SVID, Identity Binding, Client Association, user and actor
+identities, scope, tenant checks, and actor gate are unchanged. An
+unbound grant may instead obtain a DPoP-bound access token by presenting
+a valid proof at redemption; this does not make it a Level 3 exchange.
+Refresh, if enabled, follows the applicable binding rules in {{ras-refresh}}.
 
 ### Renewal and Rejection Examples
 
@@ -1508,6 +1617,8 @@ errors follow {{errors}}; API errors follow {{resource-errors}}.
 |---|---|---|
 | JWT-SVID and Identity Binding remain valid, but the Client Association for `platform-sso` is disabled | IdP | HTTP 400, `actor_unauthorized`; no ID-JAG |
 | Redemption carries a valid DPoP proof signed with another key, while the ID-JAG contains `cnf.jkt=JKT_K` | RAS | HTTP 400, `invalid_grant`; no access token |
+| Level 3 is required, but the grant has no `cnf` | RAS | HTTP 400, `invalid_grant`; no fallback to Level 2 |
+| Level 2 permits unbound grants, but this grant has `cnf.jkt` and redemption omits the proof | RAS | HTTP 400, `invalid_grant`; the existing binding is enforced |
 | The client presents the access token for an operation in another tenant, with a fresh valid proof for that request URI | API | HTTP 401, `invalid_token`; no operation performed |
 
 # Optional Evidence Inputs {#optional-inputs}
@@ -1588,7 +1699,8 @@ The selector addresses the string `aws_account` within the
 `https://sts.amazonaws.com/` object; `~1` escapes each slash in that
 member name. The client presents the STS JWT as `actor_token`,
 authenticates separately, and supplies a supported user credential and
-DPoP proof under {{root-request}}. The resulting actor is
+any proof required by the selected profile under {{root-request}}.
+The resulting actor is
 `{"iss":"https://idp.example/","sub":"agent-42"}`.
 
 The execution role and AgentCore Workload Identity are distinct
@@ -1604,8 +1716,8 @@ JWT with the credential provider's token endpoint as audience
 path, not complete conformance: its documented OBO flow uses an inbound
 user access token and returns a downstream access token. An integration
 with this profile needs a supported subject input, ID-JAG issuance and
-redemption, and the required DPoP processing; managed OBO support alone
-does not establish these capabilities ({{access-token-subject-gap}}).
+redemption, and the selected profile's proof processing; managed OBO
+support alone does not establish these capabilities ({{access-token-subject-gap}}).
 
 AgentCore's opaque workload access token is for first-party AgentCore
 services {{AWS-WORKLOAD-TOKEN}}. It is not the STS JWT in this example
@@ -1667,18 +1779,28 @@ prevent it.
 
 # Authorization Server and Client Metadata {#metadata}
 
-The delegated profile identifier is:
+The governed profiles have distinct identifiers:
 
-`urn:ietf:params:oauth:grant-profile:id-jag-agent-federation`
+* **Governed agent access:**
+  `urn:ietf:params:oauth:grant-profile:id-jag-governed-agent`
+* **Bound governed agent access:**
+  `urn:ietf:params:oauth:grant-profile:id-jag-agent-federation`
 
-It identifies RAS and client processing. IdP issuance and optional inputs
-follow {{discovery}}; the URI makes no continuation capability claim.
+The existing agent-federation URI retains its mandatory grant-binding
+requirements. Enterprise access uses the base
+`urn:ietf:params:oauth:grant-profile:id-jag` identifier under ID-JAG;
+that identifier alone makes no governed-agent conformance claim.
+
+These URIs identify RAS and client processing. IdP issuance and optional
+inputs follow {{discovery}}. No URI claims continuation support, a
+particular workload-evidence protection, or access-token protection.
+This document defines no numeric level parameter or token claim.
 
 ## Authorization Server Metadata {#server-metadata}
 
 Servers MUST publish {{RFC8414}} metadata as follows:
 
-* **RAS:** Include both this URI and the base
+* **RAS:** Include each supported governed profile URI and the base
   `urn:ietf:params:oauth:grant-profile:id-jag` in
   `authorization_grant_profiles_supported`.
   * Include `urn:ietf:params:oauth:grant-type:jwt-bearer` in
@@ -1689,14 +1811,16 @@ Servers MUST publish {{RFC8414}} metadata as follows:
   * Include `spiffe_jwt` in `token_endpoint_auth_methods_supported`
     under {{SPIFFE-OAUTH, Section 4}}. The generic JWT actor token type
     alone does not advertise JWT-SVID client authentication.
-* **Both:** Advertise supported client authentication methods and DPoP
-  algorithms, including {{flow-configuration}}'s common capabilities.
+* **Both:** Advertise supported client authentication methods and, when
+  DPoP is supported, DPoP algorithms, including {{flow-configuration}}'s
+  common capabilities.
   Where supported, publish the existing CIMD and mutual-TLS capability
   metadata defined by {{CIMD}} and {{RFC8705}}.
 
 ## Client Metadata {#client-metadata}
 
-A client SHOULD advertise this profile URI in its authoritative client
+A client SHOULD advertise each supported governed profile URI in
+`authorization_grant_profiles_supported` in its authoritative client
 metadata under {{ID-JAG, Section 8}}, including when supplied through
 CIMD. Its `grant_types` MUST permit:
 
@@ -1707,7 +1831,34 @@ CIMD. Its `grant_types` MUST permit:
 
 RAS support is advertised in metadata. IdP issuance requires bilateral
 configuration of trust, Identity Bindings, and Client Associations.
-Conformance follows {{scope}}; deployment choices are summarized below.
+Profile selection follows these rules:
+
+1. Before exchange, the client, IdP, and RAS MUST establish through
+   trusted configuration the selected profile and minimum requirements
+   for the client, issuer trust relationship, and target resources.
+   If a request spans resources, it MUST satisfy every resource's minimum.
+2. Each server MUST enforce its configured minimum regardless of absent
+   `actor_token`, `act`, or `cnf`. Metadata advertises capabilities; it
+   MUST NOT authorize a lower profile or override resource policy.
+3. Implementations MUST NOT select a lower profile because actor or
+   confirmation claims are absent, retry a failed governed request as
+   ordinary EMA, or drop proof to retry as governed agent access. A lower
+   profile requires a separately authorized configuration, not an
+   error-driven fallback.
+4. The RAS and API MUST agree on the minimum profile for their resource.
+   The API relies on the RAS to enforce grant protection; an access
+   token's `cnf` describes its own protection and does not establish
+   which grant profile was used. Where multiple paths share a resource,
+   applicability follows {{api-processing}}.
+
+An implementation MAY serve existing EMA and either governed profile
+concurrently under these rules. Supporting the bound profile does not
+require accepting grants without sender constraint or advertising the
+intermediate profile. Migration changes the configured profile after
+the participating roles implement its requirements; it does not relabel
+previously issued grants or refresh tokens.
+
+Conformance follows {{scope}}; other deployment choices are summarized below.
 
 | Common capability | Configured alternatives |
 |---|---|
@@ -1722,7 +1873,9 @@ Before using the delegated path, the client and IdP MUST agree through
 trusted configuration on issuance support and any options; generic JWT
 or authentication-method support is insufficient. The client MUST
 verify the RAS's profile advertisement, JWT bearer grant support, and
-compatible access-token protection. If the `actor_profile_token_exchange`
+compatible access-token protection. If no supported profile satisfies
+the configured minimum, the client MUST NOT initiate that path. If the
+`actor_profile_token_exchange`
 parameter of {{ACTOR-PROFILE, Section 16.2}} is published, it MUST
 describe only the paths actually supported and agree with the ID-JAG
 advertisement.
@@ -1755,18 +1908,27 @@ does not make those authorities interchangeable.
 The security requirements of the selected credential and grant
 specifications, {{RFC9700}}, and {{RFC8725}} apply.
 
-## Cost of the Baseline {#baseline-costs}
+## Adoption Tradeoffs {#baseline-costs}
 
 The profile's security controls carry these deployment costs:
 
 | Requirement | Benefit | Cost |
 |---|---|---|
 | Native JWT-SVID as the common input | Reuses SPIFFE issuance, client authentication, and trust-domain validation | JWT-SVID is bearer evidence; deployments requiring issuer-bound presenter proof must select another supported input |
-| DPoP at both token endpoints; grant bound to the grant proof key | A stolen ID-JAG cannot be redeemed without the key | Every client holds and proves a key. Grant binding does not make bearer evidence proof of an issuer-authorized presenter ({{credential-requirements}}) |
-| Same key for issuance and redemption | No key-transition protocol to secure | A broker that obtains grants must also redeem them ({{flow-configuration}}) |
+| Bound profile: DPoP at both token endpoints; grant bound to the grant proof key | A stolen ID-JAG cannot be redeemed without the key | Every client holds and proves a key. Grant binding does not make bearer evidence proof of an issuer-authorized presenter ({{credential-requirements}}) |
+| Bound grants: same key for issuance and redemption | No key-transition protocol to secure | A broker that obtains bound grants must also redeem them ({{flow-configuration}}) |
 | Access-token context as JWT claims or introspection | The API reads `act`, `scope`, and `cnf` from the token or from an authenticated introspection response ({{introspection}}) | Opaque-token deployments add an introspection round trip and a freshness policy |
 | Actor-aware API processing | The actor gate is enforced where access happens | APIs parse `act` and consult the gate on delegated paths |
 | Sender-constrained access tokens by default | Token theft is contained | Resources without DPoP or mutual TLS must be explicitly configured for bearer |
+
+Governed agent access without grant binding adds agent authorization
+to existing enterprise access but leaves stolen grants redeemable by
+an attacker able to authenticate as their designated client. This is
+particularly relevant to shared clients. Binding only the resulting
+access token does not prevent that redemption. Explicit acceptance
+policy, short grant lifetimes, credential confidentiality, and the
+no-fallback rules in {{discovery}} limit this exposure; they do not
+provide proof of possession of an issuer-authorized grant key.
 
 ## Credential and Token Confusion
 
@@ -1861,7 +2023,7 @@ clear rules about whose activity it describes.
 
 # IANA Considerations {#iana}
 
-## ID-JAG Grant Profile URI
+## ID-JAG Grant Profile URIs
 
 This document requests registration in the "OAuth URI" registry
 established by {{RFC6755}}:
@@ -1871,7 +2033,14 @@ established by {{RFC6755}}:
 * Change Controller: IETF
 * Specification Document: {{metadata}} of this document.
 
-The URI is used with ID-JAG's existing authorization server and client
+This document also requests:
+
+* URN: `urn:ietf:params:oauth:grant-profile:id-jag-governed-agent`
+* Common Name: ID-JAG Governed Agent grant profile
+* Change Controller: IETF
+* Specification Document: {{metadata}} of this document.
+
+The URIs are used with ID-JAG's existing authorization server and client
 metadata parameters.
 
 --- back
@@ -2007,8 +2176,10 @@ checks independent. This revision uses configured attester trust.
 A native mutual-TLS composition would bind the ID-JAG to the client
 certificate (`cnf.x5t#S256`). It needs issuer and redeemer agreement on
 presenter binding, recipient binding, and replay handling. Until then,
-{{access-token-protection}} requires DPoP for grant redemption even when
-the access token is certificate-bound.
+bound grants require DPoP for redemption even when the access token is
+certificate-bound ({{access-token-protection}}). Governed agent access
+can instead use an unbound grant under explicit policy; that does not
+make the grant certificate-bound.
 
 ### RAR-Only Authorization {#rar-gap}
 
