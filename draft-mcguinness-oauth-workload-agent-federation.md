@@ -526,6 +526,15 @@ Support alone does not establish the required trust or authorization
 configuration. Deployments MAY use mutually supported optional inputs
 instead of the mandatory-to-implement path.
 
+Under {{subject-token-validation}}, the ID Token's audience identifies
+the dedicated client. A
+token issued only to a shared `platform-sso` client cannot accompany
+authentication as a separate `analysis-client`. Dedicated deployments
+therefore need a user authorization flow for each agent's client
+registration, though an existing IdP session may avoid another login
+prompt. A platform retaining its shared SSO client instead uses an
+agreed independent workload input ({{optional-inputs}} or {{jwt-svid-input}}).
+
 Credential-class validation follows {{actor-inputs}}; profile
 applicability and downgrade prevention follow {{discovery}}.
 
@@ -717,6 +726,15 @@ Using the assertion in both parameters of one request is one
 presentation, not a replay. Following {{ACTOR-PROFILE, Section 6.3.1.2}},
 the IdP MUST reuse the successful authentication result, then apply
 this profile's separate identity mapping and authorization checks.
+
+When retrying a dedicated-client exchange, including after a
+`use_dpop_nonce` challenge under {{RFC9449, Section 8}}, the client MUST
+generate a new client assertion with a fresh `jti` and use it in both
+`client_assertion` and `actor_token`. The IdP may already have consumed
+the previous assertion during authentication. For a nonce retry, the
+client MUST also generate a fresh DPoP proof containing the supplied
+nonce while retaining the grant proof key. Changing only the DPoP
+proof does not satisfy the assertion replay rule.
 
 The client and agent remain distinct principals. This mode does not
 distinguish agents behind one shared client identity; such a client
@@ -1037,14 +1055,10 @@ referenced sections define the requirements.
 
 ## Prerequisites and Common Capabilities {#flow-configuration}
 
-Before issuance, the IdP MUST have trusted configuration for:
-
-* The Client Association: authenticated client, selected Identity
-  Binding, flow, and credential class.
-* That client's registration and the user's subject namespace at the
-  target RAS ({{subject-resolution}}).
-* The Governance Tenant, Target Tenant, RAS issuer, and permitted resource.
-* The applicable governed profile and minimum requirements under {{discovery}}.
+Before issuance, the IdP MUST establish the applicable identity,
+client, delegation, and target relationships in {{configuration}}.
+Input and role capabilities are defined in {{scope}}; profile
+applicability follows {{discovery}}.
 
 The IdP MUST derive the ID-JAG `client_id` from an authoritative
 association between the authenticated IdP client and that client's
@@ -1054,23 +1068,18 @@ association is distinct from the Client Association that permits use
 of an Identity Binding.
 
 Each authorization server establishes authoritative client metadata
-through registration or, when supported, {{CIMD}}. The IdP MUST support
-`private_key_jwt` under {{client-assertion-input}}. Clients selecting
-JWT-SVID use native authentication under {{jwt-svid-input}}. The client
-and RAS MUST support `private_key_jwt` under {{RFC7523, Section 2.2}},
-with client-assertion audience processing under {{client-assertion-input}}.
-Other configured methods MAY be used, and client
-identifiers and keys MAY differ between servers.
+through registration or, when supported, {{CIMD}}. RFC 7523 client
+authentication at either server follows {{client-assertion-input}};
+JWT-SVID authentication follows {{jwt-svid-input}}. Other configured
+methods MAY be used, and client identifiers and keys MAY differ
+between servers.
 
 `private_key_jwt` provides a common client-based input and redemption method
 across independent implementations without provisioning a shared
 client secret. It is mandatory to implement, not mandatory to use;
 governed identity resolution does not depend on that method.
 
-One platform client, including an existing SSO client authorized for
-Token Exchange, MAY serve many agents when distinct workload evidence
-resolves them. The client-assertion input instead needs a client identity
-specific to one Governed Agent. Neither path requires per-replica
+Neither the dedicated nor shared client model requires per-replica
 registration. With CIMD and SPIFFE
 authentication, client association follows {{SPIFFE-OAUTH, Section
 5.1}}, including its `spiffe_id` matching rules. A client-metadata prefix
@@ -1092,16 +1101,12 @@ through trusted configuration and metadata. Client authentication at
 the IdP follows the selected method's algorithm requirements.
 
 An ID-JAG containing `cnf.jkt` is bound to the DPoP key proven at issuance
-and MUST be redeemed with that key. This revision defines no key
-transition for bound grants; a distributed platform MUST route their
-issuance and redemption through the same key holder. A broker obtaining
-bound grants for workers therefore also redeems those grants.
-Key transition is deferred under {{key-transition-gap}}.
+and redeemed under {{grant-protection}}. The key-holder arrangements
+through API use are described in {{distributed-key-use}}; independent
+key transition is deferred under {{key-transition-gap}}.
 
-{{configuration}} summarizes deployment configuration by responsible
-party. Deployments also choose a renewal strategy for unattended work
-and recovery when fresh user authorization is required
-({{continuing-access}}).
+Deployments choose a renewal strategy and recovery when fresh user
+authorization is required under {{continuing-access}}.
 
 ## Grant Protection {#grant-protection}
 
@@ -1211,6 +1216,24 @@ authorization under {{delegation-authorization}}; the output remains an
 ID-JAG. User access tokens are not subject inputs in this revision
 ({{access-token-subject-gap}}); JWT encoding alone does not make an
 access token an ID Token.
+
+Refresh-token eligibility includes cross-domain authorization, not
+merely an SSO session:
+
+* The IdP MUST establish that the token's retained authorization permits
+  the requested target and authority under {{ID-JAG, Section 4.3.3}}.
+  Possession of a refresh token or an `offline_access` grant alone
+  MUST NOT establish that permission.
+* The retained context may include an explicitly associated
+  cross-domain delegation authorization. Its representation and
+  provisioning are local to the IdP; OIDC scope names do not themselves
+  map to resource-specific permissions.
+* For example, a token issued with `openid offline_access` is eligible
+  for `files.read` at `https://ras.example/` only if its authorization
+  context also permits that target and authority. Current agent and
+  delegation checks still apply. Without that authorization, the
+  deployment needs an authorization flow that establishes it before
+  unattended exchange can proceed.
 
 ### Actor Token Validation {#actor-inputs}
 
@@ -1459,6 +1482,24 @@ enforced, and clients and APIs MUST NOT treat
 a constrained token as an unconstrained bearer token or bypass an
 unrecognized confirmation method.
 
+### Distributed Platforms and Key Use {#distributed-key-use}
+
+Bound-grant issuance and redemption require the same key holder. For
+a DPoP access token, API use also requires proofs from that key; handing
+only the token to a worker with an independent key is insufficient.
+
+| Arrangement | Requirement through API use |
+|---|---|
+| Broker obtains and uses the token | Broker holds the grant proof key and calls the API, including when proxying an authorized worker request |
+| Worker uses a DPoP token | Worker holds the same key or obtains request-specific proofs from its authorized key holder; a remote signing interface and its authorization are outside this profile |
+| Another access-token protection mode | Explicitly configured bearer use needs no API proof key; mutual TLS requires the certificate key to which the RAS bound the access token at redemption |
+
+Remote signing or shared key custody does not establish an independent
+worker binding and expands the trusted computing base. This revision
+defines no handoff to a worker's independent DPoP key
+({{key-transition-gap}}). Access-token and refresh-token bindings remain
+subject to {{access-token-protection}} and {{ras-refresh}}.
+
 ### Opaque Access Tokens and Introspection {#introspection}
 
 The RAS MAY issue an opaque access token instead of a JWT when the API
@@ -1525,23 +1566,16 @@ On every refresh, the RAS MUST:
   {{access-token-protection}}, expiring no later than the absolute
   authorization expiration.
 
-This is RAS-local authorization context; no refresh-token format,
-storage representation, or cross-domain refresh exchange is defined.
-Because RAS refresh proceeds without a fresh IdP decision, absolute
-expiration prevents authorization derived from one ID-JAG from becoming
-indefinitely renewable solely through RAS-local refresh.
-
-The absolute expiration bounds authorization derived from one ID-JAG,
-not the entire delegated session. Continued access beyond that period
-requires a new ID-JAG, a new IdP authorization decision, and a new RAS
-authorization decision. If permitted, those decisions establish a new
-authorization period; they do not extend the previous one.
-Repeated issuance using an IdP refresh token therefore relies on
-IdP refresh-token and delegation
-policy, and any cumulative RAS limits, to bound overall unattended access.
-
-Refresh is not evidence of a fresh IdP decision. IdP-side revocation
-reaches the RAS only through a signal or online check ({{status-changes}}).
+This is RAS-local authorization context; no refresh-token format or
+storage representation is defined. Absolute expiration prevents
+indefinite renewal from one ID-JAG without a fresh IdP decision.
+Continued access beyond that expiration requires a new ID-JAG and new
+IdP and RAS authorization decisions, establishing a new period rather
+than extending the old one.
+IdP refresh-token and delegation policy, together with any cumulative
+RAS limits, bound overall unattended access. IdP revocation reaches
+existing RAS authorization only through a signal or online check
+({{status-changes}}).
 
 ## Token Endpoint Error Responses {#errors}
 
@@ -1598,7 +1632,8 @@ Deployments select a renewal model before scheduling unattended work:
 | RAS refresh | Preserves authorization at the same RAS within its lifetime and policy limits ({{ras-refresh}}) |
 
 An IdP refresh token can supply the subject credential for a new
-exchange when permitted; otherwise renewal may require user interaction.
+exchange only when eligible under {{subject-token-validation}};
+otherwise renewal may require user interaction.
 The five-minute ID-JAG recommendation bounds redemption, not task
 duration. Cross-domain continuity using Identity Continuation Assertion
 {{ICA}} is a separate, deferred composition ({{excluded-compositions}}).
@@ -1889,17 +1924,6 @@ require accepting grants without sender constraint or advertising the
 intermediate profile. Migration changes the configured profile after
 the participating roles implement its requirements; it does not relabel
 previously issued grants or refresh tokens.
-
-Conformance follows {{scope}}; other deployment choices are summarized below.
-
-| Common capability | Configured alternatives |
-|---|---|
-| ID Token subject | SAML 2.0 assertion or IdP refresh-token subject |
-| Dedicated-client resolution using RFC 7523 authentication | JWT-SVID, existing platform JWT with separate client authentication, or Client Attestation agent-resolution input |
-| `private_key_jwt` at the IdP and RAS | Native `spiffe_jwt` or other methods where supported by the selected input |
-| DPoP-protected access token, or bearer where the resource explicitly permits it | Mutual-TLS-bound access token |
-| JWT access token under {{RFC9068}} | Opaque access token with introspection under {{introspection}} |
-| No RAS refresh token; renewal by new exchange | RAS refresh tokens under {{ras-refresh}} |
 
 Before using the delegated path, the client and IdP MUST agree through
 trusted configuration on issuance support and any options; generic JWT
@@ -2277,6 +2301,12 @@ concatenate their lines before sending.
 A server nonce is included if challenged. The same key is proven at
 redemption; `JKT_K` denotes its public key thumbprint.
 
+After `use_dpop_nonce`, retry with a new client assertion in both
+assertion parameters and a fresh DPoP proof containing the nonce,
+still signed by K ({{client-assertion-input}}). For example, replace
+assertion `jti=analysis-auth-1` with `analysis-auth-2`; resending
+`analysis-auth-1` with only a new proof is a replay.
+
 ~~~ http-message
 POST /token HTTP/1.1
 Host: idp.example
@@ -2515,6 +2545,7 @@ errors follow {{errors}}; API errors follow {{resource-errors}}.
 | Exchange uses an unsupported `actor_token_type` | IdP | HTTP 400, `invalid_request` |
 | Bound-profile exchange omits its DPoP proof | IdP | HTTP 400, `invalid_request` |
 | Exchange repeats `analysis-auth-1` | IdP | HTTP 400, `invalid_client`; dual presentation within one request is not a replay |
+| After a nonce challenge, retry uses a fresh proof but reuses the consumed `analysis-auth-1` assertion | IdP | HTTP 400, `invalid_client`; regenerate the assertion in both parameters |
 | Exchange contains a second `resource` parameter | IdP | HTTP 400, `invalid_target`; obtain separate grants for the resources |
 | Exchange requests authorization details that cannot be confined to its resource | IdP | HTTP 400, `invalid_authorization_details`; no ID-JAG |
 | Redemption requests a resource different from the grant's resource | RAS | HTTP 400, `invalid_target`; no access token |

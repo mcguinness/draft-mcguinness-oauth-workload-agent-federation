@@ -4,54 +4,35 @@
 
 This is the working area for the individual Internet-Draft, "OAuth 2.0 Profile for Governed Agent Federation".
 
-The goal is a prescriptive integration contract for agent-platform vendors
-and IdPs: supply workload evidence, bind it to a governed agent and permitted
-OAuth client, and obtain downstream authorization. The draft identifies what
-the platform, client, IdP, RAS, and API each implement. Its common delegated
-path uses an existing SPIFFE JWT-SVID, a user ID Token, native SPIFFE
-client authentication at the IdP, `private_key_jwt` at the RAS, and DPoP
-at both token endpoints. The client and IdP implement JWT-SVID as the
-common input; deployments can select another supported credential profile.
+The draft defines how an IdP resolves dedicated OAuth client identities or
+independently validated workload identities to stable Governed Agents.
+Identity Binding, Client Association, user delegation, and resource-local
+authorization remain separate decisions.
 
-The draft retains both self-acting WAG and user-delegated ID-JAG, including
-subject resolution and linking for each path. ID-JAG uses direct workload
-evidence, governed-actor mapping, and RFC 7523 `jwt-bearer` redemption with
-mandatory grant confirmation checks. WAG keeps its name and federation
-requirements; its complete wire contract remains pending upstream coordination.
+The mandatory delegated path uses an ID Token issued for the dedicated
+client, `private_key_jwt` client authentication, a governed ID-JAG, and RFC
+7523 `jwt-bearer` redemption. SPIFFE JWT-SVID, existing platform JWT, and
+Client Attestation inputs are optional. Shared platforms agree on a workload
+input that distinguishes agents behind their SSO client. No new credential
+format or per-replica registration is required.
 
-DPoP remains required at the IdP and RAS token endpoints. Access-token sender
-constraint is the default: resource policy can select DPoP, mutual TLS,
-or explicitly permitted bearer access. The actor authorization gate is
-required; independent agent permissions on every data object are local policy.
+Two governed profiles support incremental adoption. Bound governed agent
+access requires DPoP at issuance and redemption; governed agent access permits
+unbound grants only under explicit policy. Access-token protection is a
+separate choice: DPoP, mutual TLS, or explicitly permitted bearer use. The
+API enforces user authority and the actor gate in every governed mode.
 
-The common-path example uses a shared registered platform SSO client and its
-corresponding RAS registration, with complete parameter-level HTTP examples.
-The identical JWT-SVID is presented as `client_assertion` and `actor_token`.
-The IdP validates its audience and trust-domain signature, then resolves its
-exact SPIFFE ID to the governed agent. Client Association separately permits
-the authenticated client to use that binding. CIMD remains available where
-supported, subject to SPIFFE OAuth's client matching rules.
+The complete dedicated-client walkthrough includes a shared-client SPIFFE
+variant. Continuing access uses eligible subject credentials for new ID-JAGs
+or policy-permitted RAS refresh within retained authorization and lifetime
+limits. Existing SSO refresh tokens do not automatically authorize downstream
+resources.
 
-The draft defines no new workload credential format or media type. Existing
-platform JWTs and Client Attestation are optional actor inputs. X.509-SVID and
-WIT-SVID can authenticate clients; their direct actor-evidence compositions
-remain deferred. JWT-SVID retains its bearer semantics: DPoP protects the
-issued grant, but does not bind the input credential to its presenter.
-Deployments requiring issuer-bound presenter proof must select a supported
-input that provides it. No per-replica IdP registration is required.
-
-RAS refresh tokens retain ID-JAG's default recommendation against issuance,
-with a constrained exception for authorized long-running work. Refresh tokens
-are client- and DPoP-key-bound and retain the original authorization ceiling.
-Cross-resource continuing access remains separate composition work with
-[Identity Continuation Assertion](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-id-continuation-assertion).
-
-[Client Instance Identification](https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-id/draft-mcguinness-oauth-client-instance-id.html)
-and
-[Client Attester Endorsement](https://mcguinness.github.io/draft-mcguinness-oauth-client-attesters/draft-mcguinness-oauth-client-attesters.html)
-are informative extension dependencies, outside core conformance. Their
-canonical editor's-copy URLs replace the old repository's redirect stubs.
-Configured ATTEST trust and the own-client attestation input remain available.
+WAG remains the intended self-acting composition with the same governed
+identity and local principal correlation. Its wire requirements await
+upstream coordination; this revision claims no WAG wire conformance.
+Instance identification, attester endorsement, key transition, and Identity
+Continuation Assertion compositions remain deferred.
 
 * [Editor's Copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-workload-agent-federation)
