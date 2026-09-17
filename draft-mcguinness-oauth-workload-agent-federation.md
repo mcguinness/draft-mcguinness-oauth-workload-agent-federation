@@ -34,6 +34,7 @@ normative:
   CIMD: I-D.ietf-oauth-client-id-metadata-document
   RFC6749:
   RFC6750:
+  RFC6901:
   RFC7517:
   RFC7519:
   RFC7523:
@@ -47,6 +48,26 @@ normative:
   RFC9449:
   RFC9700:
 informative:
+  AWS-TOKEN-CLAIMS:
+    title: "Understanding token claims"
+    target: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_outbound_token_claims.html
+    author:
+      - org: Amazon Web Services
+  AWS-AGENT-IDENTITY:
+    title: "Separate agent and human user permission"
+    target: https://docs.aws.amazon.com/wellarchitected/latest/agentic-ai-lens/agentsec03-bp02.html
+    author:
+      - org: Amazon Web Services
+  AWS-AGENTCORE-OBO:
+    title: "On-behalf-of token exchange with AgentCore Identity"
+    target: https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/on-behalf-of-token-exchange.html
+    author:
+      - org: Amazon Web Services
+  AWS-WORKLOAD-TOKEN:
+    title: "Get workload access token"
+    target: https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/get-workload-access-token.html
+    author:
+      - org: Amazon Web Services
   INSTANCE:
     title: "Client Instance Identification for Attestation-Based Client Authentication"
     target: https://mcguinness.github.io/draft-mcguinness-oauth-client-instance-id/draft-mcguinness-oauth-client-instance-id.html
@@ -116,11 +137,8 @@ provider (IdP) governs it as a separate principal with its own owner,
 lifecycle state, and assignments, and a resource authorization server
 (RAS) needs to know which governed principal was authorized without
 implementing every platform's credential validation. This document
-assigns that resolution and policy decision to the IdP. Its core is two
-approved relationships: an Identity Binding resolves external evidence
-to a Governed Agent, and a Client Association determines which OAuth
-client can use that binding in a given flow. The issued grant preserves
-the Governed Agent as subject or actor.
+assigns that resolution and policy decision to the IdP through the
+Identity Binding and Client Association defined in {{model}}.
 
 # Conventions and Terminology
 
@@ -247,9 +265,9 @@ The delegated path has two token requests:
     |              |------------- token + proof ------------>|
 ~~~
 
-The agent presents the user's ID Token, or a supported IdP refresh
-token, with workload evidence. The client authenticates independently at
-the IdP and RAS. {{identity-example}} illustrates the identity mappings.
+The client presents a supported user credential ({{subject-token-validation}})
+with workload evidence and authenticates independently at the IdP and
+RAS. {{identity-example}} illustrates the identity mappings.
 
 Delegated authority is the user's authority, bounded by the grant's
 constraints and current resource policy, and conditioned on the
@@ -342,7 +360,7 @@ requirements are in {{model}}, {{identity}}, and {{authorization}}.
 | Platform | Supply an existing credential accepted by the selected input profile | {{evidence}} |
 | Client and IdP | Implement JWT-SVID actor evidence and native SPIFFE client authentication | {{jwt-svid-input}} |
 | Client and RAS | Implement `private_key_jwt` for redemption; common JWT and DPoP algorithms | {{flow-configuration}} |
-| Client and IdP | ID Token or supported IdP refresh-token subject; direct JWT actor; one or more resources at one RAS and non-empty scope | {{exchange-request}} |
+| Client and IdP | ID Token or supported SAML assertion or IdP refresh-token subject; direct JWT actor; one or more resources at one RAS and non-empty scope | {{exchange-request}} |
 | IdP | Validate evidence; enforce the Client Association for the selected Identity Binding, flow, and credential class | {{identity}} and {{inputs}} |
 | IdP | Authorize one user-to-agent relationship; construct `act.sub` from the Governed Agent and `act.iss` from the IdP | {{authorization}} and {{actor-construction}} |
 | IdP and RAS | Resolve the user in the target namespace; authorize links and reject conflicts | {{subject-resolution}} |
@@ -355,16 +373,11 @@ requirements are in {{model}}, {{identity}}, and {{authorization}}.
 
 # Federation Model {#model}
 
-The model has four relationships: external workload identity to
-Governed Agent (Identity Binding), authenticated OAuth client to
-permitted use of an Identity Binding in a selected flow and credential
-class (Client Association), Governed Agent to user (delegation
-authorization), and Governed Agent to local principal at the RAS
-(attribution). The IdP is authoritative for Identity Bindings, Client
-Associations, and delegation authorization. The RAS is authoritative for
-its local principal association, subject to trusted provisioning from
-the IdP or an authorized directory connector, and for its own
-authorization of the user and actor.
+The IdP is authoritative for Identity Bindings, Client Associations,
+and delegation authorization. The RAS is authoritative for its local
+principal association (attribution), subject to trusted provisioning
+from the IdP or an authorized directory connector, and for its own
+authorization of the user and actor. These relationships are shown below.
 
 ~~~
  External Workload
@@ -406,21 +419,29 @@ flow depend on are:
 | Target: RAS issuer, resources, Target Tenant, subject namespace, `aud_sub` authority | IdP administrator | IdP | RAS metadata under {{RFC8414}} confirms grant and profile support |
 | Delegation authorization: agent, user, client, tenant, RAS, resource, authority | IdP policy or consent | IdP | No |
 | Local agent principal and user links | RAS, via provisioning or directory synchronization | RAS, API | No |
-| Access-token protection per resource | RAS and client | RAS, API, client | No; the client learns the result from `token_type` |
+| Access-token protection per resource | RAS and client | RAS, API, client | Trusted configuration under {{access-token-protection}}; `token_type` distinguishes DPoP, but not mutual TLS from bearer |
 
-Existing workload-identity-federation configuration can supply these
-values; no new configuration object is required. As a non-normative
-example, Microsoft Entra's federated identity credential (`issuer`,
-`subject`, and `audiences`, matched case-sensitively) and Google
-Cloud's workload identity pool provider (`issuer-uri`,
-`allowed-audiences`, `attribute-mapping`, and `attribute-condition`)
-each express an Identity Binding: the issuer and the exact subject or
-mapped attribute select the workload, the audience authorizes
-presentation, and the principal the policy grants access to is the
-Governed Agent. The application registration or `principal://`
-binding that decides which client may present the credential plays a
-role comparable to the Client Association. For the JWT-SVID input the
-same relationship is a trust-domain bundle plus an exact SPIFFE ID.
+Existing workload-identity-federation configuration can supply the
+credential-validation and identity-selection inputs. Non-normative
+examples include:
+
+* Microsoft Entra federated identity credentials use `issuer`,
+  `subject`, and `audiences`, matched case-sensitively.
+* Google Cloud workload identity pool providers use `issuer-uri`,
+  `allowed-audiences`, `attribute-mapping`, and `attribute-condition`.
+  A `principal://` IAM binding identifies a federated workload
+  principal for authorization; it does not identify a separate OAuth
+  client permitted to present that workload's credential.
+* JWT-SVID validation uses a trusted trust-domain bundle and an exact
+  SPIFFE ID for identity resolution.
+* AWS STS outbound identity tokens provide an account-specific issuer
+  and an IAM principal ARN as `sub`; {{aws-example}} illustrates the
+  binding and its use with Amazon Bedrock AgentCore.
+
+An implementation can reuse this configuration, but still needs to
+represent the Governed Agent mapping and the separate Client
+Association required by this profile. These relationships do not
+require new configuration object types.
 
 Request hints,
 discovered client metadata, and unverified JWT claims MUST NOT by
@@ -809,7 +830,9 @@ configuration, validating each under {{ID-JAG, Section 4.3.3}}:
 
 All subject inputs require current actor evidence and delegation
 authorization under {{delegation-authorization}}; the output remains an
-ID-JAG.
+ID-JAG. User access tokens are not subject inputs in this revision
+({{access-token-subject-gap}}); JWT encoding alone does not make an
+access token an ID Token.
 
 ### Actor Token Validation {#actor-inputs}
 
@@ -862,8 +885,11 @@ derived from the approved mapping even when the external and Governed
 Agent identifiers coincide. The object MUST conform to
 {{ACTOR-PROFILE, Section 3.4}}, including its `sub_profile`
 recommendation and unclassified-actor rules; this mapping replaces
-Actor Profile's Section 6.3 credential-to-actor copying. When the actor
-is classified, `sub_profile` is `ai_agent` from {{ENTITY-PROFILES}}.
+Actor Profile's Section 6.3 credential-to-actor copying. Any included
+`sub_profile` MUST reflect the IdP's authoritative classification of
+the Governed Agent. The `service` and `ai_agent` values in
+{{ENTITY-PROFILES}} distinguish services from AI agents; being a
+Governed Agent alone does not establish the `ai_agent` classification.
 
 ### Grant Issuance {#grant-issuance}
 
@@ -882,9 +908,16 @@ and additionally satisfy:
 The IdP MUST NOT issue a grant if it cannot determine an unambiguous
 user, actor, downstream client, or tenant relationship. The grant
 lifetime SHOULD be at most five minutes and MUST NOT exceed the
-configured limit, the actor credential's expiration, or the subject
-credential's expiration: the ID Token's `exp`, or the refresh token's
-expiry if the IdP records one.
+configured lifetime limit. Its expiration MUST NOT exceed the actor
+credential's expiration or the subject credential's expiration,
+determined as follows:
+
+* **ID Token:** its `exp` claim.
+* **SAML assertion:** the earliest applicable `NotOnOrAfter` in the
+  assertion's `Conditions` and the `SubjectConfirmationData` used to
+  validate the subject. If neither supplies an expiration bound, the
+  IdP MUST reject the subject as `invalid_grant`.
+* **Refresh token:** its expiry, if the IdP records one.
 
 ### Successful Response {#exchange-response}
 
@@ -989,9 +1022,11 @@ In that case:
   {{RFC9449, Section 6.2}} or `x5t#S256` under
   {{RFC8705, Section 3.2}}, and the API MUST enforce it as it would
   the JWT claim.
-* The API MUST NOT cache a response beyond the token's remaining
-  validity or the freshness its resource policy requires for
-  disablement ({{RFC7662, Section 4}}).
+* The API MUST NOT cache a response that lacks `exp`. When present,
+  `exp` MUST identify the token's expiration under
+  {{RFC7662, Section 2.2}}. The API MUST NOT cache the response beyond
+  that expiration or the freshness limit its resource policy requires
+  for disablement ({{RFC7662, Section 4}}).
 
 The processing in {{api-processing}} applies to the introspected
 context exactly as to JWT claims.
@@ -1287,9 +1322,24 @@ accepted issuer, credential class, and authenticated client; this input
 MUST NOT be used as fallback for failed native credential validation.
 
 The Identity Binding MUST specify an exact issuer and `sub` and MAY
-require additional top-level string claims, such as tenant or platform
-agent identifiers; every configured selector MUST be present, of the
-configured type, and an exact match. Configuration MUST also specify:
+require additional string values from the JWT Claims Set, including
+nested claims. Additional selectors MUST use the JSON Pointer string
+representation in {{RFC6901, Section 5}}, evaluated from the Claims Set
+root under {{RFC6901, Section 4}}:
+
+* Every configured selector MUST resolve unambiguously to a string equal to its
+  configured value, without type conversion, case folding, or Unicode
+  normalization. Missing paths, evaluation errors, non-string values,
+  or unequal values MUST prevent that binding from matching.
+* Selectors MUST NOT use wildcard, prefix, or pattern matching, and
+  MUST NOT replace the exact issuer and `sub` checks.
+* A caller-controlled claim MUST NOT distinguish agents unless trusted
+  issuance policy constrains its values to identities the caller is
+  authorized to assert. A signature alone does not establish that
+  authority for request tags or other caller-supplied attributes.
+
+These selectors constrain identity resolution, not the administrative
+configuration format. Configuration MUST also specify:
 
 | Item | Requirement |
 |---|---|
@@ -1312,6 +1362,48 @@ deployment accepting key-bound JWTs MUST configure their proof
 validation and any required relationship to the grant proof key. If
 the JWT is bearer evidence, {{credential-requirements}} applies;
 exchange DPoP does not add an issuer-bound presenter key.
+
+### Example: AWS STS and Amazon Bedrock AgentCore {#aws-example}
+
+This non-normative example uses the AWS STS `GetWebIdentityToken`
+credential documented in {{AWS-TOKEN-CLAIMS}}. It fits the existing
+platform-JWT input without a new credential format:
+
+| Item | Example configuration |
+|---|---|
+| Credential authority | The AWS account's configured STS issuer and approved verification keys |
+| Exact `sub` | `arn:aws:iam::123456789012:role/AgentRuntime` |
+| Accepted audience | `https://idp.example/token` |
+| Additional selector | `/https:~1~1sts.amazonaws.com~1/aws_account` equals `123456789012` |
+| Identity Binding result | Governed Agent `agent-42` in Governance Tenant `acme` |
+| Client Association | `platform-sso` may use this binding for delegated ID-JAG with platform-JWT actor evidence |
+
+The selector addresses the string `aws_account` within the
+`https://sts.amazonaws.com/` object; `~1` escapes each slash in that
+member name. The client presents the STS JWT as `actor_token`,
+authenticates separately, and supplies a supported user credential and
+DPoP proof under {{root-request}}. The resulting actor is
+`{"iss":"https://idp.example/","sub":"agent-42"}`.
+
+The execution role and AgentCore Workload Identity are distinct
+{{AWS-AGENT-IDENTITY}}. If several agents share this role, issuer and
+`sub` alone identify the shared IAM principal, not an individual agent.
+Mapping them to distinct Governed Agents requires distinct credential
+identities or additional trusted selectors. An agent name supplied by
+the caller does not provide that distinction.
+
+AgentCore's documented `AWS_IAM_ID_TOKEN_JWT` actor mode obtains an STS
+JWT with the credential provider's token endpoint as audience
+{{AWS-AGENTCORE-OBO}}. This establishes an applicable actor-evidence
+path, not complete conformance: its documented OBO flow uses an inbound
+user access token and returns a downstream access token. An integration
+with this profile needs a supported subject input, ID-JAG issuance and
+redemption, and the required DPoP processing; managed OBO support alone
+does not establish these capabilities ({{access-token-subject-gap}}).
+
+AgentCore's opaque workload access token is for first-party AgentCore
+services {{AWS-WORKLOAD-TOKEN}}. It is not the STS JWT in this example
+and is not external actor evidence under this profile.
 
 ## Client Attestation {#agent-evidence}
 
@@ -1433,6 +1525,29 @@ parameter of {{ACTOR-PROFILE, Section 16.2}} is published, it MUST
 describe only the paths actually supported and agree with the ID-JAG
 advertisement.
 
+# Agent Federation Requirements for WAG {#wag-flow}
+
+WAG carries the Governed Agent as subject for self-acting access. This
+section states the Agent Federation requirements that apply to WAG
+issuance and consumption. It is not a WAG wire profile: an interoperable
+IdP-issued, sender-constrained WAG remains pending {{wag-gaps}}, and
+this revision claims no WAG conformance.
+
+The IdP and RAS MUST apply {{identity}}, in particular
+{{agent-correlation}}, at these stages:
+
+| Stage | Required identity relationship |
+|---|---|
+| Workload evidence to IdP | Validated external identity resolves through an approved Identity Binding to one active Governed Agent |
+| IdP-issued WAG | Issuer-qualified `sub` identifies that Governed Agent; no `act` is needed solely to identify its executing instance |
+| WAG to local authorization | The RAS resolves the Governed Agent identity to one local agent principal in the authorized Target Tenant |
+| Access token to API | The token identifies the same agent in the RAS's subject namespace; authorization uses that agent's authority |
+
+The RAS MUST resolve the same Governed Agent to the same local principal
+whether it appears as a WAG subject or an ID-JAG actor; the acting
+relationship still determines authorization, and a shared agent link
+does not make those authorities interchangeable.
+
 # Security Considerations {#security}
 
 The security requirements of the selected credential and grant
@@ -1527,29 +1642,6 @@ established by {{RFC6755}}:
 The URI is used with ID-JAG's existing authorization server and client
 metadata parameters.
 
-# Agent Federation Requirements for WAG {#wag-flow}
-
-WAG carries the Governed Agent as subject for self-acting access. This
-section states the Agent Federation requirements that apply to WAG
-issuance and consumption. It is not a WAG wire profile: an interoperable
-IdP-issued, sender-constrained WAG remains pending {{wag-gaps}}, and
-this revision claims no WAG conformance.
-
-The IdP and RAS MUST apply {{identity}}, in particular
-{{agent-correlation}}, at these stages:
-
-| Stage | Required identity relationship |
-|---|---|
-| Workload evidence to IdP | Validated external identity resolves through an approved Identity Binding to one active Governed Agent |
-| IdP-issued WAG | Issuer-qualified `sub` identifies that Governed Agent; no `act` is needed solely to identify its executing instance |
-| WAG to local authorization | The RAS resolves the Governed Agent identity to one local agent principal in the authorized Target Tenant |
-| Access token to API | The token identifies the same agent in the RAS's subject namespace; authorization uses that agent's authority |
-
-The RAS MUST resolve the same Governed Agent to the same local principal
-whether it appears as a WAG subject or an ID-JAG actor; the acting
-relationship still determines authorization, and a shared agent link
-does not make those authorities interchangeable.
-
 --- back
 
 # Dependencies and Deferred Work {#upstream-gaps}
@@ -1594,6 +1686,28 @@ explicit confirmation processing ({{redemption}}) and takes no
 dependency on JWT DPoP Grant.
 
 ## Deferred Compositions
+
+### User Access Tokens as Subjects {#access-token-subject-gap}
+
+Deployed OBO flows, including {{AWS-AGENTCORE-OBO}}, exchange a user
+access token for downstream access. {{ID-JAG, Section 4.3}} defines
+ID Token, SAML assertion, and refresh-token subject inputs; this
+revision does not add an access-token subject composition. A follow-on
+profile needs to define:
+
+* Which issuers and token classes are eligible, how the token's audience
+  authorizes its use by the authenticated exchange client, and how the
+  IdP validates JWT or opaque tokens without accepting arbitrary API
+  tokens as identity assertions.
+* How the original user, tenant, authorized client, and any existing
+  actor relationship are resolved; how sender constraints are enforced
+  when the exchange client differs from the original token holder.
+* Which retained authorization permits a new downstream audience and
+  authority, and how expiry and revocation constrain grant issuance.
+
+This work should be coordinated with ID-JAG's subject-token processing.
+Changing only `subject_token_type` to a generic JWT type does not
+resolve the audience and authorization differences.
 
 ### Continuation with ICA {#continuation-sources}
 
