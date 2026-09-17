@@ -14,9 +14,9 @@ SPIFFE JWT-SVID as the common interoperability input.
        For user-delegated access, it profiles the Identity Assertion JWT
 Authorization Grant (ID-JAG), carrying the user as subject and the
 Governed Agent as actor. Two adoption profiles share the governance
-requirements; the full profile additionally requires sender-constrained
-grants. For self-acting access, it defines identity and linking
-requirements intended for composition with the Workload Authorization
+requirements; bound governed agent access additionally requires
+sender-constrained grants. For self-acting access, it defines identity
+and linking requirements intended for composition with the Workload Authorization
 Grant (WAG). This revision does not define or claim conformance to a
 WAG wire profile. 
     " name="description">
@@ -1098,9 +1098,9 @@ SPIFFE JWT-SVID as the common interoperability input.<a href="#section-abstract-
 <p id="section-abstract-2">For user-delegated access, it profiles the Identity Assertion JWT
 Authorization Grant (ID-JAG), carrying the user as subject and the
 Governed Agent as actor. Two adoption profiles share the governance
-requirements; the full profile additionally requires sender-constrained
-grants. For self-acting access, it defines identity and linking
-requirements intended for composition with the Workload Authorization
+requirements; bound governed agent access additionally requires
+sender-constrained grants. For self-acting access, it defines identity
+and linking requirements intended for composition with the Workload Authorization
 Grant (WAG). This revision does not define or claim conformance to a
 WAG wire profile.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
@@ -1350,12 +1350,12 @@ WAG wire profile.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-client-metadata" class="internal xref">Client Metadata</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3">
-                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-discovery-and-profile-selec" class="internal xref">Discovery and Profile Selection</a></p>
+                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-discovery-and-profile-appli" class="internal xref">Discovery and Profile Applicability</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-agent-federation-requiremen" class="internal xref">Agent Federation Requirements for WAG</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-identity-requirements-for-a" class="internal xref">Identity Requirements for a Future WAG Composition</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
             <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
@@ -1534,7 +1534,7 @@ not a new principal type or credential format (<a href="#model" class="auto inte
 described in <span>[<a href="#BCP14" class="cite xref">BCP14</a>]</span> (<a href="#RFC2119" class="auto internal xref">RFC2119</a>) (<a href="#RFC8174" class="auto internal xref">RFC8174</a>) when, and only when, they
 appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
 <p id="section-2-2">OAuth and Token Exchange terms follow <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.
-Client Attestation and Client Instance follow <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
+Client Attestation terminology follows <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
 <div id="roles">
 <section id="section-2.1">
         <h3 id="name-roles">
@@ -1690,8 +1690,8 @@ Agent.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Agent acts as itself</td>
-              <td class="text-left" rowspan="1" colspan="1">WAG; Governed Agent is the subject</td>
-              <td class="text-left" rowspan="1" colspan="1">Identity and linking requirements in <a href="#wag-flow" class="auto internal xref">Section 11</a>; wire details pending <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>
+              <td class="text-left" rowspan="1" colspan="1">Intended WAG composition; Governed Agent is the subject</td>
+              <td class="text-left" rowspan="1" colspan="1">Informative identity and linking requirements in <a href="#wag-flow" class="auto internal xref">Section 11</a>; wire details pending <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>
 </td>
             </tr>
             <tr>
@@ -1807,8 +1807,9 @@ configuration; a client using platform JWTs need not implement SPIFFE.<a href="#
             </ul>
 </li>
           <li class="normal" id="section-3.2-5.2">
-            <p id="section-3.2-5.2.1"><strong>WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 11</a> states the federation requirements applicable to
-WAG. This revision claims no WAG protocol conformance (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>).<a href="#section-3.2-5.2.1" class="pilcrow">¶</a></p>
+            <p id="section-3.2-5.2.1"><strong>WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 11</a> is informative and describes identity and linking
+requirements for a future composition. WAG is outside the conformance
+targets of this revision (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>).<a href="#section-3.2-5.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-3.2-6">Implementations <span class="bcp14">MAY</span> support other flows but <span class="bcp14">MUST NOT</span> retry the same
@@ -1818,7 +1819,7 @@ validation or authorization fails under this profile.<a href="#section-3.2-6" cl
 protection are separate choices. Even bound governed agent access can
 use bearer workload evidence and, under explicit resource policy,
 bearer access tokens. <a href="#grant-protection" class="auto internal xref">Section 8.3</a> and <a href="#discovery" class="auto internal xref">Section 10.3</a> define
-selection and downgrade prevention; <a href="#access-token-protection" class="auto internal xref">Section 8.5.4</a> defines
+applicability and downgrade prevention; <a href="#access-token-protection" class="auto internal xref">Section 8.5.4</a> defines
 protection on the API hop.<a href="#section-3.2-7" class="pilcrow">¶</a></p>
 <p id="section-3.2-8">Not in this revision: continuation composition, provisioning protocols
 and account administration, multi-agent delegation chains, instance
@@ -1948,7 +1949,7 @@ from the underlying protocols are summarized in <a href="#profile-additions" cla
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">IdP</td>
-              <td class="text-left" rowspan="1" colspan="1">Construct the governed actor and issue the bounded grant</td>
+              <td class="text-left" rowspan="1" colspan="1">Construct the governed actor and issue the governed ID-JAG</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>, <a href="#grant-issuance" class="auto internal xref">Section 8.4.5</a>
 </td>
@@ -2116,7 +2117,7 @@ interface for these relationships. Configuration includes:<a href="#section-4-8"
             <td class="text-left" rowspan="1" colspan="1">No</td>
           </tr>
           <tr>
-            <td class="text-left" rowspan="1" colspan="1">Selected profile and minimum per client, trust relationship, and resource</td>
+            <td class="text-left" rowspan="1" colspan="1">Applicable profile and minimum per client, trust relationship, and resource</td>
             <td class="text-left" rowspan="1" colspan="1">Client, IdP, RAS, and resource policy</td>
             <td class="text-left" rowspan="1" colspan="1">Client, IdP, RAS, API</td>
             <td class="text-left" rowspan="1" colspan="1">Metadata advertises capability, not acceptance policy (<a href="#discovery" class="auto internal xref">Section 10.3</a>)</td>
@@ -2323,7 +2324,7 @@ RAS correlates both to its local principals.<a href="#section-6-1" class="pilcro
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Client Attestation, agent has its own client</td>
+              <td class="text-left" rowspan="1" colspan="1">Client Attestation whose attested client maps explicitly to one Governed Agent</td>
               <td class="text-left" rowspan="1" colspan="1">Trusted attester and validated Client Attestation <code>sub</code> under <a href="#agent-evidence" class="auto internal xref">Section 9.2</a>
 </td>
               <td class="text-left" rowspan="1" colspan="1">The validated <code>sub</code> identifies the OAuth client; client-to-agent mapping is explicit</td>
@@ -2365,14 +2366,13 @@ tokens; their treatment follows <a href="#status-changes" class="auto internal x
 client to use the selected Identity Binding in the selected flow with
 the selected actor credential class (<a href="#flow-configuration" class="auto internal xref">Section 8.2</a>). The IdP
 <span class="bcp14">MUST NOT</span> substitute the client's identity for the resolved actor.<a href="#section-6.1-6" class="pilcrow">¶</a></p>
-<p id="section-6.1-7">A Client Association <span class="bcp14">MAY</span> name one binding or authorize a set of
-bindings for a Governed Agent. A set can be enumerated or selected by
-explicit policy constraints on credential authorities and classes.
-The IdP <span class="bcp14">MUST</span> evaluate that policy against the selected binding; a
-common Governed Agent alone <span class="bcp14">MUST NOT</span> establish permission. Adding a
-binding permits client use only if the existing policy explicitly
-covers it or an administrator extends that policy. No association
-overrides a disabled binding, and no per-binding policy record is required.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
+<p id="section-6.1-7">A Client Association <span class="bcp14">MAY</span> authorize one or more Identity Bindings. The
+IdP <span class="bcp14">MUST</span> determine explicitly whether the selected binding is within
+that authorization. Authorization of one binding, a credential
+authority, a credential class, or the Governed Agent itself <span class="bcp14">MUST NOT</span>
+imply authorization of another binding unless the association's policy
+explicitly includes it. No association overrides a disabled binding.
+Policy representation and evaluation mechanisms are outside this profile.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subject-resolution">
@@ -2381,9 +2381,10 @@ overrides a disabled binding, and no per-binding policy record is required.<a hr
 <a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-subject-resolution-and-link" class="section-name selfRef">Subject Resolution and Linking</a>
         </h3>
 <p id="section-6.2-1">For ID-JAG, subject resolution identifies the user and linking
-associates that identity with a local account; WAG subject resolution
-follows <a href="#wag-flow" class="auto internal xref">Section 11</a>. Subject identifiers, tenant relationships, and
-<code>aud_sub</code>, <code>aud_tenant</code>, and <code>sub_id</code> follow Sections <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">3.1</a>, <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-5" class="relref">5</a>, and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-6" class="relref">6</a> of <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>; this profile adds the following.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+associates that identity with a local account. The intended self-acting
+composition is described informatively in <a href="#wag-flow" class="auto internal xref">Section 11</a>.
+Subject identifiers, tenant relationships, and <code>aud_sub</code>, <code>aud_tenant</code>,
+and <code>sub_id</code> follow Sections <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">3.1</a>, <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-5" class="relref">5</a>, and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-6" class="relref">6</a> of <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>; this profile adds the following.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
 <p id="section-6.2-2">The IdP <span class="bcp14">MUST</span>:<a href="#section-6.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.2-3.1">
@@ -2442,7 +2443,7 @@ deployment choices (<a href="#operational-guidance" class="auto internal xref">A
 <a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-governed-agent-attribution" class="section-name selfRef">Governed Agent Attribution</a>
         </h3>
 <p id="section-6.3-1">The Governed Agent identity is the pair of IdP issuer and agent
-identifier: WAG (<code>iss</code>, <code>sub</code>) or ID-JAG (<code>act.iss</code>, <code>act.sub</code>).
+identifier, carried in ID-JAG as (<code>act.iss</code>, <code>act.sub</code>).
 The RAS <span class="bcp14">MUST</span>:<a href="#section-6.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.3-2.1">
@@ -2457,16 +2458,23 @@ replace it.<a href="#section-6.3-2.1.1" class="pilcrow">¶</a></p>
 <p id="section-6.3-3">User-account and agent-record links are distinct. A changed Identity
 Binding or local agent link <span class="bcp14">MUST NOT</span> transfer an existing delegation
 to a different agent.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
-<p id="section-6.3-4">Where the RAS requires a local agent principal, the IdP or its
+<p id="section-6.3-4">The RAS <span class="bcp14">MUST</span> preserve the IdP-qualified Governed Agent identity in the
+access token or its introspection context. It <span class="bcp14">MUST NOT</span> translate
+<code>act.sub</code> to the RAS-local agent-principal identifier or replace
+<code>act.iss</code> with its own issuer. The local agent record supports
+authorization and attribution; it does not replace the federated actor.
+Thus, user identity is translated into the RAS namespace, while agent
+identity is preserved and correlated with a local record.<a href="#section-6.3-4" class="pilcrow">¶</a></p>
+<p id="section-6.3-5">Where the RAS requires a local agent principal, the IdP or its
 authorized directory connector <span class="bcp14">SHOULD</span> provision and synchronize that
 principal keyed by the same pair and <span class="bcp14">SHOULD</span> propagate activation and
 deactivation. Once deactivation is applied, the RAS <span class="bcp14">MUST</span> reject new
 issuance and refresh for that agent; outstanding tokens follow
 <a href="#status-changes" class="auto internal xref">Section 12.5</a>. No provisioning protocol is required
-(<a href="#operational-guidance" class="auto internal xref">Appendix A.3</a>).<a href="#section-6.3-4" class="pilcrow">¶</a></p>
-<p id="section-6.3-5">Existing service principals and directory connectors can satisfy these
+(<a href="#operational-guidance" class="auto internal xref">Appendix A.3</a>).<a href="#section-6.3-5" class="pilcrow">¶</a></p>
+<p id="section-6.3-6">Existing service principals and directory connectors can satisfy these
 requirements; no particular principal class or provisioning protocol
-is required.<a href="#section-6.3-5" class="pilcrow">¶</a></p>
+is required.<a href="#section-6.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2480,31 +2488,24 @@ is required.<a href="#section-6.3-5" class="pilcrow">¶</a></p>
 <a href="#inputs" class="auto internal xref">Section 4.1</a> and <a href="#identity" class="auto internal xref">Section 6</a>, the IdP <span class="bcp14">MUST</span> authorize issuance under
 current assignments and policy for the resolved agent, authenticated
 client, acting relationship, Governance and Target Tenants, RAS, resource, and
-requested authority:<a href="#section-7-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-7-2.1">
-          <p id="section-7-2.1.1">Self-acting authority <span class="bcp14">MUST NOT</span> exceed the agent's authority.<a href="#section-7-2.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-7-2.2">
-          <p id="section-7-2.2.1">Delegated authority <span class="bcp14">MUST NOT</span> exceed the user's authority and the
-agent's authorized delegation (<a href="#delegation-authorization" class="auto internal xref">Section 7.1</a>).
-The actor gate is defined in <a href="#actor-authorization" class="auto internal xref">Section 7.3</a>.<a href="#section-7-2.2.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
-<p id="section-7-3">The IdP authorizes cross-domain delegation within its configured
+requested authority. Delegated authority <span class="bcp14">MUST NOT</span> exceed the user's
+authority and the agent's authorized delegation
+(<a href="#delegation-authorization" class="auto internal xref">Section 7.1</a>). The actor gate is defined in
+<a href="#actor-authorization" class="auto internal xref">Section 7.3</a>.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">The IdP authorizes cross-domain delegation within its configured
 authority; the RAS and API apply resource-specific policy to the actual
 operation. The IdP need not interpret every tool argument or business
 object. An issuance decision that depends on those semantics requires
 authoritative resource-domain evaluation, locally or through a trusted
-policy service.<a href="#section-7-3" class="pilcrow">¶</a></p>
-<p id="section-7-4">The IdP <span class="bcp14">MAY</span> narrow scope, reflecting the result in the grant and
+policy service.<a href="#section-7-2" class="pilcrow">¶</a></p>
+<p id="section-7-3">The IdP <span class="bcp14">MAY</span> narrow scope, reflecting the result in the grant and
 response under <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>. It <span class="bcp14">MUST</span> return <code>invalid_scope</code> if no scope
 can be granted. It <span class="bcp14">MUST NOT</span> issue by dropping a required actor or
 binding, substituting an external identifier for the Governed Agent,
 or weakening proof requirements. Denied delegation <span class="bcp14">MUST NOT</span> fall back
-to self-acting access.<a href="#section-7-4" class="pilcrow">¶</a></p>
-<p id="section-7-5">Governed Agent identity and actor attribution do not establish the
-purpose, approval, or lifecycle of a multi-operation task.<a href="#section-7-5" class="pilcrow">¶</a></p>
+to self-acting access.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<p id="section-7-4">Governed Agent identity and actor attribution do not establish the
+purpose, approval, or lifecycle of a multi-operation task.<a href="#section-7-4" class="pilcrow">¶</a></p>
 <div id="delegation-authorization">
 <section id="section-7.1">
         <h3 id="name-delegation-authorization">
@@ -2648,7 +2649,7 @@ referenced sections define the requirements.<a href="#section-8.1-1" class="pilc
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Request narrowing</td>
-              <td class="text-left" rowspan="1" colspan="1">Actor evidence, explicit resource, and non-empty scope required; no incoming actor chain</td>
+              <td class="text-left" rowspan="1" colspan="1">Actor evidence, exactly one resource, and non-empty scope required; no incoming actor chain</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#root-request" class="auto internal xref">Section 8.4.1</a>, <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>
 </td>
@@ -2662,7 +2663,7 @@ referenced sections define the requirements.<a href="#section-8.1-1" class="pilc
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Grant narrowing</td>
-              <td class="text-left" rowspan="1" colspan="1">Resource and scope constraints, and expiration bounded by evidence and policy; bound profile additionally requires DPoP and <code>cnf.jkt</code>
+              <td class="text-left" rowspan="1" colspan="1">One resource URI as a string, scope constraints, and expiration bounded by evidence and policy; bound profile additionally requires DPoP and <code>cnf.jkt</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#grant-issuance" class="auto internal xref">Section 8.4.5</a>, <a href="#grant-protection" class="auto internal xref">Section 8.3</a>
@@ -2724,7 +2725,7 @@ target RAS (<a href="#subject-resolution" class="auto internal xref">Section 6.2
             <p id="section-8.2-2.3.1">The Governance Tenant, Target Tenant, RAS issuer, and permitted resource.<a href="#section-8.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.2-2.4">
-            <p id="section-8.2-2.4.1">The selected adoption profile and minimum requirements under <a href="#discovery" class="auto internal xref">Section 10.3</a>.<a href="#section-8.2-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-8.2-2.4.1">The applicable governed profile and minimum requirements under <a href="#discovery" class="auto internal xref">Section 10.3</a>.<a href="#section-8.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-8.2-3">The IdP <span class="bcp14">MUST</span> derive the ID-JAG <code>client_id</code> from an authoritative
@@ -2733,8 +2734,8 @@ registration at the target RAS. A client-supplied downstream client
 identifier <span class="bcp14">MUST NOT</span> select or override that association. This
 association is distinct from the Client Association that permits use
 of an Identity Binding.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
-<p id="section-8.2-4">The IdP and RAS <span class="bcp14">MUST</span> apply the selected profile whenever it is configured
-for the client and trust relationship, even if <code>actor_token</code>, <code>act</code>, or
+<p id="section-8.2-4">The IdP and RAS <span class="bcp14">MUST</span> enforce the applicable profile for the configured
+client and trust relationship, even if <code>actor_token</code>, <code>act</code>, or
 <code>cnf</code> is omitted from a request or grant.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
 <p id="section-8.2-5">Each authorization server establishes authoritative client metadata
 through registration or, when supported, <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>. Clients selecting
@@ -2828,7 +2829,7 @@ recovery when fresh user authorization is required.<a href="#section-8.2-13.5.1"
         <h3 id="name-grant-protection">
 <a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-grant-protection" class="section-name selfRef">Grant Protection</a>
         </h3>
-<p id="section-8.3-1">The selected profile determines whether an ID-JAG without sender
+<p id="section-8.3-1">The applicable profile determines whether an ID-JAG without sender
 constraint is acceptable. Client authentication and all governance
 requirements remain mandatory in either profile.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -2843,7 +2844,7 @@ with <code>invalid_grant</code>.<a href="#section-8.3-2.1.1" class="pilcrow">¶<
           <li class="normal" id="section-8.3-2.2">
             <p id="section-8.3-2.2.1"><strong>Governed agent access:</strong> The IdP and RAS <span class="bcp14">MAY</span> issue and accept grants
 without <code>cnf</code> only when trusted policy explicitly permits them for
-the client, trust relationship, and requested resources. DPoP support
+the client, trust relationship, and requested resource. DPoP support
 is <span class="bcp14">OPTIONAL</span>. If the issuance request includes a DPoP proof, the IdP
 <span class="bcp14">MUST</span> validate it and bind the grant under <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-9.8.1.1" class="relref">Section 9.8.1.1</a></span>.<a href="#section-8.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
@@ -2953,30 +2954,36 @@ The following parameters are <span class="bcp14">REQUIRED</span>:<a href="#secti
                 <td class="text-left" rowspan="1" colspan="1">
                   <code>resource</code>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">One or more resource URIs under <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>, all served by the RAS named in <code>audience</code>
+                <td class="text-left" rowspan="1" colspan="1">Exactly one resource URI under <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>, served by the RAS named in <code>audience</code>
 </td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">
                   <code>scope</code>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Non-empty scope string for the requested resources</td>
+                <td class="text-left" rowspan="1" colspan="1">Non-empty scope string for the requested resource</td>
               </tr>
             </tbody>
           </table>
 <p id="section-8.4.1-3"><code>audience</code> selects the RAS that will redeem the grant; <code>resource</code>
-selects protected-resource authority at that RAS. Multiple resources
-allow separate redemptions of one grant for resource-specific access
-tokens; each redemption selects one resource under <a href="#redemption-request" class="auto internal xref">Section 8.5.1</a>.<a href="#section-8.4.1-3" class="pilcrow">¶</a></p>
-<p id="section-8.4.1-4">This profile narrows ID-JAG by requiring actor evidence, an explicit
+selects protected-resource authority at that RAS. The request <span class="bcp14">MUST</span>
+contain exactly one <code>resource</code> parameter. A client requiring access to
+multiple resources <span class="bcp14">MUST</span> obtain a separate ID-JAG for each resource.
+The IdP <span class="bcp14">MUST</span> reject multiple <code>resource</code> parameters with <code>invalid_target</code>.<a href="#section-8.4.1-3" class="pilcrow">¶</a></p>
+<p id="section-8.4.1-4">This profile narrows ID-JAG by requiring actor evidence, exactly one
 resource, and a non-empty scope; <code>authorization_details</code> <span class="bcp14">MAY</span>
 accompany <code>scope</code> and is processed under ID-JAG. Requiring scope gives
 this revision a common authorization mechanism through grant issuance,
 redemption, refresh, and API enforcement. Resource-specific
 authorization details can supplement it; RAR-only authorization is
 outside this revision (<a href="#rar-gap" class="auto internal xref">Appendix A.2.10</a>).<a href="#section-8.4.1-4" class="pilcrow">¶</a></p>
-<p id="section-8.4.1-5">DPoP processing and the bound profile's additional requirement follow
-<a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#section-8.4.1-5" class="pilcrow">¶</a></p>
+<p id="section-8.4.1-5">One resource per grant avoids carrying different scope ceilings for
+different resources. The IdP <span class="bcp14">MUST</span> constrain all granted scope and
+<code>authorization_details</code> to that resource. If requested authorization
+details cannot be confined to it, the IdP <span class="bcp14">MUST</span> reject the request with
+<code>invalid_target</code> rather than authorize additional resources.<a href="#section-8.4.1-5" class="pilcrow">¶</a></p>
+<p id="section-8.4.1-6">DPoP processing and the bound profile's additional requirement follow
+<a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#section-8.4.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subject-token-validation">
@@ -3059,7 +3066,7 @@ rules; the IdP <span class="bcp14">MUST NOT</span> try validators until one acce
                 <td class="text-left" rowspan="1" colspan="1">
                   <span class="bcp14">OPTIONAL</span>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Identical compact JWT in <code>actor_token</code> and <code>OAuth-Client-Attestation</code>; own-client processing under <a href="#agent-evidence" class="auto internal xref">Section 9.2</a>
+                <td class="text-left" rowspan="1" colspan="1">Identical compact JWT in <code>actor_token</code> and <code>OAuth-Client-Attestation</code>; attested client maps explicitly to one Governed Agent under <a href="#agent-evidence" class="auto internal xref">Section 9.2</a>
 </td>
               </tr>
             </tbody>
@@ -3167,8 +3174,7 @@ and additionally satisfy:<a href="#section-8.4.5-1" class="pilcrow">¶</a></p>
                 <td class="text-left" rowspan="1" colspan="1">
                   <code>resource</code>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Authorized resource URI or array of URIs, using the representation in <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>
-</td>
+                <td class="text-left" rowspan="1" colspan="1">The authorized resource URI as a JSON string; arrays are not permitted in this profile</td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">
@@ -3265,7 +3271,7 @@ parameters are <span class="bcp14">REQUIRED</span> unless marked <span class="bc
                 <td class="text-left" rowspan="1" colspan="1">
                   <code>resource</code>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">One resource authorized by the grant</td>
+                <td class="text-left" rowspan="1" colspan="1">Exactly one parameter whose value equals the grant's resource URI</td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">
@@ -3278,6 +3284,8 @@ parameters are <span class="bcp14">REQUIRED</span> unless marked <span class="bc
           </table>
 <p id="section-8.5.1-3">The confirmation checks of <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-9.8.1.2" class="relref">Section 9.8.1.2</a></span> apply to this
 grant type (<a href="#bound-grant-coordination" class="auto internal xref">Appendix A.1.2</a>).<a href="#section-8.5.1-3" class="pilcrow">¶</a></p>
+<p id="section-8.5.1-4">The RAS <span class="bcp14">MUST</span> reject multiple <code>resource</code> parameters or a requested
+resource different from the grant's resource with <code>invalid_target</code>.<a href="#section-8.5.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="redemption-validation">
@@ -3305,9 +3313,13 @@ configured minimum profile even when <code>cnf</code> is absent. Independently
 authenticate the client identified by <code>client_id</code>.<a href="#section-8.5.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-8.5.2-2.3">
-              <p id="section-8.5.2-2.3.1"><strong>Authority:</strong> Require the grant's resource and scope constraints.
-Validate the requested resource and any scope reduction, and apply
-ID-JAG's processing for any <code>authorization_details</code> present.<a href="#section-8.5.2-2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-8.5.2-2.3.1"><strong>Authority:</strong> Require <code>resource</code> to be a single resource URI encoded
+as a JSON string; reject missing or invalid values, including arrays,
+with <code>invalid_grant</code>. Require the requested resource to match that
+string exactly. Require a non-empty <code>scope</code> string and validate any
+scope reduction. Apply ID-JAG's
+processing for <code>authorization_details</code>; reject the grant with
+<code>invalid_grant</code> if its authority extends beyond that resource.<a href="#section-8.5.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-8.5.2-2.4">
               <p id="section-8.5.2-2.4.1"><strong>Local authorization:</strong> Resolve the user under
@@ -3331,7 +3343,8 @@ with these claims under <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]
 <ul class="normal">
 <li class="normal" id="section-8.5.3-2.1">
               <p id="section-8.5.3-2.1.1"><strong>Identity:</strong> RAS as issuer, resolved user as subject, and validated
-<code>act</code> unchanged. The authenticated client <span class="bcp14">MUST NOT</span> replace the actor.<a href="#section-8.5.3-2.1.1" class="pilcrow">¶</a></p>
+<code>act</code> unchanged under <a href="#agent-correlation" class="auto internal xref">Section 6.3</a>. Neither the authenticated
+client nor the local agent-principal identifier replaces the actor.<a href="#section-8.5.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.5.3-2.2">
               <p id="section-8.5.3-2.2.1"><strong>Authority:</strong> Redeemed resource as audience and non-empty authorized
@@ -3510,7 +3523,10 @@ a new grant in this revision.<a href="#section-8.5.6-4.1.1" class="pilcrow">¶</
             <li class="normal" id="section-8.5.6-4.2">
               <p id="section-8.5.6-4.2.1">Preserve the user, qualified actor, Target Tenant, resource, and
 authorization ceiling, including <code>authorization_details</code>. Apply
-current local user and actor policy and <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>], <a href="https://rfc-editor.org/rfc/rfc9396#section-6" class="relref">Section 6</a></span>.<a href="#section-8.5.6-4.2.1" class="pilcrow">¶</a></p>
+current local user and actor policy and <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>], <a href="https://rfc-editor.org/rfc/rfc9396#section-6" class="relref">Section 6</a></span>.
+A refresh request <span class="bcp14">MUST NOT</span> select a different resource; reject it
+with <code>invalid_target</code> if it supplies multiple <code>resource</code> parameters
+or a value different from the retained resource.<a href="#section-8.5.6-4.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.5.6-4.3">
               <p id="section-8.5.6-4.3.1">Enforce current minimum-profile policy against the profile under
@@ -3532,8 +3548,14 @@ authorization expiration.<a href="#section-8.5.6-4.5.1" class="pilcrow">¶</a></
           </ul>
 <p id="section-8.5.6-5">This is RAS-local authorization context; no refresh-token format,
 storage representation, or cross-domain refresh exchange is defined.<a href="#section-8.5.6-5" class="pilcrow">¶</a></p>
-<p id="section-8.5.6-6">Refresh is not evidence of a fresh IdP decision. IdP-side revocation
-reaches the RAS only through a signal or online check (<a href="#status-changes" class="auto internal xref">Section 12.5</a>).<a href="#section-8.5.6-6" class="pilcrow">¶</a></p>
+<p id="section-8.5.6-6">The absolute expiration bounds authorization derived from one ID-JAG,
+not the entire delegated session. A newly issued ID-JAG based on a new
+IdP authorization decision <span class="bcp14">MAY</span> establish another RAS authorization
+period if current RAS policy permits it. Repeated issuance using an IdP
+refresh token therefore relies on IdP refresh-token and delegation
+policy, and any cumulative RAS limits, to bound overall unattended access.<a href="#section-8.5.6-6" class="pilcrow">¶</a></p>
+<p id="section-8.5.6-7">Refresh is not evidence of a fresh IdP decision. IdP-side revocation
+reaches the RAS only through a signal or online check (<a href="#status-changes" class="auto internal xref">Section 12.5</a>).<a href="#section-8.5.6-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3556,9 +3578,15 @@ before authorization. This profile specifies the following outcomes:<a href="#se
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Missing <code>actor_token</code> when this profile is configured, unsupported input combination, or ambiguous credential classification</td>
+              <td class="text-left" rowspan="1" colspan="1">Missing required request parameter, unsupported input combination, or ambiguous credential classification</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_request</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Multiple <code>resource</code> parameters, a requested resource outside the grant or refresh authorization, or exchange authorization details that cannot be confined to the requested resource</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_target</code>
 </td>
             </tr>
             <tr>
@@ -3650,7 +3678,7 @@ duration. Cross-domain continuity using Identity Continuation Assertion
 <p id="section-8.8-1">The client <span class="bcp14">MUST</span> associate each cached grant, access token, and refresh
 token with its authorized user, Governed Agent, Governance and Target
 Tenants, OAuth client registrations, target RAS and resource, authority,
-selected profile, and proof-binding context. It <span class="bcp14">MUST</span> reuse a token or
+applicable profile, and proof-binding context. It <span class="bcp14">MUST</span> reuse a token or
 grant only when that context authorizes the operation. A shared client
 identifier or matching scope alone <span class="bcp14">MUST NOT</span> permit reuse across agents,
 users, or tenants.<a href="#section-8.8-1" class="pilcrow">¶</a></p>
@@ -3838,10 +3866,11 @@ exchange DPoP does not add an issuer-bound presenter key.<a href="#section-9.1-7
         <h3 id="name-client-attestation">
 <a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-client-attestation" class="section-name selfRef">Client Attestation</a>
         </h3>
-<p id="section-9.2-1">Client Attestation is an <span class="bcp14">OPTIONAL</span> direct actor input for an agent with
-its own client. The client <span class="bcp14">MUST</span> present the identical compact JWT in
-<code>actor_token</code> and the <code>OAuth-Client-Attestation</code> header and
-authenticate with the configured ATTEST method; the IdP <span class="bcp14">MUST</span> validate
+<p id="section-9.2-1">Client Attestation is an <span class="bcp14">OPTIONAL</span> direct actor input where the attested
+OAuth client identity maps explicitly to one Governed Agent. The client
+<span class="bcp14">MUST</span> present the identical compact JWT in <code>actor_token</code> and the
+<code>OAuth-Client-Attestation</code> header and authenticate with the configured
+ATTEST method; the IdP <span class="bcp14">MUST</span> validate
 the attestation and proof under <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span> before resolving the agent
 (<a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>).<a href="#section-9.2-1" class="pilcrow">¶</a></p>
 <p id="section-9.2-2">The IdP <span class="bcp14">MUST</span> identify the attester unambiguously from the trusted
@@ -3981,30 +4010,31 @@ CIMD. Its <code>grant_types</code> <span class="bcp14">MUST</span> permit:<a hre
 </div>
 <div id="discovery">
 <section id="section-10.3">
-        <h3 id="name-discovery-and-profile-selec">
-<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-discovery-and-profile-selec" class="section-name selfRef">Discovery and Profile Selection</a>
+        <h3 id="name-discovery-and-profile-appli">
+<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-discovery-and-profile-appli" class="section-name selfRef">Discovery and Profile Applicability</a>
         </h3>
 <p id="section-10.3-1">RAS support is advertised in metadata. IdP issuance requires bilateral
 configuration of trust, Identity Bindings, and Client Associations.
-Profile selection follows these rules:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+Profile applicability follows these rules:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-10.3-2">
 <li id="section-10.3-2.1">
-            <p id="section-10.3-2.1.1">Before exchange, the client, IdP, and RAS <span class="bcp14">MUST</span> establish through
-trusted configuration the selected profile and minimum requirements
-for the client, issuer trust relationship, and target resources.
-If a request spans resources, it <span class="bcp14">MUST</span> satisfy every resource's minimum.<a href="#section-10.3-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-10.3-2.1.1">Before exchange, trusted configuration <span class="bcp14">MUST</span> establish the applicable
+governed profile and minimum requirements for the client, issuer
+trust relationship, and target resource. The client, IdP, and RAS
+<span class="bcp14">MUST</span> use that configuration. Client identity, issuer context, and
+target resource identify the applicable policy; this document defines
+no transaction-level profile negotiation.<a href="#section-10.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-10.3-2.2">
             <p id="section-10.3-2.2.1">Each server <span class="bcp14">MUST</span> enforce its configured minimum regardless of absent
-<code>actor_token</code>, <code>act</code>, or <code>cnf</code>. Metadata advertises capabilities; it
-<span class="bcp14">MUST NOT</span> authorize a lower profile or override resource policy.<a href="#section-10.3-2.2.1" class="pilcrow">¶</a></p>
+<code>actor_token</code>, <code>act</code>, DPoP, or <code>cnf</code>. Their presence or absence <span class="bcp14">MUST NOT</span> select a different profile. Metadata advertises capabilities;
+it <span class="bcp14">MUST NOT</span> authorize a lower profile or override resource policy.<a href="#section-10.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-10.3-2.3">
-            <p id="section-10.3-2.3.1">Implementations <span class="bcp14">MUST NOT</span> select a lower profile because actor or
-confirmation claims are absent, retry a failed governed request as
-ordinary EMA, or drop proof to retry as governed agent access. A lower
-profile requires a separately authorized configuration, not an
-error-driven fallback.<a href="#section-10.3-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-10.3-2.3.1">Implementations <span class="bcp14">MUST NOT</span> retry a failed governed request as ordinary
+EMA or drop proof to retry as governed agent access. A lower profile
+requires a separately authorized configuration, not an error-driven
+fallback.<a href="#section-10.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-10.3-2.4">
             <p id="section-10.3-2.4.1">The RAS and API <span class="bcp14">MUST</span> agree on the minimum profile for their resource.
@@ -4076,22 +4106,22 @@ advertisement.<a href="#section-10.3-6" class="pilcrow">¶</a></p>
 </div>
 <div id="wag-flow">
 <section id="section-11">
-      <h2 id="name-agent-federation-requiremen">
-<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-agent-federation-requiremen" class="section-name selfRef">Agent Federation Requirements for WAG</a>
+      <h2 id="name-identity-requirements-for-a">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-identity-requirements-for-a" class="section-name selfRef">Identity Requirements for a Future WAG Composition</a>
       </h2>
-<p id="section-11-1">WAG carries the Governed Agent as subject for self-acting access. This
-section states the Agent Federation requirements that apply to WAG
-issuance and consumption. It is not a WAG wire profile: an interoperable
-IdP-issued, sender-constrained WAG remains pending <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>, and
-this revision claims no WAG conformance.<a href="#section-11-1" class="pilcrow">¶</a></p>
-<p id="section-11-2">The IdP and RAS <span class="bcp14">MUST</span> apply <a href="#identity" class="auto internal xref">Section 6</a>, in particular
-<a href="#agent-correlation" class="auto internal xref">Section 6.3</a>, at these stages:<a href="#section-11-2" class="pilcrow">¶</a></p>
+<p id="section-11-1">This informative section describes identity and linking requirements
+for a future WAG composition carrying the Governed Agent as subject
+for self-acting access. An interoperable IdP-issued, sender-constrained
+WAG remains pending <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>; this revision defines no WAG wire
+profile or implementation conformance target.<a href="#section-11-1" class="pilcrow">¶</a></p>
+<p id="section-11-2">A future composition will need to preserve the identity invariants in
+<a href="#identity" class="auto internal xref">Section 6</a>, particularly <a href="#agent-correlation" class="auto internal xref">Section 6.3</a>, at these stages:<a href="#section-11-2" class="pilcrow">¶</a></p>
 <table class="center" id="table-21">
         <caption><a href="#table-21" class="selfRef">Table 21</a></caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">Stage</th>
-            <th class="text-left" rowspan="1" colspan="1">Required identity relationship</th>
+            <th class="text-left" rowspan="1" colspan="1">Intended identity relationship</th>
           </tr>
         </thead>
         <tbody>
@@ -4113,10 +4143,11 @@ this revision claims no WAG conformance.<a href="#section-11-1" class="pilcrow">
           </tr>
         </tbody>
       </table>
-<p id="section-11-4">The RAS <span class="bcp14">MUST</span> resolve the same Governed Agent to the same local principal
-whether it appears as a WAG subject or an ID-JAG actor; the acting
-relationship still determines authorization, and a shared agent link
-does not make those authorities interchangeable.<a href="#section-11-4" class="pilcrow">¶</a></p>
+<p id="section-11-4">The intended composition resolves the same Governed Agent to the same
+local principal whether it appears as a WAG subject or an ID-JAG actor.
+Self-acting authority is limited to the agent's own authority; delegated
+authority remains limited by the user's authority and approved delegation.
+A shared agent link does not make those authorities interchangeable.<a href="#section-11-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security">
@@ -5193,7 +5224,9 @@ authorization expiration at initial issuance. For example, a four-hour
 authorization with a thirty-minute inactivity limit permits renewal
 only while both limits hold. Rotation does not restart the four-hour
 period, each access token expires no later than its end, and extension
-requires a new ID-JAG.<a href="#appendix-B.6-1" class="pilcrow">¶</a></p>
+requires a new ID-JAG and current RAS authorization. This limit does not
+bound subsequent authorization periods established by new grants
+(<a href="#ras-refresh" class="auto internal xref">Section 8.5.6</a>).<a href="#appendix-B.6-1" class="pilcrow">¶</a></p>
 <p id="appendix-B.6-2">Each rejection below changes one condition in the walkthrough; all
 other credentials, proofs, and policy checks succeed. Token endpoint
 errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API errors follow <a href="#resource-errors" class="auto internal xref">Section 8.9.1</a>.<a href="#appendix-B.6-2" class="pilcrow">¶</a></p>
@@ -5207,6 +5240,16 @@ errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API 
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Exchange contains a second <code>resource</code> parameter</td>
+              <td class="text-left" rowspan="1" colspan="1">IdP</td>
+              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_target</code>; obtain separate grants for the resources</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">ID-JAG <code>resource</code> is an array, even with one URI</td>
+              <td class="text-left" rowspan="1" colspan="1">RAS</td>
+              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_grant</code>; this profile requires a JSON string</td>
+            </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">JWT-SVID remains valid, but its Identity Binding is disabled</td>
               <td class="text-left" rowspan="1" colspan="1">IdP</td>
@@ -5250,10 +5293,9 @@ errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API 
       <h2 id="name-example-aws-sts-and-amazon-">
 <a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-example-aws-sts-and-amazon-" class="section-name selfRef">Example: AWS STS and Amazon Bedrock AgentCore</a>
       </h2>
-<p id="appendix-C-1">This non-normative example illustrates <a href="#imported-jwt-input" class="auto internal xref">Section 9.1</a>.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
-<p id="appendix-C-2">This non-normative example uses the AWS STS <code>GetWebIdentityToken</code>
+<p id="appendix-C-1">This non-normative example uses the AWS STS <code>GetWebIdentityToken</code>
 credential documented in <span>[<a href="#AWS-TOKEN-CLAIMS" class="cite xref">AWS-TOKEN-CLAIMS</a>]</span>. It fits the existing
-platform-JWT input without a new credential format:<a href="#appendix-C-2" class="pilcrow">¶</a></p>
+platform-JWT input (<a href="#imported-jwt-input" class="auto internal xref">Section 9.1</a>) without a new credential format:<a href="#appendix-C-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-27">
         <caption><a href="#table-27" class="selfRef">Table 27</a></caption>
 <thead>
@@ -5298,30 +5340,30 @@ platform-JWT input without a new credential format:<a href="#appendix-C-2" class
           </tr>
         </tbody>
       </table>
-<p id="appendix-C-4">The selector addresses the string <code>aws_account</code> within the
+<p id="appendix-C-3">The selector addresses the string <code>aws_account</code> within the
 <code>https://sts.amazonaws.com/</code> object; <code>~1</code> escapes each slash in that
 member name. The client presents the STS JWT as <code>actor_token</code>,
 authenticates separately, and supplies a supported user credential and
-any proof required by the selected profile under <a href="#root-request" class="auto internal xref">Section 8.4.1</a>.
+any proof required by the applicable profile under <a href="#root-request" class="auto internal xref">Section 8.4.1</a>.
 The resulting actor is
-<code>{"iss":"https://idp.example/","sub":"agent-42"}</code>.<a href="#appendix-C-4" class="pilcrow">¶</a></p>
-<p id="appendix-C-5">The execution role and AgentCore Workload Identity are distinct
+<code>{"iss":"https://idp.example/","sub":"agent-42"}</code>.<a href="#appendix-C-3" class="pilcrow">¶</a></p>
+<p id="appendix-C-4">The execution role and AgentCore Workload Identity are distinct
 <span>[<a href="#AWS-AGENT-IDENTITY" class="cite xref">AWS-AGENT-IDENTITY</a>]</span>. If several agents share this role, issuer and
 <code>sub</code> alone identify the shared IAM principal, not an individual agent.
 Mapping them to distinct Governed Agents requires distinct credential
 identities or additional trusted selectors. An agent name supplied by
-the caller does not provide that distinction.<a href="#appendix-C-5" class="pilcrow">¶</a></p>
-<p id="appendix-C-6">AgentCore's documented <code>AWS_IAM_ID_TOKEN_JWT</code> actor mode obtains an STS
+the caller does not provide that distinction.<a href="#appendix-C-4" class="pilcrow">¶</a></p>
+<p id="appendix-C-5">AgentCore's documented <code>AWS_IAM_ID_TOKEN_JWT</code> actor mode obtains an STS
 JWT with the credential provider's token endpoint as audience
 <span>[<a href="#AWS-AGENTCORE-OBO" class="cite xref">AWS-AGENTCORE-OBO</a>]</span>. This establishes an applicable actor-evidence
 path, not complete conformance: its documented OBO flow uses an inbound
 user access token and returns a downstream access token. An integration
 with this profile needs a supported subject input, ID-JAG issuance and
-redemption, and the selected profile's proof processing; managed OBO
-support alone does not establish these capabilities (<a href="#access-token-subject-gap" class="auto internal xref">Appendix A.2.3</a>).<a href="#appendix-C-6" class="pilcrow">¶</a></p>
-<p id="appendix-C-7">AgentCore's opaque workload access token is for first-party AgentCore
+redemption, and the applicable profile's proof processing; managed OBO
+support alone does not establish these capabilities (<a href="#access-token-subject-gap" class="auto internal xref">Appendix A.2.3</a>).<a href="#appendix-C-5" class="pilcrow">¶</a></p>
+<p id="appendix-C-6">AgentCore's opaque workload access token is for first-party AgentCore
 services <span>[<a href="#AWS-WORKLOAD-TOKEN" class="cite xref">AWS-WORKLOAD-TOKEN</a>]</span>. It is not the STS JWT in this example
-and is not external actor evidence under this profile.<a href="#appendix-C-7" class="pilcrow">¶</a></p>
+and is not external actor evidence under this profile.<a href="#appendix-C-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="document-history">
