@@ -3,7 +3,7 @@
 # OAuth 2.0 Profile for Governed Agent Federation
 
 This is the working area for "OAuth 2.0 Profile for Governed Agent Federation"
-and its companion, "Governed Agent Lifecycle State and OAuth Enforcement".
+and its lifecycle and Shared Signals companions.
 
 The draft defines how an IdP resolves dedicated OAuth client identities or
 independently validated workload identities to stable Governed Agents.
@@ -42,21 +42,23 @@ Continuation Assertion compositions remain deferred.
 
 ## Provisioning and Lifecycle Companion
 
-The companion defines transport-independent Governed Agent Lifecycle State
-for the same IdP-qualified identity. SCIM and Shared Signals carry that state
-into a lifecycle registry independently of local resource existence.
-Descriptive SCIM edits do not advance the lifecycle version.
+The lifecycle profile composes SCIM, Shared Signals, and OAuth for the same
+IdP-qualified identity. It applies ordered state to local correlation,
+disablement, reactivation, retirement, and authorization. It defines no new
+event type or SCIM schema.
 
-An eligibility lease limits reliance on active state; an authorization cutoff
-prevents old authorization from reviving after reactivation. A second layer
-applies state to OAuth redemption, refresh, and API access. Online introspection,
-bounded introspection caching, and expiring JWTs each have an explicit denial
-bound. Streams bind the governed issuer namespace to a Target Tenant. WAG
-remains a future wire composition using the same principal lifecycle.
+The separate event profile defines Agent State Changed with SSF subject
+identification, CAEP common claims, and event-specific lifecycle claims.
+Its SCIM mapping carries the same logical state using SCIM attribute names
+and dateTime values.
+It can be implemented independently of the OAuth enforcement profile.
+The lifecycle profile supplies the configured enforcement modes and denial
+bounds. WAG remains a future composition using the same principal lifecycle.
 
-* [Companion source](draft-mcguinness-oauth-governed-agent-lifecycle.md)
-* [Companion editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html)
-
+* [Lifecycle profile source](draft-mcguinness-oauth-governed-agent-lifecycle.md)
+* [Lifecycle profile editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html)
+* [Event specification source](draft-mcguinness-ssf-governed-agent-events.md)
+* [Event specification editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-ssf-governed-agent-events.html)
 
 ## Contributing
 
@@ -68,7 +70,7 @@ don't already know how to do that.
 
 ## Command Line Usage
 
-Formatted text and HTML versions of both drafts can be built using `make`.
+Formatted text and HTML versions of all drafts can be built using `make`.
 
 ```sh
 $ make

@@ -1,5 +1,5 @@
 ---
-title: "Governed Agent Lifecycle State and OAuth Enforcement"
+title: "Governed Agent Lifecycle Profile for SCIM and OAuth"
 abbrev: "Governed Agent Lifecycle"
 category: std
 docname: draft-mcguinness-oauth-governed-agent-lifecycle-latest
@@ -26,6 +26,14 @@ author:
    organization: Independent
    email: public@karlmcguinness.com
 normative:
+  AGENT-EVENTS:
+    title: "Governed Agent Lifecycle Events Profile"
+    author:
+      - name: Karl McGuinness
+    date: 2026-09-17
+    seriesinfo:
+      Internet-Draft: draft-mcguinness-ssf-governed-agent-events
+    target: https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-ssf-governed-agent-events.html
   FEDERATION:
     title: "OAuth 2.0 Profile for Governed Agent Federation"
     author:
@@ -41,21 +49,17 @@ normative:
     author:
       - org: OpenID Foundation
     date: 2025-08-29
-  RFC3339:
   RFC6749:
   RFC6750:
   RFC7519:
   RFC7643:
   RFC7644:
   RFC7662:
-  RFC8259:
   RFC8417:
   RFC8935:
   RFC8936:
   RFC9068:
-  RFC9493:
 informative:
-  RFC6755:
   RFC7009:
   RFC8792:
   SCIM-GOVERNANCE: I-D.kushwaha-scim-agent-governance
@@ -79,18 +83,15 @@ informative:
   WAG: I-D.carleton-workload-authz-grant
 --- abstract
 
-This document defines Governed Agent Lifecycle State: a versioned,
-transport-independent object expressing whether an issuer-qualified
-agent remains eligible. An eligibility lease limits reliance on active
-state, and an authorization cutoff prevents old authorization from
-reviving after reactivation.
+This document profiles SCIM provisioning, Shared Signals, and OAuth for
+the lifecycle of an issuer-qualified Governed Agent. It applies the state
+and events defined by Governed Agent Lifecycle Events Profile to local
+principal correlation, grant redemption, refresh, and API authorization.
 
-SCIM and Shared Signals bindings carry the same state into a receiver's
-lifecycle registry. A second layer applies that state to OAuth issuance,
-refresh, and resource access with explicit denial bounds. Lifecycle
-eligibility does not establish client authority, user delegation, or
-resource permissions. No new workload credential or delivery protocol
-is defined.
+An eligibility lease bounds reliance on active state. An authorization
+cutoff prevents old authorization from reviving after reactivation. The
+profile defines deployment requirements and denial bounds; it defines no
+new event type, State Record format, SCIM schema, or delivery protocol.
 
 --- middle
 
@@ -103,9 +104,9 @@ independently of the workload credentials used to establish it.
 
 For delegated access, the governed identity is the actor in an Identity
 Assertion JWT Authorization Grant (ID-JAG) {{ID-JAG}}. This companion
-uses Security Event Tokens (SETs) {{RFC8417}} and the Shared Signals
-Framework (SSF) {{SSF}} to convey lifecycle changes to the resource
-domain.
+profiles Governed Agent Lifecycle Events Profile {{AGENT-EVENTS}},
+carried in Security Event Tokens (SETs) {{RFC8417}} over the Shared
+Signals Framework (SSF) {{SSF}}.
 
 Federation establishes who the agent is. Lifecycle state establishes
 whether that identity remains eligible. SCIM reconciles its local
@@ -144,14 +145,14 @@ This profile defines a complete IdP-to-resource-domain path:
   API authorization.
 * Recover from duplicate, delayed, or missed delivery.
 
-It reuses the Agent resource in {{SCIM-AGENT}}. The extension defined
-here adds federation identity and synchronization semantics. It does not
-replace the Agent resource or define a general agent inventory.
+It uses the Agent resource in {{SCIM-AGENT}} and the lifecycle extension
+defined in {{AGENT-EVENTS}}. The event specification owns the state and
+wire formats; this document defines their SCIM and OAuth application.
 
 {{SCIM-GOVERNANCE}} describes broader administrative lifecycle states.
 {{WISE}} describes changes to workloads, credentials, and trust material.
 {{CAEP}} describes continuous-access events. Those mechanisms can supply
-inputs to an authority's decision. The state defined here expresses the
+inputs to an authority's decision. The state applied here expresses the
 result for a Governed Agent and the receiver obligations that follow.
 
 Platform-to-IdP enrollment, Identity Binding administration, individual
@@ -181,7 +182,8 @@ Lifecycle Receiver:
   run in the same process.
 
 Governed Agent Lifecycle State (State Record):
-: The transport-independent object in {{state-schema}}, containing
+: The logical snapshot defined in {{AGENT-EVENTS}} and applied under
+  {{state-schema}}, containing
   identity, lifecycle version, status, authorization cutoff, and lease.
 
 Eligibility Lease:
@@ -209,11 +211,11 @@ This document separates two layers:
 
 | Layer | Contract |
 |---|---|
-| Lifecycle state and distribution | State Record, eligibility lease, registry ordering, SCIM and Shared Signals bindings, and recovery |
+| Lifecycle state application | Apply the State Record from {{AGENT-EVENTS}} through SCIM and SSF to a local registry; reconcile and recover |
 | OAuth enforcement | Issuance-time interpretation of the cutoff, retained authorization provenance, resource enforcement modes, and denial bounds |
 
-The state model is reusable independently of its bindings. Conformance
-requires both layers and the bindings specified here; storing state
+{{AGENT-EVENTS}} defines independent event conformance. Conformance to
+this consuming profile requires both layers below; accepting an event
 alone does not establish an OAuth enforcement guarantee.
 
 A deployment claiming this profile MUST implement:
@@ -346,53 +348,24 @@ observable through this SCIM extension. A returned `active: true`
 reports the source's administrative status only; it is not an access
 decision.
 
-# Governed Agent Lifecycle State {#state-schema}
+# Lifecycle State Application {#state-schema}
 
-A State Record is a complete JSON object, not a SCIM resource or a
-delta. All members except `validUntil` are REQUIRED; `validUntil` is
-REQUIRED only for `active` state. Member names are case-sensitive;
-unknown members have no lifecycle meaning and MUST be ignored. Bindings
-MUST preserve the defined member values and semantics.
+The Authority and Receiver MUST use the State Record, version
+comparison, and transition rules defined in {{AGENT-EVENTS}}. This
+profile adds the clock bounds, local registry behavior, and OAuth
+effects below; it does not redefine the state members or event
+semantics.
 
-| Member | JSON type | Meaning |
-|---|---|---|
-| `issuer` | string | Governing IdP issuer identifier |
-| `subject` | string | Governed Agent identifier in that issuer's namespace |
-| `version` | string | Strictly increasing lifecycle version |
-| `status` | string | One of `active`, `disabled`, or `retired` |
-| `authorizationCutoff` | string | Time watermark invalidating authorization issued at or before it |
-| `assertedAt` | string | Time the Authority produced this State Record |
-| `validUntil` | string | Exclusive source expiration of the eligibility lease for active state |
-
-The identity pair MUST remain unchanged for the lifetime of the record.
-The JSON representation follows {{RFC8259}}; duplicate member names MUST
-be rejected rather than selecting one value.
-
-Timestamps MUST use RFC 3339 {{RFC3339}} UTC with uppercase `T` and `Z`,
-whole-second precision, and seconds from 00 through 59. Conversion to
-NumericDate counts seconds since 1970-01-01T00:00:00Z, ignoring leap
-seconds. For active state, `validUntil` MUST be later than `assertedAt`.
-For disabled or retired state, it SHOULD be omitted; its presence and
-value MUST be ignored during lifecycle validation and equality
-comparison.
+This document uses SCIM attribute names for registry state. For event input,
+the Receiver MUST apply the mapping in {{AGENT-EVENTS}}: identity comes
+from `sub_id`, `event_timestamp` maps to `assertedAt`, `authorization_cutoff`
+maps to `authorizationCutoff`, and `valid_until` maps to `validUntil`.
+Time arithmetic compares instants after conversion. An event has no nested
+`state` object.
 
 The Receiver MUST reject a cutoff later than `assertedAt + D`, using the
-configured issuer-ahead bound in {{parameters}}.
-
-`version` MUST be a decimal string representing an integer from 1
-through 9223372036854775807, using only ASCII digits and no leading
-zero. Comparison is numerical, not lexical. Implementations MUST
-preserve it without floating-point rounding; a signed 64-bit integer is
-sufficient. The Authority MUST increase it when any compared member
-changes, including a lease renewal; it MUST NOT reuse or reset a
-lifecycle version. Descriptive SCIM changes MUST NOT by themselves
-change the State Record or increment its version.
-
-The Authority MUST retain the current version and cutoff across
-restarts, backup recovery, and connector changes. Display names,
-ownership, local permissions, and resource modification timestamps are
-not members of this object and do not participate in its version
-sequence.
+configured issuer-ahead bound in {{parameters}}. Descriptive SCIM edits
+leave lifecycle state and its version unchanged.
 
 ## Eligibility Lease {#lease}
 
@@ -417,35 +390,16 @@ newer active State Record can restore eligibility. It does not reverse a
 disablement or cutoff invalidation. Local permissions and authorization
 remain separate decisions in either case.
 
-## States and Transitions {#transitions}
+## Activation and Cutoff Application {#transitions}
 
-| State | Meaning | Permitted next states |
-|---|---|---|
-| `active` | Enterprise eligibility within its effective lease deadline, subject to local authorization | `active`, `disabled`, `retired` |
-| `disabled` | Reversible withdrawal of enterprise eligibility | `disabled`, `active`, `retired` |
-| `retired` | Permanent withdrawal for this governed identity | `retired` |
+Initial provisioning SHOULD use disabled state. Initial activation
+requires explicit enterprise and local acceptance; resource creation
+alone MUST NOT supply either decision.
 
-Initial provisioning SHOULD use `disabled`. Initial `active` state
-requires explicit enterprise activation and local acceptance; record
-creation alone MUST NOT supply either decision.
-
-The following transitions MUST advance the Authorization Cutoff under
-{{cutoff}}: `active` to `disabled`, `active` to `retired`, and `disabled`
-to `active`. A transition from `disabled` to `retired` need not advance it.
-Other snapshots retain the cutoff unless the Authority intends to
-invalidate additional authorization. The cutoff MUST never decrease.
-
-A lease renewal alone advances the version without changing the cutoff.
-Descriptive SCIM edits change neither. Reactivation cannot restore
-authorization invalidated by an earlier cutoff.
-
-If whole-second precision prevents a strictly increased cutoff within
-the configured clock bound, the Authority waits before asserting the new
-transition. Disablement still closes the issuance gate immediately.
-
-Retirement is terminal. A new principal needs a new governed identifier.
-Deletion of a local SCIM representation MUST NOT permit reuse of the
-retired identity or erase its retirement protection.
+The Authority MUST generate cutoff advances required by {{AGENT-EVENTS}}
+using {{cutoff}}. If clock precision prevents a strict advance within
+the configured bound, it waits before asserting the transition;
+disablement still closes its issuance gate immediately.
 
 # Receiver Lifecycle Registry {#registry}
 
@@ -478,33 +432,22 @@ relax applied restrictions.
 
 ## State Acceptance and Ordering {#ordering}
 
-Both transport bindings MUST apply the following registry rules:
+Both transport bindings MUST apply the State Record validation and
+ordering rules in {{AGENT-EVENTS}}, with these application requirements:
 
-1. Authenticate the sender and authorize its issuer namespace and Target
-   Tenant before selecting the entry.
-2. Validate the complete State Record. Reject `assertedAt` in the future
-   by more than 2S; delay alone is not an error.
-   Apply the eligibility-lease clamp in {{lease}}.
-3. Compare with the highest accepted lifecycle version, including pending
-   state. A lower version is stale. An equal version with identical
-   defined member values is a duplicate; different values are a conflict.
-4. For a higher version, reject a decreasing cutoff, a transition out of
-   retirement, or a transition lacking the cutoff advance in {{transitions}}.
-   A decreasing `assertedAt` alone is not an error; version orders state.
-5. Persist accepted state. Apply SCIM updates before returning success;
-   SSF may acknowledge durable pending state. Application atomically
-   advances the applied record and its RAS enforcement state.
+1. Authorize the sender for the governing issuer and Target Tenant before
+   selecting the registry entry.
+2. Reject `assertedAt` more than 2S in the future and a cutoff beyond
+   `assertedAt + D`. Apply the lease clamp in {{lease}}.
+3. Include pending accepted state in the version comparison. Map stale,
+   conflicting, or invalid input to the SCIM or SSF response rules below.
+4. Persist accepted state. SCIM application is synchronous; SSF may
+   acknowledge durable pending state. Application atomically advances
+   the applied record and its RAS enforcement state.
 
-Equality compares the defined members after binding-specific decoding,
-not serialized bytes or member order; ignore `validUntil` for non-active
-state as specified in {{state-schema}}. An active record beyond its
-effective lease deadline can advance registry state but cannot establish
-active eligibility. Bindings map stale, conflicting, and invalid inputs
-to their existing response mechanisms ({{scim-updates}}, {{signals}}).
-
-An accepted later version MUST NOT allow an older pending record to
-become current afterward. Complete snapshots and the nondecreasing
-cutoff make intermediate versions unnecessary for recovery.
+The event specification's equality rule excludes `validUntil` for
+non-active state. A valid snapshot beyond its effective lease deadline
+can advance registry state without establishing eligibility.
 
 # SCIM Provisioning {#scim}
 
@@ -523,36 +466,16 @@ filtering on both extension identity attributes and their conjunction.
 PATCH and Bulk are OPTIONAL; if supported, they MUST preserve the
 atomicity and ordering rules below.
 
-## State-to-SCIM Mapping {#scim-schema}
+## Applying the SCIM Representation {#scim-schema}
 
-The extension schema URI is:
+The Receiver MUST use the `GovernedAgentLifecycle` extension defined by
+{{AGENT-EVENTS}}, including its attribute types, case handling, conditional
+`validUntil` requirement, and immutable identity fields. The extension
+represents applied registry state, whether received through SCIM or SSF.
 
-`urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent`
-
-Its name is `GovernedAgentLifecycle`. Each State Record member maps to a
-same-named SCIM attribute. `authorizationCutoff`, `assertedAt`, and
-`validUntil` have SCIM type `dateTime`; the other attributes have type
-`string`. Their values retain the representation in {{state-schema}}.
-
-All attributes are single-valued, returned by default, and have
-uniqueness `none`. All except `validUntil` have `required: true`;
-`validUntil` has `required: false` in the schema and is required by this
-profile only for active state. SCIM responses omit it for disabled or
-retired state. String attributes have `caseExact: true`. Mutability is
-`readWrite` except for immutable `issuer` and `subject`. The registry
-enforces uniqueness of the qualified identity within the Target Tenant;
-the individual attributes are not independently unique.
-
-Providers MUST advertise these characteristics in `/Schemas`. `status`
-has the three canonical values in {{transitions}}; the other attributes
-have no enumeration. SCIM attribute-name matching follows {{RFC7643}};
-the binding decodes those names to the State Record's canonical names
-before registry comparison. Ambiguous duplicate attributes MUST be
-rejected.
-
-The extension is a projection of the registry state. Its enclosing SCIM
-resource can change without changing lifecycle state, and lifecycle
-state can change without a SCIM write.
+The Receiver MUST enforce uniqueness of the qualified agent identity
+within each Target Tenant. Neither individual identity attribute is
+independently unique.
 
 ## Creation and Existing Records
 
@@ -670,7 +593,7 @@ authenticated poll request identifies the stream. The Receiver MUST
 then:
 
 1. Validate the SET issuer, signature, and audience against that stream.
-2. Require `state.issuer` to equal the stream's bound governing issuer.
+2. Require `sub_id.iss` to equal the stream's bound governing issuer.
 3. Use the stream's bound Target Tenant for the registry lookup.
 
 Ambiguous stream selection or a mismatch MUST be rejected. Neither the
@@ -682,41 +605,20 @@ binding requires a new stream and audience value; replay on another
 binding MUST be rejected. The Target Tenant scopes local correlation,
 not the qualified identity or its source version sequence.
 
-## Event Definition
+## Applying Lifecycle Events
 
-This document defines the SET event type:
-
-`urn:ietf:params:oauth:event-type:governed-agent-lifecycle`
-
-It carries the Authority's current State Record, including
-eligibility-lease renewals. It is an assertion of enterprise lifecycle
-state, not a command to grant local access.
-
-SET validation and delivery follow {{RFC8417}} and {{SSF}}, including
-`secevent+jwt` typing and SSF's prohibition on `exp`. The eligibility
-lease is not SET expiration. In addition, the event MUST:
-
-* Identify the agent using the top-level `sub_id` with the `iss_sub`
-  format from {{RFC9493}}.
-* Contain a `state` member whose value is the State Record object from
-  {{state-schema}}, with its members directly in that object. It MUST NOT
-  wrap them in a SCIM schema-URN member or include a `schemas` member.
-  Required member names use the spelling in that section. Receivers MUST
-  ignore other unknown members; they confer no lifecycle semantics.
-* Have matching `sub_id.iss` / `state.issuer` and `sub_id.sub` /
-  `state.subject` values.
-
-The event object has no other REQUIRED members. The subject MUST NOT be
-placed in an event-local `subject` member. A Receiver MUST NOT infer the
-agent's governing issuer from the SET's top-level `iss`.
+The Transmitter and Receiver MUST implement the Agent State Changed
+event defined in {{AGENT-EVENTS}}, including its payload, subject
+matching, and validation rules. This profile adds the stream-to-tenant
+binding above and the registry and enforcement requirements below. It
+defines no event identifier or alternative event payload.
 
 ## Delivery and Acceptance
 
 Both parties MUST support SSF push delivery using {{RFC8935}}. SSF poll
 delivery {{RFC8936}} MAY additionally be supported. Mandatory push
 support is this profile's requirement, not a requirement of base SSF.
-The event type is advertised through existing SSF event capability and
-stream configuration fields; no separate discovery protocol is defined.
+Event discovery follows {{AGENT-EVENTS}} and SSF.
 
 The Authority MUST arrange delivery of each new State Record through
 SCIM or SSF, and MUST enqueue a lifecycle event on every status or
@@ -725,10 +627,8 @@ cutoff change for each configured target stream.
 When a stream is paused or delivery fails, the Transmitter retains the
 event for its configured retry period and the connector uses SCIM
 reconciliation. Expiration of that period does not remove the obligation
-to reconcile current state. SCIM and SSF do not need to arrive in the
-same order. Retransmitting a record MUST NOT change its version or
-lease; a lease renewal requires a new State Record with a higher
-version.
+to reconcile current state. SCIM and SSF can arrive in different orders;
+both apply the common ordering rules in {{AGENT-EVENTS}}.
 
 Receivers MUST durably deduplicate SETs by Transmitter issuer and `jti`
 for the configured delivery retry period. Source-version processing
@@ -736,11 +636,9 @@ remains necessary after the deduplication record expires and across SCIM
 delivery of the same state. Neither `jti` nor SET `iat` is a state
 ordering mechanism.
 
-Accepted lower-version events and exact duplicates are acknowledged
-without changing state. Invalid or conflicting events use the delivery
-protocol's existing error reporting; this document defines no new
-delivery error code. Conflicting equal-version records MUST also raise
-an administrative diagnostic.
+Event acknowledgments and errors follow {{AGENT-EVENTS}}. This profile
+additionally requires an administrative diagnostic for conflicting
+equal-version records.
 
 A delivery acknowledgment confirms durable acceptance for processing,
 not completed API enforcement. E bounds application delay for the
@@ -1097,39 +995,8 @@ attributes can follow local retention policy.
 
 # IANA Considerations
 
-## SCIM Schema Registration
-
-This document requests registration in the SCIM Schema URIs registry
-under the procedure in {{RFC7643, Section 10.3}}. The registration
-template is in {{schema-registration}}.
-
-## OAuth URI Registration
-
-This document requests registration in the OAuth URI registry under
-{{RFC6755}}:
-
-* URN: `urn:ietf:params:oauth:event-type:governed-agent-lifecycle`
-* Common Name: Governed Agent Lifecycle Security Event
-* Change Controller: IETF
-* Specification Document: {{signals}} of this document.
-
-The proposed `event-type` composition uses the RFC 6755 registration
-procedure without creating a separate registry.
-
-# SCIM Schema Registration Template {#schema-registration}
-
-The registration template required by {{RFC7643, Section 10.3.2}} is:
-
-* Schema URI:
-  `urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent`
-* Schema Name: Governed Agent Lifecycle Extension
-* Intended or Associated Resource Type: Agent
-* Purpose: Carry the qualified agent identity and authoritative
-  lifecycle state used for provisioning and OAuth enforcement.
-* Single-value Attributes: `issuer`, `subject`, `version`, `status`,
-  `authorizationCutoff`, `assertedAt`, `validUntil`, as defined in
-  {{state-schema}} and mapped to SCIM types in {{scim-schema}}.
-* Multi-valued Attributes: None.
+This document requests no IANA registrations. {{AGENT-EVENTS}} defines the
+event URI and requests registration of the SCIM schema.
 
 --- back
 
@@ -1198,35 +1065,12 @@ access token on each request.
 At 12:02:00 the Authority disables the agent and publishes version 42.
 Its stream is administratively bound to issuer `https://idp.example` and
 Target Tenant `tenant-7`, with the exclusive audience
-`https://ras.example/lifecycle/tenant-7/idp-example`. The decoded SET
-has protected header `{"typ":"secevent+jwt"}` together with the
-negotiated signing algorithm and key identifier, and this payload:
-
-~~~ json
-{
-  "iss": "https://signals.idp.example",
-  "aud": "https://ras.example/lifecycle/tenant-7/idp-example",
-  "jti": "event-42",
-  "iat": 1789646520,
-  "sub_id": {
-    "format": "iss_sub",
-    "iss": "https://idp.example",
-    "sub": "agent-42"
-  },
-  "events": {
-    "urn:ietf:params:oauth:event-type:governed-agent-lifecycle": {
-      "state": {
-        "issuer": "https://idp.example",
-        "subject": "agent-42",
-        "version": "42",
-        "status": "disabled",
-        "authorizationCutoff": "2026-09-17T12:02:02Z",
-        "assertedAt": "2026-09-17T12:02:00Z"
-      }
-    }
-  }
-}
-~~~
+`https://ras.example/lifecycle/tenant-7/idp-example`. The Transmitter
+sends the event defined in {{AGENT-EVENTS}} with disabled state version
+42, `event_timestamp` corresponding to 12:02:00, and
+`authorization_cutoff` corresponding to 12:02:02. Its examples show the
+decoded SET. The stream audience identifies the receiving context; the
+payload identifies the governed agent.
 
 The Receiver applies version 42. Redemption and refresh fail with
 `invalid_grant`; introspection of the previously issued token returns
@@ -1258,30 +1102,19 @@ until its bounded expiry. Neither mode allows RAS refresh after the
 disablement is applied. Their longer bounds are explicit in
 {{freshness}}.
 
-# Relationship to Existing Work
+# Relationship to Event Specifications
 
-The assessed inputs are SCIM Agent Resource -00, SCIM Agent Governance
--00, and the WISE editor's copy. Their evolution can change the most
-appropriate schema and event bindings.
+This profile consumes the lifecycle snapshot from {{AGENT-EVENTS}}.
+That specification owns event definitions and their coordination with
+{{CAEP}}, {{WISE}}, and {{RISC}}; this document does not extend their event
+vocabularies. A future binding to existing SCIM Events would likewise be
+specified separately before this profile could claim support for it.
 
-This profile deliberately reuses the Agent resource, SCIM operations,
-SET subject identifiers, and SSF delivery. The new material is the
-transport-independent lifecycle state, shared ordering, eligibility
-lease, authorization cutoff, and OAuth enforcement contract.
-
-The account-disabled, account-enabled, and account-purged events in
-{{RISC}} report account transitions. They do not define this profile's
-shared source version, authorization cutoff, or eligibility lease.
-Those fields must also survive missed transitions and SCIM reconciliation.
-A dedicated event makes those receiver obligations explicit without
-changing the meaning of existing account events. This is a distinction
-in event semantics, not a claim that SSF subjects must be human users.
-
-Detailed quarantine workflows, autonomy classifications, and credential
-discovery are not required for that contract. A deployment using richer
-governance states maps them into active, disabled, or retired
-eligibility at the Lifecycle Authority, rather than asking each RAS to
-interpret them.
+The essential consumer requirements are authoritative agent correlation,
+shared state ordering, eligibility-lease enforcement, and application of
+the cutoff to retained authorization. A different event carrier cannot
+silently weaken those requirements or substitute a resource ETag for the
+lifecycle version.
 
 # Document History
 
