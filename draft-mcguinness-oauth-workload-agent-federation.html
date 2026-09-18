@@ -1949,7 +1949,7 @@ SPIFFE ID, display name, or instance identifier. Identity continuity is
 an explicit decision by the governing authority to preserve the same
 principal; it does not imply that the principal's permissions remain
 unchanged. Agent Principal continuity concerns the authorization
-principal, not continuity of a particular execution.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
+principal, not continuity of a particular execution or runtime instance.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 <p id="section-3.3-3">A transfer to a different Governance Tenant under a different
 administrative authority <span class="bcp14">MUST</span> create a new Agent Principal identifier
 and <span class="bcp14">MUST NOT</span> automatically carry forward delegations or RAS principal
@@ -1982,10 +1982,11 @@ Target Tenant for the requested resource uses <code>invalid_target</code>.<a hre
         <h3 id="name-governance-boundary-and-exe">
 <a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-governance-boundary-and-exe" class="section-name selfRef">Governance Boundary and Execution Independence</a>
         </h3>
-<p id="section-3.4-1">Use distinct Agent Principal identities when actors need independently
-managed authorization, delegation, attribution, local-principal
-correlation, or lifecycle, including disablement. Differences in process,
-replica, session, worker, or credential alone do not require distinct
+<p id="section-3.4-1">Clients, workloads, or other actors requiring independently managed
+authorization, delegation, attribution, resource correlation, or
+disablement as principals need separate Agent Principal identities.
+Differences in process, replica, session, worker, or credential alone
+do not require distinct
 identities. Sharing those elements does not justify combining actors
 that require independent governance.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
 <p id="section-3.4-2">Multiple executions <span class="bcp14">MAY</span> operate as the same Agent Principal, and an
@@ -1995,10 +1996,10 @@ multiple Agent Principals. The validated resolution input and its
 Identity Binding <span class="bcp14">MUST</span> distinguish exactly one Agent Principal for each
 authorization transaction; a shared workload identity alone cannot
 select among agents.<a href="#section-3.4-2" class="pilcrow">¶</a></p>
-<p id="section-3.4-3">Scaling, restarting, rescheduling, migration, or credential rotation
-<span class="bcp14">MUST NOT</span> by itself create, merge, or transfer Agent Principal authority.
-Creating additional executions, replicas, credentials, Identity Bindings,
-or Client Associations does not by itself increase the agent's authority.
+<p id="section-3.4-3">Scaling, restarting, rescheduling, migration, credential rotation, or
+creation of additional executions, replicas, credentials, Identity
+Bindings, or Client Associations <span class="bcp14">MUST NOT</span> by itself create, merge,
+transfer, or increase Agent Principal authority.
 Each transaction remains subject to the applicable Client Association,
 delegation authorization, target, and resource policy.
 This profile defines no aggregate budget, quota, or concurrency semantics.<a href="#section-3.4-3" class="pilcrow">¶</a></p>
@@ -2125,80 +2126,86 @@ from presented credentials.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
             </tr>
           </tbody>
         </table>
-<p id="section-4.2-4">Enterprise access is a migration baseline, not conformance to this
+<p id="section-4.2-4">"Bound" refers to sender constraint on the ID-JAG between issuance and
+redemption. It does not imply sender constraint on the agent-resolution
+credential or the resulting access token.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+<p id="section-4.2-5">Enterprise access is a migration baseline, not conformance to this
 document's governed profiles. Existing EMA deployments need no changes
 to continue on that path. Adding <code>act</code> alone does not establish governed
 agent conformance: identity resolution and actor authorization are also
-required. These adoption profiles apply to delegated ID-JAG, not WAG.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
-<p id="section-4.2-5">Unless explicitly limited to bound grants or a named profile, the
+required. These adoption profiles apply to delegated ID-JAG, not WAG.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+<p id="section-4.2-6">Unless explicitly limited to bound grants or a named profile, the
 requirements below apply to both governed profiles. Conformance claims
 <span class="bcp14">MUST</span> identify the supported profile by its URI (<a href="#metadata" class="auto internal xref">Section 10</a>),
-implemented role, and supported inputs:<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+implemented role, and supported inputs:<a href="#section-4.2-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4.2-6.1">
-            <p id="section-4.2-6.1.1"><strong>ID-JAG:</strong> The IdP, RAS, and client <span class="bcp14">MUST</span> implement their respective
+<li class="normal" id="section-4.2-7.1">
+            <p id="section-4.2-7.1.1"><strong>ID-JAG:</strong> The IdP, RAS, and client <span class="bcp14">MUST</span> implement their respective
 requirements in <a href="#model" class="auto internal xref">Section 3</a>, <a href="#evidence" class="auto internal xref">Section 5</a>, <a href="#identity" class="auto internal xref">Section 6</a>, <a href="#authorization" class="auto internal xref">Section 7</a>,
-<a href="#delegated-flow" class="auto internal xref">Section 8</a>, and <a href="#metadata" class="auto internal xref">Section 10</a>; the API <span class="bcp14">MUST</span> implement <a href="#api-processing" class="auto internal xref">Section 8.9</a>.<a href="#section-4.2-6.1.1" class="pilcrow">¶</a></p>
+<a href="#delegated-flow" class="auto internal xref">Section 8</a>, and <a href="#metadata" class="auto internal xref">Section 10</a>; the API <span class="bcp14">MUST</span> implement <a href="#api-processing" class="auto internal xref">Section 8.9</a>.<a href="#section-4.2-7.1.1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4.2-6.1.2.1">
-                <p id="section-4.2-6.1.2.1.1">The client and IdP <span class="bcp14">MUST</span> implement ID Token subjects and dedicated-client
+<li class="normal" id="section-4.2-7.1.2.1">
+                <p id="section-4.2-7.1.2.1.1">The client and IdP <span class="bcp14">MUST</span> implement ID Token subjects and dedicated-client
 resolution using RFC 7523 <code>private_key_jwt</code> authentication
-(<a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>).<a href="#section-4.2-6.1.2.1.1" class="pilcrow">¶</a></p>
+(<a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>).<a href="#section-4.2-7.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-4.2-6.1.2.2">
-                <p id="section-4.2-6.1.2.2.1">The client and RAS <span class="bcp14">MUST</span> implement <code>private_key_jwt</code> for redemption.
+              <li class="normal" id="section-4.2-7.1.2.2">
+                <p id="section-4.2-7.1.2.2.1">The client and RAS <span class="bcp14">MUST</span> implement <code>private_key_jwt</code> for redemption.
 DPoP support and use are <span class="bcp14">REQUIRED</span> for bound governed agent access;
-governed agent access follows <a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#section-4.2-6.1.2.2.1" class="pilcrow">¶</a></p>
+governed agent access follows <a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#section-4.2-7.1.2.2.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-4.2-6.1.2.3">
-                <p id="section-4.2-6.1.2.3.1">Access tokens are JWTs under <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span> or opaque tokens whose
+              <li class="normal" id="section-4.2-7.1.2.3">
+                <p id="section-4.2-7.1.2.3.1">Access tokens are JWTs under <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span> or opaque tokens whose
 introspection response carries the same context under
-<a href="#introspection" class="auto internal xref">Section 8.5.6</a>.<a href="#section-4.2-6.1.2.3.1" class="pilcrow">¶</a></p>
+<a href="#introspection" class="auto internal xref">Section 8.5.6</a>.<a href="#section-4.2-7.1.2.3.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-4.2-6.1.2.4">
-                <p id="section-4.2-6.1.2.4.1">SPIFFE JWT-SVIDs, existing platform JWTs, Client Attestation, SAML
+              <li class="normal" id="section-4.2-7.1.2.4">
+                <p id="section-4.2-7.1.2.4.1">SPIFFE JWT-SVIDs, existing platform JWTs, Client Attestation, SAML
 subjects, and IdP refresh-token subjects are <span class="bcp14">OPTIONAL</span> capabilities. A
 deployment selects mutually supported inputs through trusted
 configuration; neither role needs SPIFFE for the client-assertion path.
 Shared-client interoperability is bilateral: the client and IdP must
 agree on an input that distinguishes the agents. Conformance alone
-does not guarantee a common shared-client input.<a href="#section-4.2-6.1.2.4.1" class="pilcrow">¶</a></p>
+does not guarantee a common shared-client input.<a href="#section-4.2-7.1.2.4.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </li>
-          <li class="normal" id="section-4.2-6.2">
-            <p id="section-4.2-6.2.1"><strong>WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 11</a> describes the self-acting identity and authorization
+          <li class="normal" id="section-4.2-7.2">
+            <p id="section-4.2-7.2.1"><strong>WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 11</a> describes the self-acting identity and authorization
 composition informatively. This revision claims no WAG wire conformance
-while the requirements in <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a> remain unresolved.<a href="#section-4.2-6.2.1" class="pilcrow">¶</a></p>
+while the requirements in <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a> remain unresolved.<a href="#section-4.2-7.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-4.2-7">The mandatory interoperability path uses an ID Token subject and
+<p id="section-4.2-8">The mandatory interoperability path uses an ID Token subject and
 dedicated-client resolution at the IdP, followed by governed ID-JAG
 redemption using <code>private_key_jwt</code> at the RAS and actor-aware processing
-at the API. Grant protection follows the applicable governed profile.
-Support alone does not establish the required trust or authorization
-configuration. Deployments <span class="bcp14">MAY</span> use mutually supported optional inputs
-instead of the mandatory-to-implement path.<a href="#section-4.2-7" class="pilcrow">¶</a></p>
-<p id="section-4.2-8">Under <a href="#subject-token-validation" class="auto internal xref">Section 8.4.2</a>, the ID Token's audience identifies
+at the API. Grant protection follows the applicable governed profile.<a href="#section-4.2-8" class="pilcrow">¶</a></p>
+<p id="section-4.2-9">ID-JAG requires support for Identity Assertions (<span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.3" class="relref">Section 4.3</a></span>).
+This profile specifically requires ID Token support to give independent
+implementations a common subject-token format. This is an implementation
+baseline, not a requirement to deploy one client per agent: deployments
+<span class="bcp14">MAY</span> use mutually supported optional inputs. Support alone establishes
+neither trust nor authorization configuration.<a href="#section-4.2-9" class="pilcrow">¶</a></p>
+<p id="section-4.2-10">Under <a href="#subject-token-validation" class="auto internal xref">Section 8.4.2</a>, the ID Token's audience identifies
 the dedicated client. A token issued only to a shared <code>platform-sso</code>
 client cannot accompany
 authentication as a separate <code>analysis-client</code>. Dedicated deployments
 therefore need a user authorization flow for each agent's client
 registration, though an existing IdP session may avoid another login
 prompt. A platform retaining its shared SSO client instead uses an
-agreed independent workload input (<a href="#optional-inputs" class="auto internal xref">Section 9</a> or <a href="#jwt-svid-input" class="auto internal xref">Section 5.2</a>).<a href="#section-4.2-8" class="pilcrow">¶</a></p>
-<p id="section-4.2-9">Credential-class validation follows <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>; profile
-applicability and downgrade prevention follow <a href="#discovery" class="auto internal xref">Section 10.3</a>.<a href="#section-4.2-9" class="pilcrow">¶</a></p>
-<p id="section-4.2-10">Grant protection, workload-evidence protection, and access-token
+agreed independent workload input (<a href="#optional-inputs" class="auto internal xref">Section 9</a> or <a href="#jwt-svid-input" class="auto internal xref">Section 5.2</a>).<a href="#section-4.2-10" class="pilcrow">¶</a></p>
+<p id="section-4.2-11">Credential-class validation follows <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>; profile
+applicability and downgrade prevention follow <a href="#discovery" class="auto internal xref">Section 10.3</a>.<a href="#section-4.2-11" class="pilcrow">¶</a></p>
+<p id="section-4.2-12">Grant protection, workload-evidence protection, and access-token
 protection are separate choices. Even bound governed agent access can
 use bearer workload evidence and, under explicit resource policy,
 bearer access tokens. <a href="#grant-protection" class="auto internal xref">Section 8.3</a> and <a href="#discovery" class="auto internal xref">Section 10.3</a> define
 applicability and downgrade prevention; <a href="#access-token-protection" class="auto internal xref">Section 8.5.4</a> defines
-protection on the API hop.<a href="#section-4.2-10" class="pilcrow">¶</a></p>
-<p id="section-4.2-11">Not in this revision: continuation composition, provisioning protocols
+protection on the API hop.<a href="#section-4.2-12" class="pilcrow">¶</a></p>
+<p id="section-4.2-13">Not in this revision: continuation composition, provisioning protocols
 and account administration, multi-agent delegation chains, instance
 identification and propagation, client attester endorsement, and
-enrollment or key-replacement protocols (<a href="#upstream-gaps" class="auto internal xref">Appendix A</a>).<a href="#section-4.2-11" class="pilcrow">¶</a></p>
+enrollment or key-replacement protocols (<a href="#upstream-gaps" class="auto internal xref">Appendix A</a>).<a href="#section-4.2-13" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="configuration">
@@ -2619,8 +2626,10 @@ the AS <span class="bcp14">MUST</span> compare using exact string matching under
 audience configuration.<a href="#section-5.1.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-5.1.2-2.3">
-              <p id="section-5.1.2-2.3.1">A rejected assertion <span class="bcp14">MUST NOT</span> cause automatic retry with a different
-audience.<a href="#section-5.1.2-2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-5.1.2-2.3.1">A client <span class="bcp14">MAY</span> retry with another audience already authorized by trusted
+configuration for the same AS. An error response <span class="bcp14">MUST NOT</span> establish
+that authorization or broaden the configured audience set. Retries
+remain subject to <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>'s replay requirements.<a href="#section-5.1.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 <p id="section-5.1.2-3">This defines a common default while permitting existing AS audience
@@ -3058,9 +3067,10 @@ delegation. A valid signature or an <code>act</code> claim alone does not open
 the gate; failure to establish it <span class="bcp14">MUST</span> result in denial.<a href="#section-7.3-4.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.3-5">The gate <span class="bcp14">MAY</span> be implemented through an agent registration, tenant
-assignment, consent policy, or another explicit rule. Requiring the
-agent to also hold independent permissions on each object is local
+<p id="section-7.3-5">The actor gate is an authorization condition, not a protocol object.
+It <span class="bcp14">MAY</span> be implemented through an agent registration, tenant assignment,
+consent policy, or another explicit rule. Requiring the agent to also
+hold independent permissions on each object is local
 policy, not a baseline requirement.<a href="#section-7.3-5" class="pilcrow">¶</a></p>
 <p id="section-7.3-6">Every operation the API permits
 <span class="bcp14">MUST</span> be covered by an applicable actor-gate authorization. The API <span class="bcp14">MAY</span>
@@ -3435,22 +3445,24 @@ with <code>invalid_target</code>.<a href="#section-8.4.1-7" class="pilcrow">¶</
 <p id="section-8.4.1-8">This profile requires exactly one resource and a non-empty scope.
 It requires <code>actor_token</code> for actor-evidence inputs and omits it for
 configured dedicated-client resolution. <code>authorization_details</code> <span class="bcp14">MAY</span>
-accompany <code>scope</code> and is processed under ID-JAG. The scope requirement
-belongs to this ID-JAG realization: it supplies a common authorization
-mechanism through grant issuance, redemption, refresh, and API enforcement.
-Resource-specific authorization details can supplement it; RAR-only
-authorization is outside this revision (<a href="#excluded-compositions" class="auto internal xref">Appendix A.2.4</a>).<a href="#section-8.4.1-8" class="pilcrow">¶</a></p>
-<p id="section-8.4.1-9">One resource per grant avoids carrying different scope ceilings for
+accompany <code>scope</code> and is processed under ID-JAG.<a href="#section-8.4.1-8" class="pilcrow">¶</a></p>
+<p id="section-8.4.1-9">Requiring scope is a deliberate narrowing of ID-JAG for this realization,
+not an identity-model invariant. It supplies a common authorization
+mechanism through issuance, redemption, refresh, and API enforcement.
+Structured authorization details can supplement it; RAR-only support
+would require an agreed authorization-detail type and its processing
+rules across those stages and remains deferred (<a href="#excluded-compositions" class="auto internal xref">Appendix A.2.4</a>).<a href="#section-8.4.1-9" class="pilcrow">¶</a></p>
+<p id="section-8.4.1-10">One resource per grant avoids carrying different scope ceilings for
 different resources. The IdP <span class="bcp14">MUST</span> constrain all granted scope and
-<code>authorization_details</code> to that resource.<a href="#section-8.4.1-9" class="pilcrow">¶</a></p>
-<p id="section-8.4.1-10">If requested authorization details cannot be confined to it, the IdP
+<code>authorization_details</code> to that resource.<a href="#section-8.4.1-10" class="pilcrow">¶</a></p>
+<p id="section-8.4.1-11">If requested authorization details cannot be confined to it, the IdP
 <span class="bcp14">MUST</span> reject the request with <code>invalid_authorization_details</code> under
 <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>], <a href="https://rfc-editor.org/rfc/rfc9396#section-6" class="relref">Section 6</a></span> rather than authorize additional resources.
 Unsupported or invalid requested authorization details use the same
 error; an unacceptable <code>resource</code> parameter uses <code>invalid_target</code>
-(<a href="#errors" class="auto internal xref">Section 8.6</a>).<a href="#section-8.4.1-10" class="pilcrow">¶</a></p>
-<p id="section-8.4.1-11">DPoP processing and the bound profile's additional requirement follow
-<a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#section-8.4.1-11" class="pilcrow">¶</a></p>
+(<a href="#errors" class="auto internal xref">Section 8.6</a>).<a href="#section-8.4.1-11" class="pilcrow">¶</a></p>
+<p id="section-8.4.1-12">DPoP processing and the bound profile's additional requirement follow
+<a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#section-8.4.1-12" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subject-token-validation">
