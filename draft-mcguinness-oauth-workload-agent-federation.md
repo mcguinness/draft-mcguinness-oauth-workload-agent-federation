@@ -425,7 +425,7 @@ SPIFFE ID, display name, or instance identifier. Identity continuity is
 an explicit decision by the governing authority to preserve the same
 principal; it does not imply that the principal's permissions remain
 unchanged. Agent Principal continuity concerns the authorization
-principal, not continuity of a particular execution.
+principal, not continuity of a particular execution or runtime instance.
 
 A transfer to a different Governance Tenant under a different
 administrative authority MUST create a new Agent Principal identifier
@@ -453,10 +453,11 @@ Target Tenant for the requested resource uses `invalid_target`.
 
 ## Governance Boundary and Execution Independence {#governance-boundary}
 
-Use distinct Agent Principal identities when actors need independently
-managed authorization, delegation, attribution, local-principal
-correlation, or lifecycle, including disablement. Differences in process,
-replica, session, worker, or credential alone do not require distinct
+Clients, workloads, or other actors requiring independently managed
+authorization, delegation, attribution, resource correlation, or
+disablement as principals need separate Agent Principal identities.
+Differences in process, replica, session, worker, or credential alone
+do not require distinct
 identities. Sharing those elements does not justify combining actors
 that require independent governance.
 
@@ -468,10 +469,10 @@ Identity Binding MUST distinguish exactly one Agent Principal for each
 authorization transaction; a shared workload identity alone cannot
 select among agents.
 
-Scaling, restarting, rescheduling, migration, or credential rotation
-MUST NOT by itself create, merge, or transfer Agent Principal authority.
-Creating additional executions, replicas, credentials, Identity Bindings,
-or Client Associations does not by itself increase the agent's authority.
+Scaling, restarting, rescheduling, migration, credential rotation, or
+creation of additional executions, replicas, credentials, Identity
+Bindings, or Client Associations MUST NOT by itself create, merge,
+transfer, or increase Agent Principal authority.
 Each transaction remains subject to the applicable Client Association,
 delegation authorization, target, and resource policy.
 This profile defines no aggregate budget, quota, or concurrency semantics.
@@ -548,6 +549,10 @@ from presented credentials.
 | Governed agent access | Agent resolution, Identity Binding, Client Association, governed actor, tenant enforcement, and downstream actor gate | Grants without sender constraint permitted only by explicit policy; any binding present is enforced |
 | Bound governed agent access | All governed agent requirements plus DPoP at grant issuance and redemption | `cnf.jkt` and same-key continuity required |
 
+"Bound" refers to sender constraint on the ID-JAG between issuance and
+redemption. It does not imply sender constraint on the agent-resolution
+credential or the resulting access token.
+
 Enterprise access is a migration baseline, not conformance to this
 document's governed profiles. Existing EMA deployments need no changes
 to continue on that path. Adding `act` alone does not establish governed
@@ -586,9 +591,13 @@ The mandatory interoperability path uses an ID Token subject and
 dedicated-client resolution at the IdP, followed by governed ID-JAG
 redemption using `private_key_jwt` at the RAS and actor-aware processing
 at the API. Grant protection follows the applicable governed profile.
-Support alone does not establish the required trust or authorization
-configuration. Deployments MAY use mutually supported optional inputs
-instead of the mandatory-to-implement path.
+
+ID-JAG requires support for Identity Assertions ({{ID-JAG, Section 4.3}}).
+This profile specifically requires ID Token support to give independent
+implementations a common subject-token format. This is an implementation
+baseline, not a requirement to deploy one client per agent: deployments
+MAY use mutually supported optional inputs. Support alone establishes
+neither trust nor authorization configuration.
 
 Under {{subject-token-validation}}, the ID Token's audience identifies
 the dedicated client. A token issued only to a shared `platform-sso`
@@ -832,8 +841,10 @@ IdP and RAS:
   the AS MUST compare using exact string matching under
   {{RFC7523, Section 3}}. The assertion MUST NOT establish the accepted
   audience configuration.
-* A rejected assertion MUST NOT cause automatic retry with a different
-  audience.
+* A client MAY retry with another audience already authorized by trusted
+  configuration for the same AS. An error response MUST NOT establish
+  that authorization or broaden the configured audience set. Retries
+  remain subject to {{client-assertion-input}}'s replay requirements.
 
 This defines a common default while permitting existing AS audience
 conventions; it does not change other credential classes' audience rules.
@@ -1140,9 +1151,10 @@ For delegated access, the RAS and API MUST enforce both:
   delegation. A valid signature or an `act` claim alone does not open
   the gate; failure to establish it MUST result in denial.
 
-The gate MAY be implemented through an agent registration, tenant
-assignment, consent policy, or another explicit rule. Requiring the
-agent to also hold independent permissions on each object is local
+The actor gate is an authorization condition, not a protocol object.
+It MAY be implemented through an agent registration, tenant assignment,
+consent policy, or another explicit rule. Requiring the agent to also
+hold independent permissions on each object is local
 policy, not a baseline requirement.
 
 Every operation the API permits
@@ -1325,11 +1337,14 @@ with `invalid_target`.
 This profile requires exactly one resource and a non-empty scope.
 It requires `actor_token` for actor-evidence inputs and omits it for
 configured dedicated-client resolution. `authorization_details` MAY
-accompany `scope` and is processed under ID-JAG. The scope requirement
-belongs to this ID-JAG realization: it supplies a common authorization
-mechanism through grant issuance, redemption, refresh, and API enforcement.
-Resource-specific authorization details can supplement it; RAR-only
-authorization is outside this revision ({{excluded-compositions}}).
+accompany `scope` and is processed under ID-JAG.
+
+Requiring scope is a deliberate narrowing of ID-JAG for this realization,
+not an identity-model invariant. It supplies a common authorization
+mechanism through issuance, redemption, refresh, and API enforcement.
+Structured authorization details can supplement it; RAR-only support
+would require an agreed authorization-detail type and its processing
+rules across those stages and remains deferred ({{excluded-compositions}}).
 
 One resource per grant avoids carrying different scope ceilings for
 different resources. The IdP MUST constrain all granted scope and
