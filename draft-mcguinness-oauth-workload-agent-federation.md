@@ -145,6 +145,11 @@ workload identity to an Agent Principal, separately authorizes OAuth
 client use and user delegation, and carries the governed identity into
 the resource domain.
 
+Execution identity can be too coarse when one runtime serves several
+actors that need independent governance. It can also be too unstable
+when one actor moves across runtime identities while its authorization
+identity needs to remain stable.
+
 A dedicated OAuth client resolves through an explicit client-to-agent
 binding. A shared client uses independently validated workload identity
 to distinguish the agents it serves. Both deployments retain separate
@@ -426,6 +431,11 @@ an explicit decision by the governing authority to preserve the same
 principal; it does not imply that the principal's permissions remain
 unchanged. Agent Principal continuity concerns the authorization
 principal, not continuity of a particular execution or runtime instance.
+
+An Agent Principal identity does not itself prove which runtime or
+execution currently represents the agent; any such assurance comes from
+the validated evidence and proofs required by the resolution-input
+profile ({{evidence}}).
 
 A transfer to a different Governance Tenant under a different
 administrative authority MUST create a new Agent Principal identifier
