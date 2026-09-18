@@ -3,7 +3,8 @@
 # OAuth 2.0 Profile for Governed Agent Federation
 
 This is the working area for "OAuth 2.0 Profile for Governed Agent Federation"
-and its SCIM management, lifecycle, and Shared Signals companions.
+and its SCIM client management, agent management, lifecycle, and Shared
+Signals companions.
 
 The draft defines how an IdP resolves dedicated OAuth client identities or
 independently validated workload identities to stable Agent Principals.
@@ -42,13 +43,30 @@ Continuation Assertion compositions remain deferred.
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-workload-agent-federation)
 * [Compare Editor's Copy to Individual Draft](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.diff)
 
+## SCIM OAuth Client Management
+
+The generic OAuthClient profile develops the SCIM registration approach first
+proposed by Phil Hunt, Morteza Ansari, and Anthony Nadalin. It maps current
+OAuth registration metadata into SCIM 2.0 and defines management of the same
+registration through SCIM and RFC 7591/7592 interfaces. CIMD clients retain
+their URL identifiers and document-owned metadata; SCIM manages local
+admission and references used by agent associations. Client registration,
+agent identity, and permission to use that identity remain separate.
+
+* [OAuthClient profile source](draft-mcguinness-scim-oauth-client-management.md)
+* [OAuthClient editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-oauth-client-management.html)
+
 ## Platform-to-IdP SCIM Management
 
 The SCIM management profile provisions Agent Principals and administers
 Identity Bindings and Client Associations at the IdP. It reuses SCIM
 operations, adds a small Agent identity extension and two relationship
-resources, and keeps credential-authority trust, client registration,
-user delegation, and downstream revocation separate.
+resources, and references OAuthClient registrations from the generic profile.
+Dedicated-client bindings reference OAuthClient directly; shared-client
+deployments retain external workload bindings and separately authorize
+client use. Both support CIMD clients without copying their metadata.
+Credential-authority trust, client registration permission, user delegation,
+and downstream revocation remain separate.
 
 * [SCIM management profile source](draft-mcguinness-scim-agent-federation.md)
 * [SCIM management editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-agent-federation.html)
