@@ -14,7 +14,7 @@ Expires: 22 March 2027
 Abstract
 
    This document defines an event profile of the Shared Signals
-   Framework for Governed Agent lifecycle changes.  Transmitters report
+   Framework for Agent Principal lifecycle changes.  Transmitters report
    an agent's current eligibility, lifecycle version, authorization
    cutoff, and, when active, eligibility-lease expiration.  Receivers
    use these assertions under their own authorization policy or a
@@ -106,7 +106,7 @@ Table of Contents
 
 1.  Introduction
 
-   Governed Agent lifecycle events allow cooperating Transmitters and
+   Agent Principal lifecycle events allow cooperating Transmitters and
    Receivers to communicate changes in enterprise eligibility.  The
    subject is the stable issuer-qualified agent described by Governed
    Agent Federation [FEDERATION], independent of its workload
@@ -145,9 +145,9 @@ Table of Contents
    The event subject is identified by top-level sub_id, following the
    SSF rules for new event types.  Its format MUST be iss_sub [RFC9493]:
 
-   *  iss identifies the authority's Governed Agent namespace.
+   *  iss identifies the authority's Agent Principal namespace.
 
-   *  sub identifies the Governed Agent within that namespace.
+   *  sub identifies the Agent Principal within that namespace.
 
    Receivers MUST correlate the exact pair without case folding or URI
    rewriting and authorize the Transmitter to assert state for that
@@ -205,7 +205,7 @@ Table of Contents
    https://mcguinness.github.io/secevent/agent/state-changed
 
    Agent State Changed signals that the Authority has established a new
-   version of a Governed Agent's eligibility state.  This includes
+   version of an Agent Principal's eligibility state.  This includes
    initial state, disablement, reactivation, retirement, and renewal of
    an active eligibility lease.  Renewal changes the state version even
    when status is unchanged.
@@ -643,7 +643,7 @@ Appendix B.  Relationship to Existing Events
      | [WISE]    | Workload disabled, enabled, and purged events    |
      |           | overlap the lifecycle transitions.  They include |
      |           | workload and credential semantics that need      |
-     |           | explicit mapping to a Governed Agent.            |
+     |           | explicit mapping to an Agent Principal.          |
      +-----------+--------------------------------------------------+
      | [RISC]    | Account transitions can inform lifecycle         |
      |           | decisions but do not carry this snapshot's       |

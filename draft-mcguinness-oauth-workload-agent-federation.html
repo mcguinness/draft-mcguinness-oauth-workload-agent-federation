@@ -9,11 +9,11 @@
 <meta content="
        This document defines how an identity provider resolves a dedicated
 OAuth client identity or an independently validated workload identity
-to a stable Governed Agent principal. Client authority and user
+to a stable Agent Principal. Client authority and user
 delegation are authorized separately. Resource systems consume the
 issuer-qualified agent identity without interpreting the original
 credential. No new credential format is defined. 
-       The federation model covers self-acting access, with the Governed Agent
+       The federation model covers self-acting access, with the Agent Principal
 as subject, and delegated access, with the user as subject and the
 agent as actor. This revision defines a complete delegated profile of
 the Identity Assertion JWT Authorization Grant (ID-JAG), using existing
@@ -1095,11 +1095,11 @@ svg {
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This document defines how an identity provider resolves a dedicated
 OAuth client identity or an independently validated workload identity
-to a stable Governed Agent principal. Client authority and user
+to a stable Agent Principal. Client authority and user
 delegation are authorized separately. Resource systems consume the
 issuer-qualified agent identity without interpreting the original
 credential. No new credential format is defined.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">The federation model covers self-acting access, with the Governed Agent
+<p id="section-abstract-2">The federation model covers self-acting access, with the Agent Principal
 as subject, and delegated access, with the user as subject and the
 agent as actor. This revision defines a complete delegated profile of
 the Identity Assertion JWT Authorization Grant (ID-JAG), using existing
@@ -1249,7 +1249,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-governed-agent-resolution" class="internal xref">Governed Agent Resolution</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-agent-principal-resolution" class="internal xref">Agent Principal Resolution</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
                 <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-identity-binding" class="internal xref">Identity Binding</a></p>
@@ -1258,7 +1258,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-subject-resolution-and-link" class="internal xref">Subject Resolution and Linking</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
-                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-governed-agent-correlation" class="internal xref">Governed Agent Correlation</a></p>
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-agent-principal-correlation" class="internal xref">Agent Principal Correlation</a></p>
 </li>
             </ul>
 </li>
@@ -1530,7 +1530,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 stable authorization principals. Resource systems need to recognize
 those principals without understanding every platform's credentials.
 This document defines how an identity provider (IdP) resolves client or
-workload identity to a Governed Agent, separately authorizes OAuth
+workload identity to an Agent Principal, separately authorizes OAuth
 client use and user delegation, and carries the governed identity into
 the resource domain.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">A dedicated OAuth client resolves through an explicit client-to-agent
@@ -1561,7 +1561,7 @@ identity, client-authority, delegation, and resource-policy decisions.<a href="#
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">What resource-local principal represents the IdP-qualified agent?</td>
-            <td class="text-left" rowspan="1" colspan="1">Governed Agent Correlation</td>
+            <td class="text-left" rowspan="1" colspan="1">Agent Principal Correlation</td>
           </tr>
         </tbody>
       </table>
@@ -1643,8 +1643,8 @@ an explicit Identity Binding.<a href="#section-2.1-1.4.1" class="pilcrow">¶</a>
           <dd class="break"></dd>
 <dt id="section-2.1-1.5">Identity Provider (IdP):</dt>
           <dd style="margin-left: 1.5em" id="section-2.1-1.6">
-            <p id="section-2.1-1.6.1">The OAuth authorization server that resolves validated inputs to a
-Governed Agent, checks the permitted client and acting relationship,
+            <p id="section-2.1-1.6.1">The OAuth authorization server that resolves validated inputs to an
+Agent Principal, checks the permitted client and acting relationship,
 and issues a grant naming that agent as subject or actor.<a href="#section-2.1-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
@@ -1671,11 +1671,11 @@ the acting relationship and proof binding it carries.<a href="#section-2.1-1.10.
 <a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-terms" class="section-name selfRef">Terms</a>
         </h3>
 <span class="break"></span><dl class="dlParallel" id="section-2.2-1">
-          <dt id="section-2.2-1.1">Governed Agent:</dt>
+          <dt id="section-2.2-1.1">Agent Principal:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.2">
             <p id="section-2.2-1.2.1">A stable, non-human authorization principal in the IdP's namespace
-representing an independently governed actor. Its identity defines
-the boundary for independently managed authorization, delegation,
+representing an independently governed workload or agent. Its identity
+defines the boundary for independently managed authorization, delegation,
 attribution, correlation, and disablement. It is independent of the
 external credentials, execution environments, and OAuth clients used
 to obtain authorization for it; it does not necessarily identify an
@@ -1687,20 +1687,20 @@ execution, process, replica, installation, or OAuth client.<a href="#section-2.2
             <p id="section-2.2-1.4.1">An external computational principal identified by accepted workload
 evidence. It can span multiple running instances; its identity does
 not necessarily distinguish executions. An Identity Binding resolves
-that external identity to a Governed Agent.<a href="#section-2.2-1.4.1" class="pilcrow">¶</a></p>
+that external identity to an Agent Principal.<a href="#section-2.2-1.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.2-1.5">Dedicated client:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.6">
             <p id="section-2.2-1.6.1">An OAuth client whose authenticated identity maps explicitly to one
-Governed Agent in the IdP's client-registration context. Dedicated
+Agent Principal in the IdP's client-registration context. Dedicated
 refers to identity resolution, not to one process, replica, or
 installation.<a href="#section-2.2-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.2-1.7">Shared client:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.8">
-            <p id="section-2.2-1.8.1">An OAuth client serving multiple Governed Agents. Its authenticated
+            <p id="section-2.2-1.8.1">An OAuth client serving multiple Agent Principals. Its authenticated
 client identity alone cannot distinguish those agents; resolution
 requires independently validated workload identity.<a href="#section-2.2-1.8.1" class="pilcrow">¶</a></p>
 </dd>
@@ -1709,14 +1709,14 @@ requires independently validated workload identity.<a href="#section-2.2-1.8.1" 
           <dd style="margin-left: 1.5em" id="section-2.2-1.10">
             <p id="section-2.2-1.10.1">An approved association from an exact client or workload identity,
 qualified by its registration context or credential authority, to one
-Governed Agent. It is administered in a Governance Tenant and
+Agent Principal. It is administered in a Governance Tenant and
 establishes identity resolution, not permission to exercise the agent.<a href="#section-2.2-1.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.2-1.11">Client Association:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.12">
-            <p id="section-2.2-1.12.1">An approved permission for an authenticated OAuth client to use a
-Governed Agent through the selected Identity Binding, flow, and
+            <p id="section-2.2-1.12.1">An approved permission for an authenticated OAuth client to use an
+Agent Principal through the selected Identity Binding, flow, and
 credential class. The permission can cover one binding or an explicitly
 authorized set of bindings under <a href="#identity-binding" class="auto internal xref">Section 6.1</a>. It is an
 authorization-policy relationship, independent of identity resolution.<a href="#section-2.2-1.12.1" class="pilcrow">¶</a></p>
@@ -1732,14 +1732,14 @@ JWT encoding alone does not identify the class.<a href="#section-2.2-1.14.1" cla
           <dd class="break"></dd>
 <dt id="section-2.2-1.15">Delegation Authorization:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.16">
-            <p id="section-2.2-1.16.1">The IdP's decision that a Governed Agent may act for a user within
+            <p id="section-2.2-1.16.1">The IdP's decision that an Agent Principal may act for a user within
 an approved client, tenant, target, and authority context.<a href="#section-2.2-1.16.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.17">Governed Agent Correlation:</dt>
+<dt id="section-2.2-1.17">Agent Principal Correlation:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.18">
-            <p id="section-2.2-1.18.1">The RAS's authoritative association of an IdP-qualified Governed
-Agent with a local principal. Correlation does not grant authority.<a href="#section-2.2-1.18.1" class="pilcrow">¶</a></p>
+            <p id="section-2.2-1.18.1">The RAS's authoritative association of an IdP-qualified Agent Principal
+with a local principal. Correlation does not grant authority.<a href="#section-2.2-1.18.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.2-1.19">Issuer-bound presenter key:</dt>
@@ -1766,8 +1766,8 @@ selected input profile.<a href="#section-2.2-1.24.1" class="pilcrow">¶</a></p>
           <dd class="break"></dd>
 <dt id="section-2.2-1.25">Governance Tenant:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.26">
-            <p id="section-2.2-1.26.1">The IdP tenant within whose governance domain the Governed Agent
-exists and is administered. The Governed Agent identifier remains
+            <p id="section-2.2-1.26.1">The IdP tenant within whose governance domain the Agent Principal
+exists and is administered. The Agent Principal identifier remains
 qualified by the IdP issuer (<a href="#canonical-identity" class="auto internal xref">Section 3.3</a>), not by the
 tenant.<a href="#section-2.2-1.26.1" class="pilcrow">¶</a></p>
 </dd>
@@ -1778,8 +1778,8 @@ tenant.<a href="#section-2.2-1.26.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-2.2-2">Where the meaning is clear, this document says agent for Governed
-Agent.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
+<p id="section-2.2-2">Where the meaning is clear, this document uses agent as shorthand for
+Agent Principal.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1809,11 +1809,11 @@ still determines whether to accept its delegated access.<a href="#section-3-2" c
  agent-42 -- Delegation Authorization --&gt; authority to act for user
 </pre><a href="#section-3-3" class="pilcrow">¶</a>
 </div>
-<p id="section-3-4">External workload identity, Governed Agent identity, and OAuth client
+<p id="section-3-4">External workload identity, Agent Principal identity, and OAuth client
 identity are distinct. Identity Binding resolves the agent identity;
 Client Association authorizes client use through the binding, flow,
 and credential class. Its coverage is explicit under <a href="#identity-binding" class="auto internal xref">Section 6.1</a>.<a href="#section-3-4" class="pilcrow">¶</a></p>
-<p id="section-3-5">The IdP is the authority for the Governed Agent: the ID-JAG's <code>act.iss</code>
+<p id="section-3-5">The IdP is the authority for the Agent Principal: the ID-JAG's <code>act.iss</code>
 equals its <code>iss</code>, and <code>act.sub</code> comes from the IdP's mapping rather than
 forwarding the external subject.<a href="#section-3-5" class="pilcrow">¶</a></p>
 <p id="section-3-6">The RAS needs no platform-specific credential validation or workload
@@ -1857,7 +1857,7 @@ define their processing rules.<a href="#section-3.1-2" class="pilcrow">¶</a></p
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Identity</td>
-              <td class="text-left" rowspan="1" colspan="1">Authenticated dedicated-client identity or independently validated workload identity resolves through an enabled exact Identity Binding to one active Governed Agent</td>
+              <td class="text-left" rowspan="1" colspan="1">Authenticated dedicated-client identity or independently validated workload identity resolves through an enabled exact Identity Binding to one active Agent Principal</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#identity-binding" class="auto internal xref">Section 6.1</a>
 </td>
@@ -1878,7 +1878,7 @@ define their processing rules.<a href="#section-3.1-2" class="pilcrow">¶</a></p
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Federation</td>
-              <td class="text-left" rowspan="1" colspan="1">ID-JAG identifies the user in the target subject namespace and the agent as <code>act.iss</code> = governing IdP, <code>act.sub</code> = Governed Agent</td>
+              <td class="text-left" rowspan="1" colspan="1">ID-JAG identifies the user in the target subject namespace and the agent as <code>act.iss</code> = governing IdP, <code>act.sub</code> = Agent Principal</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#subject-resolution" class="auto internal xref">Section 6.2</a>, <a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>
 </td>
@@ -1917,7 +1917,7 @@ for another:<a href="#section-3.2-2" class="pilcrow">¶</a></p>
           <li class="normal" id="section-3.2-3.2">
             <p id="section-3.2-3.2.1"><strong>Agent resolution:</strong> resolution of the authenticated dedicated-client
 identity or independently validated workload identity through an
-Identity Binding to exactly one Governed Agent.<a href="#section-3.2-3.2.1" class="pilcrow">¶</a></p>
+Identity Binding to exactly one Agent Principal.<a href="#section-3.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.2-3.3">
             <p id="section-3.2-3.3.1"><strong>Key possession:</strong> proof that the presenter controls a key, with the
@@ -1938,20 +1938,20 @@ authenticated client to exercise that agent.<a href="#section-3.2-5" class="pilc
         <h3 id="name-canonical-identity-and-tena">
 <a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-canonical-identity-and-tena" class="section-name selfRef">Canonical Identity and Tenant Boundaries</a>
         </h3>
-<p id="section-3.3-1">The Governed Agent identifier <span class="bcp14">MUST</span> be unique and non-reassignable
+<p id="section-3.3-1">The Agent Principal identifier <span class="bcp14">MUST</span> be unique and non-reassignable
 within the IdP issuer's namespace, across all Governance Tenants sharing
 that issuer identifier. Governance Tenant is not an additional component
 of the downstream agent identity. Tenant-local identifiers <span class="bcp14">MUST</span> be
 qualified to meet this issuer-wide uniqueness requirement before use
-as a Governed Agent identifier.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+as an Agent Principal identifier.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
 <p id="section-3.3-2">It need not equal an external subject, OAuth client identifier,
 SPIFFE ID, display name, or instance identifier. Identity continuity is
 an explicit decision by the governing authority to preserve the same
 principal; it does not imply that the principal's permissions remain
-unchanged. Governed Agent continuity concerns the authorization
+unchanged. Agent Principal continuity concerns the authorization
 principal, not continuity of a particular execution.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 <p id="section-3.3-3">A transfer to a different Governance Tenant under a different
-administrative authority <span class="bcp14">MUST</span> create a new Governed Agent identifier
+administrative authority <span class="bcp14">MUST</span> create a new Agent Principal identifier
 and <span class="bcp14">MUST NOT</span> automatically carry forward delegations or RAS principal
 links. This revision defines no cross-tenant identity migration protocol.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
 <p id="section-3.3-4">For example:<a href="#section-3.3-4" class="pilcrow">¶</a></p>
@@ -1966,7 +1966,7 @@ same governance domain does not by itself change the principal.<a href="#section
 </li>
         </ul>
 <p id="section-3.3-6">Multiple Identity Bindings <span class="bcp14">MAY</span> resolve distinct client or workload
-identities to the same Governed Agent when the IdP approves them as
+identities to the same Agent Principal when the IdP approves them as
 representing the same governed principal. They share the governed
 authorization identity downstream.<a href="#section-3.3-6" class="pilcrow">¶</a></p>
 <p id="section-3.3-7">The IdP <span class="bcp14">MUST</span> establish an unambiguous Governance Tenant and, before
@@ -1982,21 +1982,21 @@ Target Tenant for the requested resource uses <code>invalid_target</code>.<a hre
         <h3 id="name-governance-boundary-and-exe">
 <a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-governance-boundary-and-exe" class="section-name selfRef">Governance Boundary and Execution Independence</a>
         </h3>
-<p id="section-3.4-1">Use distinct Governed Agent identities when actors need independently
+<p id="section-3.4-1">Use distinct Agent Principal identities when actors need independently
 managed authorization, delegation, attribution, local-principal
 correlation, or lifecycle, including disablement. Differences in process,
 replica, session, worker, or credential alone do not require distinct
 identities. Sharing those elements does not justify combining actors
 that require independent governance.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
-<p id="section-3.4-2">Multiple executions <span class="bcp14">MAY</span> operate as the same Governed Agent, and an
+<p id="section-3.4-2">Multiple executions <span class="bcp14">MAY</span> operate as the same Agent Principal, and an
 agent <span class="bcp14">MAY</span> move between workloads or execution environments through
 approved Identity Bindings. Conversely, one environment <span class="bcp14">MAY</span> host
-multiple Governed Agents. The validated resolution input and its
-Identity Binding <span class="bcp14">MUST</span> distinguish exactly one Governed Agent for each
+multiple Agent Principals. The validated resolution input and its
+Identity Binding <span class="bcp14">MUST</span> distinguish exactly one Agent Principal for each
 authorization transaction; a shared workload identity alone cannot
 select among agents.<a href="#section-3.4-2" class="pilcrow">¶</a></p>
 <p id="section-3.4-3">Scaling, restarting, rescheduling, migration, or credential rotation
-<span class="bcp14">MUST NOT</span> by itself create, merge, or transfer Governed Agent authority.
+<span class="bcp14">MUST NOT</span> by itself create, merge, or transfer Agent Principal authority.
 Creating additional executions, replicas, credentials, Identity Bindings,
 or Client Associations does not by itself increase the agent's authority.
 Each transaction remains subject to the applicable Client Association,
@@ -2030,19 +2030,19 @@ distinguishes their wire-profile status, not their architectural scope:<a href="
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Agent acts as itself</td>
-              <td class="text-left" rowspan="1" colspan="1">WAG composition; Governed Agent is the subject</td>
+              <td class="text-left" rowspan="1" colspan="1">WAG composition; Agent Principal is the subject</td>
               <td class="text-left" rowspan="1" colspan="1">Identity and authorization composition in <a href="#wag-flow" class="auto internal xref">Section 11</a> is informative; wire requirements pending <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>
 </td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Agent acts for a user</td>
-              <td class="text-left" rowspan="1" colspan="1">ID-JAG; user is the subject and Governed Agent is the actor</td>
+              <td class="text-left" rowspan="1" colspan="1">ID-JAG; user is the subject and Agent Principal is the actor</td>
               <td class="text-left" rowspan="1" colspan="1">Complete flow in <a href="#delegated-flow" class="auto internal xref">Section 8</a>
 </td>
             </tr>
           </tbody>
         </table>
-<p id="section-4.1-3">A Governed Agent is not intrinsically self-acting or delegated. The
+<p id="section-4.1-3">An Agent Principal is not intrinsically self-acting or delegated. The
 authorization transaction determines whether it is represented as the
 subject or as the actor for another subject. Authorization for one
 relationship does not imply authorization for the other.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
@@ -2095,7 +2095,7 @@ is constrained by its own policy domain (<a href="#actor-authorization" class="a
 <span>[<a href="#EMA" class="cite xref">EMA</a>]</span> deployments and adds agent governance before requiring grant
 binding. The names identify deployment profiles, not assurance ratings.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
 <p id="section-4.2-2">This profile does not establish trust in previously unknown agent issuers
-or automatically create Identity Bindings or Governed Agent Correlations
+or automatically create Identity Bindings or Agent Principal Correlations
 from presented credentials.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
 <table class="center" id="table-4">
           <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
@@ -2109,7 +2109,7 @@ from presented credentials.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Enterprise access</td>
-              <td class="text-left" rowspan="1" colspan="1">Existing EMA and base ID-JAG; no separate Governed Agent required</td>
+              <td class="text-left" rowspan="1" colspan="1">Existing EMA and base ID-JAG; no separate Agent Principal required</td>
               <td class="text-left" rowspan="1" colspan="1">Existing deployment policy</td>
             </tr>
             <tr>
@@ -2217,8 +2217,8 @@ under the selected credential specification.<a href="#section-4.3-3.1.1" class="
 </li>
           <li class="normal" id="section-4.3-3.2">
             <p id="section-4.3-3.2.1"><strong>Identity Binding:</strong> An IdP administrator or approved platform-registry
-import supplies the qualified client or workload identity, Governed
-Agent, and Governance Tenant.<a href="#section-4.3-3.2.1" class="pilcrow">¶</a></p>
+import supplies the qualified client or workload identity, Agent
+Principal, and Governance Tenant.<a href="#section-4.3-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.3-3.3">
             <p id="section-4.3-3.3.1"><strong>Client Association:</strong> The IdP administrator specifies the client,
@@ -2279,7 +2279,7 @@ mechanism here. Profile metadata does not establish acceptance policy
 </li>
         </ul>
 <p id="section-4.3-8">Existing workload-federation configuration can supply credential trust
-and exact identity selectors. The Governed Agent mapping and separate
+and exact identity selectors. The Agent Principal mapping and separate
 Client Association are still required, but no new configuration object
 types are prescribed. <a href="#identity-example" class="auto internal xref">Section 4.4</a> illustrates the shared-client
 case; <a href="#aws-example" class="auto internal xref">Appendix D</a> applies the model to an AWS STS workload credential.<a href="#section-4.3-8" class="pilcrow">¶</a></p>
@@ -2362,7 +2362,7 @@ her. In this example, the agent needs no separate file ACL.<a href="#section-4.4
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>act.sub</code> (Governed Agent)</td>
+                <code>act.sub</code> (Agent Principal)</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>agent-42</code>
 </td>
@@ -2550,7 +2550,7 @@ this profile's requirements; there is no universal IdP audience:<a href="#sectio
 <a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-dedicated-client-identity" class="section-name selfRef">Dedicated Client Identity</a>
         </h3>
 <p id="section-5.1-1">This mode resolves an authenticated OAuth client identity to its
-explicitly bound Governed Agent. Client authentication uses an
+explicitly bound Agent Principal. Client authentication uses an
 asymmetrically signed assertion under <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>; no separate
 platform-issued credential is required. The common method is
 <code>private_key_jwt</code>; other configured asymmetric RFC 7523 methods <span class="bcp14">MAY</span>
@@ -2563,7 +2563,7 @@ be supported.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <p id="section-5.1.1-1">The assertion authenticates the client; it is not independent workload
 evidence. In this explicitly configured mode, the IdP uses the validated
 client-authentication context as the resolution source. The Identity
-Binding determines the Governed Agent; client authentication alone does
+Binding determines the Agent Principal; client authentication alone does
 not authorize its use.<a href="#section-5.1.1-1" class="pilcrow">¶</a></p>
 <p id="section-5.1.1-2">The client <span class="bcp14">MUST</span> present its assertion in <code>client_assertion</code>, with
 <code>client_assertion_type</code> set to
@@ -2591,7 +2591,7 @@ Assertion-supplied keys or issuer claims <span class="bcp14">MUST NOT</span> est
             <li class="normal" id="section-5.1.1-5.3">
               <p id="section-5.1.1-5.3.1"><strong>Resolution:</strong> Resolve the exact validated (<code>iss</code>, <code>sub</code>) in the IdP's
 client-registration
-context through an enabled Identity Binding to one Governed Agent.
+context through an enabled Identity Binding to one Agent Principal.
 Then enforce Client Association and delegation authorization separately.<a href="#section-5.1.1-5.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
@@ -2672,7 +2672,7 @@ assertion replay rule.<a href="#section-5.1.3-5" class="pilcrow">¶</a></p>
 distinguish agents behind one shared client identity; such a client
 <span class="bcp14">MUST</span> present separate supported workload evidence in <code>actor_token</code>. An
 additional agent claim in a self-signed client assertion <span class="bcp14">MUST NOT</span> select
-another Governed Agent under this input.<a href="#section-5.1.4-1" class="pilcrow">¶</a></p>
+another Agent Principal under this input.<a href="#section-5.1.4-1" class="pilcrow">¶</a></p>
 <p id="section-5.1.4-2">Assertion signing authenticates the client; it does not bind the ID-JAG
 to that signing key or establish an attested runtime identity. Grant
 proof processing follows <a href="#grant-protection" class="auto internal xref">Section 8.3</a> independently, and the
@@ -2727,11 +2727,11 @@ input rather than treat DPoP as that proof (<a href="#credential-requirements" c
 </div>
 <div id="identity">
 <section id="section-6">
-      <h2 id="name-governed-agent-resolution">
-<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-governed-agent-resolution" class="section-name selfRef">Governed Agent Resolution</a>
+      <h2 id="name-agent-principal-resolution">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-agent-principal-resolution" class="section-name selfRef">Agent Principal Resolution</a>
       </h2>
 <p id="section-6-1">Resolution turns validated inputs into principals: the Identity
-Binding resolves a qualified client or workload identity to one Governed Agent,
+Binding resolves a qualified client or workload identity to one Agent Principal,
 subject resolution identifies the user for delegated access, and the
 RAS correlates both to its local principals.<a href="#section-6-1" class="pilcrow">¶</a></p>
 <div id="identity-binding">
@@ -2767,7 +2767,7 @@ RAS correlates both to its local principals.<a href="#section-6-1" class="pilcro
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Client Attestation whose attested client maps explicitly to one Governed Agent</td>
+              <td class="text-left" rowspan="1" colspan="1">Client Attestation whose attested client maps explicitly to one Agent Principal</td>
               <td class="text-left" rowspan="1" colspan="1">Trusted attester and validated Client Attestation <code>sub</code> under <a href="#agent-evidence" class="auto internal xref">Section 9.2</a>
 </td>
               <td class="text-left" rowspan="1" colspan="1">The validated <code>sub</code> identifies the OAuth client; client-to-agent mapping is explicit</td>
@@ -2778,7 +2778,7 @@ RAS correlates both to its local principals.<a href="#section-6-1" class="pilcro
 <ul class="normal">
 <li class="normal" id="section-6.1-3.1">
             <p id="section-6.1-3.1.1">Resolve the exact qualified client or workload identity to one active
-Governed Agent through an enabled Identity Binding; reject missing,
+Agent Principal through an enabled Identity Binding; reject missing,
 ambiguous, or disabled mappings.<a href="#section-6.1-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.1-3.2">
@@ -2790,7 +2790,7 @@ identifies the client, not the agent.<a href="#section-6.1-3.2.1" class="pilcrow
 <p id="section-6.1-4">Similar names, unqualified identifiers, or a shared signing key <span class="bcp14">MUST NOT</span> establish identity equivalence. The table above defines the
 qualified identity for each input.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
 <p id="section-6.1-5">Deployments <span class="bcp14">SHOULD</span> permit an Identity Binding to be disabled independently
-of the Governed Agent and its other bindings.
+of the Agent Principal and its other bindings.
 A disabled binding <span class="bcp14">MUST NOT</span> authorize new grant issuance. Disabling
 a binding does not itself revoke outstanding tokens; their treatment
 follows <a href="#status-changes" class="auto internal xref">Section 12.6</a>.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
@@ -2801,19 +2801,19 @@ the selected credential class (<a href="#flow-configuration" class="auto interna
 <p id="section-6.1-7">A Client Association <span class="bcp14">MAY</span> authorize one or more Identity Bindings. The
 IdP <span class="bcp14">MUST</span> determine explicitly whether the selected binding is within
 that authorization. Authorization of one binding, a credential
-authority, a credential class, or the Governed Agent itself <span class="bcp14">MUST NOT</span>
+authority, a credential class, or the Agent Principal itself <span class="bcp14">MUST NOT</span>
 imply authorization of another binding unless the association's policy
 explicitly includes it. No association overrides a disabled binding.
 Policy representation and evaluation mechanisms are outside this profile.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
-<p id="section-6.1-8">For a dedicated client, Identity Binding determines which Governed
-Agent the client represents. Client Association independently determines
+<p id="section-6.1-8">For a dedicated client, Identity Binding determines which Agent Principal
+the client represents. Client Association independently determines
 whether that client may exercise the binding in the requested flow.
 Deployments <span class="bcp14">MAY</span> administer both in one registration or policy object;
 their identity and authorization semantics remain distinct.<a href="#section-6.1-8" class="pilcrow">¶</a></p>
 <p id="section-6.1-9">A binding can remain valid while permission to use it is withdrawn,
 preserving identity continuity across policy changes. Credential class
 constrains the authorized resolution path even when several classes
-can resolve to the same Governed Agent.<a href="#section-6.1-9" class="pilcrow">¶</a></p>
+can resolve to the same Agent Principal.<a href="#section-6.1-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subject-resolution">
@@ -2893,10 +2893,10 @@ or missing, ambiguous, or conflicting resolution (<a href="#errors" class="auto 
 </div>
 <div id="agent-correlation">
 <section id="section-6.3">
-        <h3 id="name-governed-agent-correlation">
-<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-governed-agent-correlation" class="section-name selfRef">Governed Agent Correlation</a>
+        <h3 id="name-agent-principal-correlation">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-agent-principal-correlation" class="section-name selfRef">Agent Principal Correlation</a>
         </h3>
-<p id="section-6.3-1">The Governed Agent identity is the pair of IdP issuer and agent
+<p id="section-6.3-1">The Agent Principal identity is the pair of IdP issuer and agent
 identifier, carried in ID-JAG as (<code>act.iss</code>, <code>act.sub</code>).
 The RAS <span class="bcp14">MUST</span>:<a href="#section-6.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -2971,7 +2971,7 @@ can be granted.<a href="#section-7-5.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-7-5.2">
           <p id="section-7-5.2.1">It <span class="bcp14">MUST NOT</span> issue by dropping a required actor or binding,
-substituting an external identifier for the Governed Agent, or
+substituting an external identifier for the Agent Principal, or
 weakening proof requirements.<a href="#section-7-5.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-7-5.3">
@@ -2983,8 +2983,8 @@ weakening proof requirements.<a href="#section-7-5.2.1" class="pilcrow">¶</a></
         <h3 id="name-delegation-authorization">
 <a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-delegation-authorization" class="section-name selfRef">Delegation Authorization</a>
         </h3>
-<p id="section-7.1-1">Before constructing <code>act</code>, the IdP <span class="bcp14">MUST</span> authorize the resolved Governed
-Agent to act for the user in the requested client, tenant, RAS,
+<p id="section-7.1-1">Before constructing <code>act</code>, the IdP <span class="bcp14">MUST</span> authorize the resolved Agent
+Principal to act for the user in the requested client, tenant, RAS,
 resource, and authority context. The IdP <span class="bcp14">MUST</span> reject missing, revoked,
 expired, or insufficient delegation authorization. Valid credentials,
 user sign-in, or a shared client <span class="bcp14">MUST NOT</span> imply that authorization or
@@ -3128,7 +3128,7 @@ referenced sections define the requirements.<a href="#section-8.1-1" class="pilc
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Actor representation</td>
-              <td class="text-left" rowspan="1" colspan="1">One actor with the Governed Agent as <code>act.sub</code> and the IdP as <code>act.iss</code>; replaces Actor Profile's credential-to-actor copying</td>
+              <td class="text-left" rowspan="1" colspan="1">One actor with the Agent Principal as <code>act.sub</code> and the IdP as <code>act.iss</code>; replaces Actor Profile's credential-to-actor copying</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>
 </td>
@@ -3584,7 +3584,7 @@ subject-only impersonation.<a href="#section-8.4.3-3" class="pilcrow">¶</a></p>
                 <td class="text-left" rowspan="1" colspan="1">
                   <span class="bcp14">OPTIONAL</span>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Identical compact JWT in <code>actor_token</code> and <code>OAuth-Client-Attestation</code>; attested client maps explicitly to one Governed Agent under <a href="#agent-evidence" class="auto internal xref">Section 9.2</a>
+                <td class="text-left" rowspan="1" colspan="1">Identical compact JWT in <code>actor_token</code> and <code>OAuth-Client-Attestation</code>; attested client maps explicitly to one Agent Principal under <a href="#agent-evidence" class="auto internal xref">Section 9.2</a>
 </td>
               </tr>
             </tbody>
@@ -3655,7 +3655,7 @@ subject whose retained authorization contains an actor chain.<a href="#section-8
 ID-JAG <span class="bcp14">MUST</span> contain one <code>act</code> object with:<a href="#section-8.4.4-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.4.4-2.1">
-              <p id="section-8.4.4-2.1.1"><code>sub</code>: the Governed Agent identifier from the Identity Binding.<a href="#section-8.4.4-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-8.4.4-2.1.1"><code>sub</code>: the Agent Principal identifier from the Identity Binding.<a href="#section-8.4.4-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-8.4.4-2.2">
               <p id="section-8.4.4-2.2.1"><code>iss</code>: this IdP's issuer identifier.<a href="#section-8.4.4-2.2.1" class="pilcrow">¶</a></p>
@@ -3669,8 +3669,8 @@ under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</
 <p id="section-8.4.4-4">The object <span class="bcp14">MUST</span> follow <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00#section-3.4" class="relref">Section 3.4</a></span>, including its
 <code>sub_profile</code> recommendation and unclassified-actor rules. Any
 <code>sub_profile</code> <span class="bcp14">MUST</span> reflect the IdP's authoritative classification.
-<span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span> defines <code>service</code> and <code>ai_agent</code>; being a Governed
-Agent does not itself establish the <code>ai_agent</code> classification.<a href="#section-8.4.4-4" class="pilcrow">¶</a></p>
+<span>[<a href="#ENTITY-PROFILES" class="cite xref">ENTITY-PROFILES</a>]</span> defines <code>service</code> and <code>ai_agent</code>; being an Agent
+Principal does not itself establish the <code>ai_agent</code> classification.<a href="#section-8.4.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="grant-issuance">
@@ -3699,7 +3699,7 @@ and additionally satisfy:<a href="#section-8.4.5-1" class="pilcrow">¶</a></p>
                 <td class="text-left" rowspan="1" colspan="1">
                   <code>act</code>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Governed Agent actor constructed under <a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>
+                <td class="text-left" rowspan="1" colspan="1">Agent Principal actor constructed under <a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>
 </td>
               </tr>
               <tr>
@@ -3900,7 +3900,7 @@ if its authority extends beyond that resource.<a href="#section-8.5.2-2.3.2.4.1"
 </li>
             <li id="section-8.5.2-2.4">
               <p id="section-8.5.2-2.4.1"><strong>Local authorization:</strong> Resolve the user under
-<a href="#subject-resolution" class="auto internal xref">Section 6.2</a> and the Governed Agent actor under
+<a href="#subject-resolution" class="auto internal xref">Section 6.2</a> and the Agent Principal actor under
 <a href="#agent-correlation" class="auto internal xref">Section 6.3</a>. Apply current RAS policy to the user/actor
 relationship under <a href="#actor-authorization" class="auto internal xref">Section 7.3</a>, client, tenant, and
 resource. A valid grant sets an authority ceiling; it does not
@@ -4319,7 +4319,7 @@ before authorization. This profile specifies the following outcomes:<a href="#se
                 <code>invalid_grant</code>; no token or automatic linking fallback</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Absent, disabled, or ambiguous Identity Binding, or no active Governed Agent can be resolved</td>
+              <td class="text-left" rowspan="1" colspan="1">Absent, disabled, or ambiguous Identity Binding, or no active Agent Principal can be resolved</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_grant</code>
 </td>
@@ -4331,7 +4331,7 @@ before authorization. This profile specifies the following outcomes:<a href="#se
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Resolved Governed Agent, but no Client Association permits the selected binding and flow, or delegation is unauthorized</td>
+              <td class="text-left" rowspan="1" colspan="1">Resolved Agent Principal, but no Client Association permits the selected binding and flow, or delegation is unauthorized</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>actor_unauthorized</code>, as defined by Actor Profile, with HTTP 400</td>
             </tr>
@@ -4400,7 +4400,7 @@ duration. Cross-domain continuity using Identity Continuation Assertion
 token with its authorized context:<a href="#section-8.8-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.8-2.1">
-            <p id="section-8.8-2.1.1">User and Governed Agent.<a href="#section-8.8-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-8.8-2.1.1">User and Agent Principal.<a href="#section-8.8-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.8-2.2">
             <p id="section-8.8-2.2.1">Governance and Target Tenants.<a href="#section-8.8-2.2.1" class="pilcrow">¶</a></p>
@@ -4476,7 +4476,7 @@ time an active response can be relied upon. This document alone does
 not impose those additional modes or their disablement guarantees.<a href="#section-8.9-5" class="pilcrow">¶</a></p>
 <p id="section-8.9-6">If the API delegates authorization evaluation to a policy decision
 service, it <span class="bcp14">MUST</span> preserve the distinction between the user, the
-issuer-qualified Governed Agent, and the OAuth client, and supply the
+issuer-qualified Agent Principal, and the OAuth client, and supply the
 tenant and token constraints needed to evaluate the requested operation.
 <span>[<a href="#AUTHZEN" class="cite xref">AUTHZEN</a>]</span> provides an optional evaluation interface; this profile
 defines no AuthZEN message mapping and requires no particular policy
@@ -4615,7 +4615,7 @@ exchange DPoP does not add an issuer-bound presenter key.<a href="#section-9.1-8
 <a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-client-attestation" class="section-name selfRef">Client Attestation</a>
         </h3>
 <p id="section-9.2-1">Client Attestation is an <span class="bcp14">OPTIONAL</span> agent-resolution input where the
-attested OAuth client identity maps explicitly to one Governed Agent.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+attested OAuth client identity maps explicitly to one Agent Principal.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-9.2-2.1">
             <p id="section-9.2-2.1.1"><strong>Client presentation:</strong> The client <span class="bcp14">MUST</span> present the identical compact
@@ -4877,7 +4877,7 @@ ID-JAG advertisement.<a href="#section-10.3-6.3.1" class="pilcrow">¶</a></p>
       <h2 id="name-self-acting-wag-composition">
 <a href="#section-11" class="section-number selfRef">11. </a><a href="#name-self-acting-wag-composition" class="section-name selfRef">Self-Acting WAG Composition</a>
       </h2>
-<p id="section-11-1">Self-acting access uses the same Governed Agent model as delegated
+<p id="section-11-1">Self-acting access uses the same Agent Principal model as delegated
 access, with the agent as subject. This informative section describes
 the identity and authorization composition. IdP issuance and other WAG
 wire requirements remain pending <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>; this revision defines no
@@ -4895,7 +4895,7 @@ WAG wire profile or implementation conformance target.<a href="#section-11-1" cl
         <tbody>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Agent resolution at IdP</td>
-            <td class="text-left" rowspan="1" colspan="1">Validated dedicated-client or workload identity resolves through an approved Identity Binding to one active Governed Agent</td>
+            <td class="text-left" rowspan="1" colspan="1">Validated dedicated-client or workload identity resolves through an approved Identity Binding to one active Agent Principal</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Client authorization</td>
@@ -4903,11 +4903,11 @@ WAG wire profile or implementation conformance target.<a href="#section-11-1" cl
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">IdP-issued WAG</td>
-            <td class="text-left" rowspan="1" colspan="1">Issuer-qualified <code>sub</code> identifies that Governed Agent; no <code>act</code> is needed solely to identify its executing instance</td>
+            <td class="text-left" rowspan="1" colspan="1">Issuer-qualified <code>sub</code> identifies that Agent Principal; no <code>act</code> is needed solely to identify its executing instance</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">WAG to local authorization</td>
-            <td class="text-left" rowspan="1" colspan="1">The RAS resolves the Governed Agent identity to one local agent principal in the authorized Target Tenant</td>
+            <td class="text-left" rowspan="1" colspan="1">The RAS resolves the Agent Principal identity to one local agent principal in the authorized Target Tenant</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Access token to API</td>
@@ -4915,7 +4915,7 @@ WAG wire profile or implementation conformance target.<a href="#section-11-1" cl
           </tr>
         </tbody>
       </table>
-<p id="section-11-4">The intended composition correlates the same Governed Agent to the same
+<p id="section-11-4">The intended composition correlates the same Agent Principal to the same
 local agent principal in both paths:<a href="#section-11-4" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-11-5.1">
@@ -4957,7 +4957,7 @@ specifications, <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span>,
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Dedicated-client resolution as the common mode</td>
               <td class="text-left" rowspan="1" colspan="1">Reuses deployed client authentication and registered keys</td>
-              <td class="text-left" rowspan="1" colspan="1">Each client identity resolves to one Governed Agent; proves registered-client identity, not independent runtime or workload provenance</td>
+              <td class="text-left" rowspan="1" colspan="1">Each client identity resolves to one Agent Principal; proves registered-client identity, not independent runtime or workload provenance</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Optional native JWT-SVID input</td>
@@ -5047,8 +5047,8 @@ identifier does not authorize a new proof key.<a href="#section-12.3-3" class="p
         </h3>
 <p id="section-12.4-1">In dedicated-client resolution, compromise of the client's authentication
 key permits an attacker to authenticate as the resolution source for its
-bound Governed Agent. No independent workload credential is required.
-A normalized Governed Agent identity does not imply uniform runtime
+bound Agent Principal. No independent workload credential is required.
+A normalized Agent Principal identity does not imply uniform runtime
 assurance; assurance depends on the resolution input, verified claims,
 and the credential authority's issuance policy.<a href="#section-12.4-1" class="pilcrow">¶</a></p>
 <p id="section-12.4-2">The attacker still needs an acceptable user subject credential and must
@@ -5100,7 +5100,7 @@ denial bounds. Its RAS enforcement stops issuance and refresh; cached
 introspection results or offline JWTs may remain usable within the
 configured mode's explicit bound.<a href="#section-12.6-3" class="pilcrow">¶</a></p>
 <p id="section-12.6-4">Execution termination, Identity Binding disablement, Client Association
-removal, delegation revocation, and Governed Agent disablement have
+removal, delegation revocation, and Agent Principal disablement have
 different effects. Deployments <span class="bcp14">MUST NOT</span> treat one as evidence that the
 others have occurred. In particular, stopping an execution does not
 revoke credentials or authority held elsewhere.<a href="#section-12.6-4" class="pilcrow">¶</a></p>
@@ -5132,7 +5132,7 @@ the enforcing server; it defines no new propagation mechanism:<a href="#section-
               <td class="text-left" rowspan="1" colspan="1">Existing grants and RAS tokens need separate revocation or expiry</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Disable the Governed Agent at the IdP</td>
+              <td class="text-left" rowspan="1" colspan="1">Disable the Agent Principal at the IdP</td>
               <td class="text-left" rowspan="1" colspan="1">No new ID-JAG for that agent, regardless of binding or client</td>
               <td class="text-left" rowspan="1" colspan="1">RAS issuance and refresh stop when the change reaches and is applied by the RAS</td>
             </tr>
@@ -5185,7 +5185,7 @@ protocol. Asynchronous approval composition is deferred under
 <p id="section-13-1">A stable agent identifier can correlate activity across resources,
 users, and instances. Preserving the same issuer-qualified actor across
 delegated users enables a resource domain to correlate activity performed
-by the same Governed Agent for different users, supporting audit while
+by the same Agent Principal for different users, supporting audit while
 linking those activities.<a href="#section-13-1" class="pilcrow">¶</a></p>
 <p id="section-13-2">Issuers <span class="bcp14">SHOULD</span> disclose only the agent attributes needed for the
 authorized purpose. User and agent context remain separate when the
@@ -5487,7 +5487,7 @@ without specifying it. Coordination is needed on:<a href="#appendix-A.1.1-1" cla
 <ul class="normal">
 <li class="normal" id="appendix-A.1.1-2.1">
               <p id="appendix-A.1.1-2.1.1"><strong>Issuance:</strong> Dedicated-client or workload-identity resolution at
-the IdP; the Governed Agent in its namespace as the issued WAG's subject.<a href="#appendix-A.1.1-2.1.1" class="pilcrow">¶</a></p>
+the IdP; the Agent Principal in its namespace as the issued WAG's subject.<a href="#appendix-A.1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="appendix-A.1.1-2.2">
               <p id="appendix-A.1.1-2.2.1"><strong>Identifiers:</strong> WAG-owned token-type and JWT-type registrations
@@ -5889,7 +5889,7 @@ Pragma: no-cache
 }
 </pre><a href="#appendix-B.3-6" class="pilcrow">¶</a>
 </div>
-<p id="appendix-B.3-7">The RAS translates Alice's subject while preserving the Governed Agent
+<p id="appendix-B.3-7">The RAS translates Alice's subject while preserving the Agent Principal
 actor. The dedicated OAuth client identifier does not replace that
 actor, and the access token is bound to the same key K used at both
 token endpoints.<a href="#appendix-B.3-7" class="pilcrow">¶</a></p>
@@ -6281,7 +6281,7 @@ platform-JWT input (<a href="#imported-jwt-input" class="auto internal xref">Sec
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">Identity Binding result</td>
-            <td class="text-left" rowspan="1" colspan="1">Governed Agent <code>agent-42</code> in Governance Tenant <code>acme</code>
+            <td class="text-left" rowspan="1" colspan="1">Agent Principal <code>agent-42</code> in Governance Tenant <code>acme</code>
 </td>
           </tr>
           <tr>
@@ -6300,7 +6300,7 @@ The resulting actor is
 <code>{"iss":"https://idp.example/","sub":"agent-42"}</code>.<a href="#appendix-D-3" class="pilcrow">¶</a></p>
 <p id="appendix-D-4">If several agents share this role, issuer and <code>sub</code> identify the
 shared IAM principal, not an individual agent. Mapping those agents to
-distinct Governed Agents requires distinct credential identities or
+distinct Agent Principals requires distinct credential identities or
 additional trusted selectors. A caller-supplied agent name does not
 provide that distinction.<a href="#appendix-D-4" class="pilcrow">¶</a></p>
 <p id="appendix-D-5">This example covers evidence resolution, not a product's end-to-end

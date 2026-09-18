@@ -8,7 +8,7 @@
 <meta content="Karl McGuinness" name="author">
 <meta content="
        This document profiles SCIM provisioning, Shared Signals, and OAuth for
-the lifecycle of an issuer-qualified Governed Agent. It applies the state
+the lifecycle of an issuer-qualified Agent Principal. It applies the state
 and events defined by Governed Agent Lifecycle Events Profile to local
 principal correlation, grant redemption, refresh, and API authorization. 
        An eligibility lease bounds reliance on active state. An authorization
@@ -1088,7 +1088,7 @@ svg {
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This document profiles SCIM provisioning, Shared Signals, and OAuth for
-the lifecycle of an issuer-qualified Governed Agent. It applies the state
+the lifecycle of an issuer-qualified Agent Principal. It applies the state
 and events defined by Governed Agent Lifecycle Events Profile to local
 principal correlation, grant redemption, refresh, and API authorization.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <p id="section-abstract-2">An eligibility lease bounds reliance on active state. An authorization
@@ -1355,7 +1355,7 @@ new event type, State Record format, SCIM schema, or delivery protocol.<a href="
       </h2>
 <p id="section-1-1">Governed Agent Federation <span>[<a href="#FEDERATION" class="cite xref">FEDERATION</a>]</span> separates agent identity,
 client authority, user delegation, and resource authorization. It
-identifies an agent by the pair (IdP issuer, Governed Agent identifier),
+identifies an agent by the pair (IdP issuer, Agent Principal identifier),
 independently of the workload credentials used to establish it.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">For delegated access, the governed identity is the actor in an Identity
 Assertion JWT Authorization Grant (ID-JAG) <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>. This companion
@@ -1400,7 +1400,7 @@ and cutoff, so delayed delivery cannot reverse a newer decision.<a href="#sectio
 <p id="section-1.1-1">This profile defines a complete IdP-to-resource-domain path:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.1-2.1">
-            <p id="section-1.1-2.1.1">Provision or explicitly correlate a Governed Agent with a local record.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.1.1">Provision or explicitly correlate an Agent Principal with a local record.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.2">
             <p id="section-1.1-2.2.1">Synchronize active, disabled, and retired state.<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
@@ -1420,7 +1420,7 @@ wire formats; this document defines their SCIM and OAuth application.<a href="#s
 <span>[<a href="#WISE" class="cite xref">WISE</a>]</span> describes changes to workloads, credentials, and trust material.
 <span>[<a href="#CAEP" class="cite xref">CAEP</a>]</span> describes continuous-access events. Those mechanisms can supply
 inputs to an authority's decision. The state applied here expresses the
-result for a Governed Agent and the receiver obligations that follow.<a href="#section-1.1-4" class="pilcrow">¶</a></p>
+result for an Agent Principal and the receiver obligations that follow.<a href="#section-1.1-4" class="pilcrow">¶</a></p>
 <p id="section-1.1-5">Platform-to-IdP enrollment, Identity Binding administration, individual
 delegation revocation, task cancellation, runtime instance lifecycle,
 and risk scoring are outside this profile. Their boundaries are stated
@@ -1438,7 +1438,7 @@ in <a href="#relationship-changes" class="auto internal xref">Section 11</a>.<a 
 "<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
 described in <span>[<a href="#BCP14" class="cite xref">BCP14</a>]</span> (<a href="#RFC2119" class="auto internal xref">RFC2119</a>) (<a href="#RFC8174" class="auto internal xref">RFC8174</a>) when, and only when, they
 appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
-<p id="section-2-2">OAuth terms follow <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>. Governed Agent, Identity Binding, Client
+<p id="section-2-2">OAuth terms follow <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>. Agent Principal, Identity Binding, Client
 Association, Governance Tenant, Target Tenant, and resource
 authorization server (RAS) follow <span>[<a href="#FEDERATION" class="cite xref">FEDERATION</a>]</span>. SCIM terms follow
 <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span> and <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>; Transmitter, Receiver, and stream follow
@@ -1446,7 +1446,7 @@ authorization server (RAS) follow <span>[<a href="#FEDERATION" class="cite xref"
 <span class="break"></span><dl class="dlParallel" id="section-2-3">
         <dt id="section-2-3.1">Lifecycle Authority:</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.2">
-          <p id="section-2-3.2.1">The IdP responsible for the Governed Agent's enterprise lifecycle
+          <p id="section-2-3.2.1">The IdP responsible for the Agent Principal's enterprise lifecycle
 state. An authorized connector can deliver that state on its behalf.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -1459,7 +1459,7 @@ deployment responsible for atomic state application; they need not
 run in the same process.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-2-3.5">Governed Agent Lifecycle State (State Record):</dt>
+<dt id="section-2-3.5">Agent Principal Lifecycle State (State Record):</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.6">
           <p id="section-2-3.6.1">The logical snapshot defined in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> and applied under
 <a href="#state-schema" class="auto internal xref">Section 5</a>, containing
@@ -2438,7 +2438,7 @@ needs issuance provenance and an agreed relationship identifier; the
 agent's <code>act</code> identity alone is insufficient.<a href="#section-11-3" class="pilcrow">¶</a></p>
 <p id="section-11-4">OAuth token revocation <span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span> remains available to revoke a known
 token at its issuing server. It neither identifies every authorization
-derived from a Governed Agent nor distributes principal lifecycle state
+derived from an Agent Principal nor distributes principal lifecycle state
 across domains. It complements this profile; it does not replace its
 cutoff, ordering, or propagation contract.<a href="#section-11-4" class="pilcrow">¶</a></p>
 <p id="section-11-5">A WISE or other upstream signal <span class="bcp14">MAY</span> inform the Authority's decision. The
@@ -2452,7 +2452,7 @@ without the federation mapping.<a href="#section-11-5" class="pilcrow">¶</a></p
 <a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-self-acting-access" class="section-name selfRef">Self-Acting Access</a>
         </h3>
 <p id="section-11.1-1">The lifecycle identity is independent of the authorization flow. The
-intended <span>[<a href="#WAG" class="cite xref">WAG</a>]</span> composition correlates the same Governed Agent with the
+intended <span>[<a href="#WAG" class="cite xref">WAG</a>]</span> composition correlates the same Agent Principal with the
 same local agent principal used for delegated access.<a href="#section-11.1-1" class="pilcrow">¶</a></p>
 <p id="section-11.1-2">Delegated access preserves the IdP-qualified actor in <code>act</code>; self-acting
 access represents the correlated local principal as the resource-domain
@@ -2762,7 +2762,7 @@ sends the event defined in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGEN
 42, <code>event_timestamp</code> corresponding to 12:02:00, and
 <code>authorization_cutoff</code> corresponding to 12:02:02. Its examples show the
 decoded SET. The stream audience identifies the receiving context; the
-payload identifies the governed agent.<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+payload identifies the Agent Principal.<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
 <p id="appendix-A.3-2">The Receiver applies version 42. Redemption and refresh fail with
 <code>invalid_grant</code>; introspection of the previously issued token returns
 <code>{"active":false}</code>. The API denies its next use.<a href="#appendix-A.3-2" class="pilcrow">¶</a></p>
