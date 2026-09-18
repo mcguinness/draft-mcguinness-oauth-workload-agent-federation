@@ -55,6 +55,7 @@ normative:
   RFC9449:
   RFC9700:
 informative:
+  AIMS: I-D.ietf-wimse-aims
   AGENT-LIFECYCLE:
     title: "Governed Agent Lifecycle Profile for SCIM and OAuth"
     target: https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html
@@ -184,6 +185,15 @@ extensions ({{Section 9.7 of ID-JAG}}). {{ATTEST}} and
 {{SPIFFE-OAUTH}} authenticate OAuth clients, not the agents a shared
 client serves.
 
+AIMS {{AIMS}} describes a broader framework for agent identity management.
+This document defines an enterprise federation composition within that
+space: resolving client or workload identity to an IdP-governed Agent
+Principal, separately authorizing client use and user delegation, and
+correlating that principal in a resource domain. A workload identifier
+can supply a resolution input without becoming the downstream Agent
+Principal identifier. In particular, a shared OAuth client's `client_id`
+does not identify the individual agent represented by `act`.
+
 The federation model ({{model}}) defines identity resolution, client
 authorization, delegation authorization, and resource correlation.
 Grant-specific realizations specify how those relationships are carried
@@ -286,7 +296,7 @@ Client Association:
 
 Credential class:
 : A configured category of agent-resolution input with mutually exclusive
-  validation rules, such as an RFC 7523 client assertion, JWT-SVID,
+  validation rules, such as an RFC 7523 client assertion, an SVID,
   Client Attestation, or a platform issuer's workload JWT profile.
   JWT encoding alone does not identify the class.
 
@@ -598,7 +608,8 @@ implemented role, and supported inputs:
 * **Access tokens:** Access tokens are JWTs under {{RFC9068}} or opaque
   tokens whose introspection response carries the same context under
   {{introspection}}.
-* **Optional inputs:** SPIFFE JWT-SVIDs, existing platform JWTs, Client
+* **Optional inputs:** SPIFFE JWT-SVIDs, WIT-SVIDs, X.509-SVIDs,
+  existing platform JWTs, Client
   Attestation, SAML subjects, and IdP refresh-token subjects are OPTIONAL
   capabilities. A deployment selects mutually supported inputs through
   trusted configuration; neither role needs SPIFFE for the
@@ -663,9 +674,10 @@ particular storage representation or administrative interface:
 * **Client Association:** The IdP administrator specifies the client,
   permitted binding or binding set, flow, and credential class.
 * **Resolution mode and proof:** IdP policy and client configuration
-  establish dedicated-client resolution or an actor-evidence input for
-  the client, applicable profile, and target. Within an actor-evidence
-  mode, they establish accepted credential classes and proof requirements.
+  establish dedicated-client resolution, authenticated-workload resolution
+  under {{spiffe-input}}, or an actor-evidence input for the client,
+  applicable profile, and target. They establish accepted credential
+  classes and proof requirements for that mode.
   Request parameters do not select the resolution mode ({{actor-inputs}}).
 * **Target:** The IdP administrator configures the RAS issuer, resources,
   Target Tenant, subject namespace, and authority to assert `aud_sub`.
@@ -808,6 +820,8 @@ this profile's requirements; there is no universal IdP audience:
 |---|---|---|
 | Dedicated client using `private_key_jwt` | IdP token endpoint URL by default; an explicitly configured identifier for that AS is permitted | {{Section 3 of RFC7523}} permits AS audience identifiers; {{client-assertion-input}} requires endpoint-URL support and defines configuration |
 | SPIFFE JWT-SVID | IdP issuer identifier as the sole audience | {{Section 3.1 of SPIFFE-OAUTH}} |
+| SPIFFE WIT-SVID | Client Attestation PoP JWT targets the IdP under its native audience rules; no `aud` requirement is added to the WIT-SVID | {{Section 3.3 of SPIFFE-OAUTH}}, {{WIT}}, and {{spiffe-input}} |
+| SPIFFE X.509-SVID | No JWT audience; the client authenticates on the mutual-TLS connection carrying the token request | {{Section 3.2 of SPIFFE-OAUTH}} and {{spiffe-input}} |
 | Existing platform JWT | Configured audience authorizing presentation to the IdP as workload evidence | Credential issuer's profile and {{imported-jwt-input}}; may be the token endpoint URL |
 | Client Attestation | Attestation and accompanying proof follow their distinct audience rules; no generic JWT audience is added to the attestation | {{ATTEST}} and {{agent-evidence}} |
 {: title="Audience rules by agent-resolution input"}
@@ -905,7 +919,8 @@ assertion replay rule.
 
 The client and agent remain distinct principals. This mode does not
 distinguish agents behind one shared client identity; such a client
-MUST present separate supported workload evidence in `actor_token`. An
+MUST use a supported workload-identity input that distinguishes its agents
+({{actor-inputs}}). An
 additional agent claim in a self-signed client assertion MUST NOT select
 another Agent Principal under this input.
 
@@ -926,7 +941,8 @@ OAuth client identifier, including multiple agents behind a shared client.
 The client MUST present the identical compact JWT-SVID in `actor_token`
 and `client_assertion`, and authenticate under
 {{Section 3.1 of SPIFFE-OAUTH}}. The IdP MUST apply its JWT-SVID validation
-rules before resolving
+rules before
+resolving
 the actor, including:
 
 * Require `client_assertion_type` of
@@ -967,6 +983,8 @@ An Identity Binding is keyed by the qualified identity of its input:
 |---|---|---|
 | Dedicated client identity | Trusted assertion issuer and exact client `sub`, qualified by the IdP client-registration context | Common mode under {{client-assertion-input}}; explicit client-to-agent binding |
 | SPIFFE JWT-SVID | Approved trust domain and exact SPIFFE ID in `sub` | Optional input under {{jwt-svid-input}}; native client authentication |
+| SPIFFE WIT-SVID | Approved trust domain and exact SPIFFE ID in validated `sub` | Authenticated-workload resolution under {{spiffe-input}} |
+| SPIFFE X.509-SVID | Approved trust domain and exact SPIFFE ID in the authenticated certificate's URI Subject Alternative Name | Authenticated-workload resolution under {{spiffe-input}} |
 | Existing platform JWT | Approved issuer and exact subject, with configured additional selectors | Optional input under {{imported-jwt-input}} |
 | Client Attestation whose attested client maps explicitly to one Agent Principal | Trusted attester and validated Client Attestation `sub` under {{agent-evidence}} | The validated `sub` identifies the OAuth client; client-to-agent mapping is explicit |
 {: title="Identity used for resolution"}
@@ -1231,8 +1249,9 @@ referenced sections define the requirements.
 |---|---|---|
 | Actor extension | Resolve dedicated-client or workload identity through an Identity Binding; authorize client use through a separate Client Association | {{identity-binding}} |
 | Dedicated-client input | Resolve from authenticated client context with no actor-token parameters; require token-endpoint audience support, explicit configuration for an alternative AS identifier, and single-use `jti` | {{client-assertion-input}} |
+| Authenticated-workload input | Resolve the exact WIT-SVID or X.509-SVID identity validated during client authentication; no actor-token parameters | {{spiffe-input}} |
 | Actor representation | One actor with the Agent Principal as `act.sub` and the IdP as `act.iss`; replaces Actor Profile's credential-to-actor copying | {{actor-construction}} |
-| Request narrowing | Configured resolution mode, exactly one resource, and non-empty scope required; actor evidence required outside dedicated-client mode; no incoming actor chain | {{root-request}}, {{actor-inputs}} |
+| Request narrowing | Configured resolution mode, exactly one resource, and non-empty scope required; actor-token parameters required only in actor-evidence mode; no incoming actor chain | {{root-request}}, {{actor-inputs}} |
 | Identity and client binding | Resolve users and agents separately; derive downstream `client_id` from an authoritative client-registration association | {{subject-resolution}}, {{agent-correlation}}, {{flow-configuration}} |
 | Grant narrowing | One resource URI (issued as a string; singleton arrays also accepted), scope constraints, and input-specific expiration limits; bound profile requires DPoP and `cnf.jkt` | {{grant-issuance}}, {{redemption-validation}}, {{grant-protection}} |
 | Resource processing | Preserve actor and tenant context; enforce the user authority and actor gate with the selected token protection | {{access-token-response}}, {{api-processing}} |
@@ -1355,7 +1374,7 @@ specifies otherwise:
 | `requested_token_type` | `urn:ietf:params:oauth:token-type:id-jag` |
 | `subject_token` | User ID Token, SAML 2.0 assertion, or refresh token when supported, issued for the authenticated client |
 | `subject_token_type` | `urn:ietf:params:oauth:token-type:id_token`, `urn:ietf:params:oauth:token-type:saml2`, or `urn:ietf:params:oauth:token-type:refresh_token` |
-| `actor_token` | Omitted for dedicated-client resolution; REQUIRED for an actor-evidence input under {{actor-inputs}} |
+| `actor_token` | Omitted for dedicated-client and authenticated-workload resolution; REQUIRED for an actor-evidence input under {{actor-inputs}} |
 | `actor_token_type` | Omitted with `actor_token`; otherwise REQUIRED with value `urn:ietf:params:oauth:token-type:jwt` |
 | `audience` | One target RAS issuer identifier |
 | `resource` | Exactly one resource URI under {{RFC8707}}, served by the RAS named in `audience` |
@@ -1453,21 +1472,28 @@ change that mode.
 * **Dedicated-client resolution:** Use the authenticated client context
   under {{client-assertion-input}}. The IdP MUST reject `actor_token` or
   `actor_token_type` with `invalid_request`.
+* **Authenticated-workload resolution:** Use the WIT-SVID or X.509-SVID
+  identity validated during client authentication under {{spiffe-input}}.
+  The IdP MUST reject `actor_token` or `actor_token_type` with
+  `invalid_request`. The configured credential class MUST match the
+  authentication method used for this request.
 * **Actor-evidence input:** The IdP MUST require both `actor_token` and
   `actor_token_type`. Missing either uses `invalid_request`. The type
   MUST be `urn:ietf:params:oauth:token-type:jwt`; any other type uses
   `invalid_request`. Missing or rejected evidence MUST NOT trigger
-  dedicated-client resolution.
+  resolution from authentication context.
 
-Both modes proceed through {{actor-construction}}. A governed request
+All modes proceed through {{actor-construction}}. A governed request
 MUST result in the required governed `act` or fail; omitting actor-token
-parameters in dedicated-client mode does not request ordinary EMA or
+parameters in an authentication-context mode does not request ordinary EMA or
 subject-only impersonation.
 
 | Input | Support | Presentation and validation |
 |---|---|---|
 | Dedicated client identity | REQUIRED at the client and IdP for `private_key_jwt`; use is configurable | Authenticated client context; no actor-token parameters; explicit binding under {{client-assertion-input}} |
 | JWT-SVID | OPTIONAL | Identical compact JWT in `actor_token` and `client_assertion`; native JWT-SVID authentication under {{jwt-svid-input}} |
+| WIT-SVID | OPTIONAL | WIT-SVID and Client Attestation PoP headers; no actor-token parameters; resolution under {{spiffe-input}} |
+| X.509-SVID | OPTIONAL | Certificate authenticated on the token request's mutual-TLS connection; no actor-token parameters; resolution under {{spiffe-input}} |
 | Existing platform JWT | OPTIONAL | Existing platform JWT in `actor_token`; validate under {{imported-jwt-input}} and authenticate separately |
 | Client Attestation | OPTIONAL | Identical compact JWT in `actor_token` and `OAuth-Client-Attestation`; attested client maps explicitly to one Agent Principal under {{agent-evidence}} |
 {: title="Agent-resolution inputs"}
@@ -1488,7 +1514,8 @@ The IdP MUST classify the `actor_token` using these steps:
      `urn:ietf:params:oauth:client-assertion-type:jwt-spiffe`, used for
      JWT-SVID authentication, selects JWT-SVID.
    * `OAuth-Client-Attestation` used for Client Attestation
-     authentication selects Client Attestation.
+     authentication with `typ=oauth-client-attestation+jwt` selects
+     Client Attestation.
 2. Otherwise, an issuer and credential class configured for the
    authenticated client's existing platform JWT input select that
    input. Apply its configured classification rules under
@@ -1497,6 +1524,9 @@ The IdP MUST classify the `actor_token` using these steps:
 The IdP MUST reject a credential matching no configured class or more
 than one class with `invalid_request`. Classification selects validation
 rules; unverified claims do not establish trust.
+
+A `wit+jwt` credential MUST NOT be accepted in actor-evidence mode.
+WIT-SVID resolution uses the separately configured mode in {{spiffe-input}}.
 
 Within one token
 request, once a credential class is selected, the IdP MUST NOT validate
@@ -1514,8 +1544,9 @@ For Client Attestation, the authentication method determines proof use:
 The errors defined by {{ATTEST}} apply.
 
 To preserve the single user-to-agent relationship, the IdP MUST reject
-an `actor_token` or ID Token containing `act`, and a refresh-token
-subject whose retained authorization contains an actor chain.
+an `actor_token`, resolution WIT-SVID, or ID Token containing `act`,
+and a refresh-token subject whose retained authorization contains an
+actor chain.
 
 ### Actor Resolution and Construction {#actor-construction}
 
@@ -1529,8 +1560,9 @@ ID-JAG MUST contain one `act` object with:
 These values MUST come from the approved mapping, even when source
 and governed identifiers coincide. For actor-evidence inputs this
 replaces credential-to-actor copying in {{Section 6.3 of ACTOR-PROFILE}};
-for dedicated-client resolution it uses the authenticated client context
-under {{client-assertion-input}}.
+for dedicated-client and authenticated-workload resolution it uses the
+validated authentication context under {{client-assertion-input}} or
+{{spiffe-input}}, respectively.
 
 The object MUST follow {{Section 3.4 of ACTOR-PROFILE}}, including its
 `sub_profile` recommendation and unclassified-actor rules. Any
@@ -1566,7 +1598,11 @@ Grant lifetime has three limits:
   {{client-assertion-input}}, the client assertion MUST be valid when
   the request is authenticated, but its expiration does not limit the
   issued grant's lifetime. For every other agent-resolution input, the
-  grant MUST NOT outlive the validated credential.
+  grant MUST NOT outlive the validated credential. For WIT-SVID this
+  limit is its `exp`; for X.509-SVID it is the earliest `notAfter` in
+  the validated certificate path, excluding the trust anchor. The
+  short-lived Client Attestation PoP JWT authenticates the request and
+  does not further limit a WIT-SVID-derived grant's lifetime.
 
 The dedicated-client assertion authenticates one transaction rather
 than defining a continuing workload-evidence validity window.
@@ -1840,9 +1876,10 @@ before authorization. This profile specifies the following outcomes:
 | Failure | Error |
 |---|---|
 | Missing required request parameter, unsupported input combination, or ambiguous credential classification | `invalid_request` |
-| No unambiguous configured resolution mode, actor-token parameters in dedicated-client mode, or missing actor-token parameters in actor-evidence mode | `invalid_request`; no mode fallback |
+| No unambiguous configured resolution mode, actor-token parameters in an authentication-context mode, a method inconsistent with that mode, or missing actor-token parameters in actor-evidence mode | `invalid_request`; no mode fallback |
 | Unsupported `actor_token_type` in actor-evidence mode | `invalid_request` |
 | Missing required issuance DPoP proof, or DPoP supplied to an endpoint that does not support it | `invalid_request` |
+| Valid issuance DPoP proof uses a key different from the resolution WIT-SVID's confirmation key | `invalid_grant` under {{spiffe-input}} |
 | Failed RFC 7523 client authentication | `invalid_client`; other methods use their specified authentication errors |
 | Invalid DPoP proof or required nonce challenge | `invalid_dpop_proof` or `use_dpop_nonce`, as specified by RFC 9449 |
 | Missing required grant binding or redemption proof, unsupported confirmation, mismatch with grant `cnf.jkt`, or authenticated client differing from the grant's `client_id` | `invalid_grant` under {{grant-protection}} and ID-JAG client processing |
@@ -1874,8 +1911,8 @@ endpoints; unsupported DPoP and missing required issuance proof follow
 {{grant-protection}}.
 
 Client authentication failures use the authentication method's error,
-including when JWT-SVID or Client Attestation also serves as actor
-evidence. Error descriptions
+including when the same credential supplies an agent-resolution input.
+Error descriptions
 SHOULD NOT reveal identity, binding, or policy details beyond those
 disclosed by the error category. Distinguishing `invalid_grant`
 from `actor_unauthorized` reveals that an actor was resolved but denied
@@ -1994,10 +2031,8 @@ actor-specific rejection details outside the trust domain.
 
 # Optional Agent Resolution Inputs {#optional-inputs}
 
-The inputs in this section are OPTIONAL. Existing platform JWTs and
-Client Attestations support agent resolution; X.509-SVIDs and WIT-SVIDs
-support client authentication only. Each composition requires trusted
-configuration under {{flow-configuration}}.
+The inputs in this section are OPTIONAL. Each defines an agent-resolution
+composition and requires trusted configuration under {{flow-configuration}}.
 
 ## Existing Platform JWT {#imported-jwt-input}
 
@@ -2085,27 +2120,87 @@ agents need distinct workload evidence, such as a JWT-SVID or an
 accepted platform JWT. Instance-based resolution
 and attester endorsement are deferred ({{excluded-compositions}}).
 
-## SPIFFE X.509-SVID and WIT-SVID Client Authentication {#spiffe-input}
+## SPIFFE WIT-SVID and X.509-SVID Resolution {#spiffe-input}
 
-X.509-SVID MAY authenticate the client under {{Section 3.2 of SPIFFE-OAUTH}},
-and WIT-SVID under {{Section 3.3 of SPIFFE-OAUTH}} and {{WIT}},
-including their proof and key-use requirements:
+These OPTIONAL inputs resolve the workload identity validated during
+OAuth client authentication. They reuse existing credential formats
+and presentation mechanisms; this profile adds the Identity Binding
+and governed actor construction. No second credential is required.
 
-| Authentication credential | Validated client identity |
-|---|---|
-| X.509-SVID | Approved trust domain and exact SPIFFE ID in the URI Subject Alternative Name |
-| WIT-SVID | Approved trust domain and exact SPIFFE ID in `sub` |
-{: title="SPIFFE client authentication identities"}
+The client and IdP MUST configure authenticated-workload resolution and
+the accepted SVID class under {{actor-inputs}}. The client MUST omit
+`actor_token` and `actor_token_type`. The IdP MUST use the SVID validated
+for this token request, not a client-supplied identity hint or context
+from an unrelated request or session. Failure handling follows {{errors}}.
 
-Either request still requires a separate supported agent-resolution
-input. These authentication identities alone do not produce an Identity
-Binding in this document ({{excluded-compositions}}).
+### Presentation and Validation
+
+| Input | Presentation | Validation and resolution source |
+|---|---|---|
+| WIT-SVID | `OAuth-Client-Attestation` carries the WIT-SVID; `OAuth-Client-Attestation-PoP` carries its proof | {{Section 3.3 of SPIFFE-OAUTH}} and {{WIT}}; exact SPIFFE ID in validated `sub` |
+| X.509-SVID | Client certificate on the mutual-TLS connection carrying the token request | {{Section 3.2 of SPIFFE-OAUTH}} and {{RFC8705}}; exact SPIFFE ID in the certificate's URI Subject Alternative Name |
+{: title="Authenticated-workload resolution inputs"}
+
+The IdP MUST apply the selected authentication profile, including its
+client-identifier association, trust, validity, and proof requirements.
+In addition:
+
+* **WIT-SVID:** Require `typ=wit+jwt` and validate possession of the key
+  in `cnf.jwk` through the Client Attestation PoP JWT. A WIT-SVID MUST
+  NOT be accepted as bearer evidence. Its optional `iss` MUST NOT select
+  a different trust domain or key authority.
+* **X.509-SVID:** Use the certificate and proof established by mutual
+  TLS for this request. A certificate supplied only in a request
+  parameter or an untrusted forwarding header MUST NOT establish the
+  workload identity. TLS termination arrangements follow
+  {{Section 7.5 of RFC8705}}.
+* **Resolution:** Resolve the approved trust domain and exact SPIFFE ID
+  through {{identity-binding}}. Authentication acceptance, including any
+  client-registration match, MUST NOT replace the exact binding or
+  separate Client Association and delegation checks.
+
+One shared SPIFFE ID cannot distinguish independently governed agents.
+These inputs retain SPIFFE OAuth's client-identifier requirements; they
+do not authorize an arbitrary shared `client_id` to present any SVID.
+
+### Proof Boundaries
+
+Workload authentication and ID-JAG protection remain separate:
+
+* **WIT-SVID:** When DPoP is used at issuance, its key MUST match the
+  WIT-SVID's `cnf.jwk`. The IdP MUST compare their JWK thumbprints as
+  used in {{RFC9449}} and reject a mismatch with `invalid_grant`.
+  This is this profile's
+  key-continuity requirement, not a replacement for the Client
+  Attestation PoP JWT.
+* **X.509-SVID:** The client proves the certificate key on the mutual-TLS
+  connection and, when required, a grant proof key in DPoP on the same
+  token request. The keys MAY differ. The certificate does not endorse
+  the DPoP key; the authenticated request associates it with this
+  issuance. The ID-JAG uses `cnf.jkt`, not certificate confirmation.
+
+The selected input proves control of a credential-bound key. Assurance
+about a particular runtime or execution depends on the credential
+authority's issuance rules and identity granularity.
+
+### Relationship to General WIMSE Credentials
+
+WIT-SVID is the SPIFFE form of a Workload Identity Token (WIT), and
+X.509-SVID provides a certificate input within the Workload Identity
+Certificate (WIC) model in {{WIT}}. This document profiles their existing
+OAuth SPIFFE presentation mechanisms. It does not define a general
+non-SPIFFE WIT or WIC input, WIT presentation with Workload Proof Tokens
+or HTTP Message Signatures, or conversion of a certificate to a JWT
+actor token ({{excluded-compositions}}).
+
+{{svid-context-example}} illustrates both inputs.
 
 ## Bearer Evidence Limits {#credential-requirements}
 
 Where issuer endorsement of the proof key is required, the deployment
 MUST use a supported input that cryptographically binds the key, such
-as Client Attestation under {{agent-evidence}}; DPoP co-presented with
+as Client Attestation under {{agent-evidence}} or the SVID inputs under
+{{spiffe-input}}; DPoP co-presented with
 bearer JWT-SVID or unbound platform JWT evidence establishes possession only.
 DPoP MUST NOT substitute for a credential proof that the selected input
 requires.
@@ -2164,6 +2259,11 @@ Servers MUST publish {{RFC8414}} metadata as follows:
   * When JWT-SVID is supported, include `spiffe_jwt` under
     {{Section 4 of SPIFFE-OAUTH}}. The generic JWT actor token type alone
     does not advertise JWT-SVID client authentication.
+  * When WIT-SVID or X.509-SVID authentication is supported, include
+    `spiffe_wit` or `spiffe_x509`, respectively, under that same section.
+    Authentication metadata alone does not advertise support for
+    authenticated-workload resolution; client and IdP MUST configure
+    that composition explicitly under {{spiffe-input}}.
 * **Both:** Advertise supported client authentication methods and, when
   DPoP is supported, DPoP algorithms, including {{flow-configuration}}'s
   common capabilities.
@@ -2499,10 +2599,12 @@ uses `jwt-dpop`. This profile follows the normative grant type with
 explicit confirmation processing ({{redemption}}) and takes no
 dependency on JWT DPoP Grant.
 
-### Dedicated-Client Identity Mapping {#dedicated-client-coordination}
+### Resolution from Authentication Context {#dedicated-client-coordination}
 
-This document explicitly defines delegated issuance from authenticated
-client context and an approved Identity Binding, without `actor_token`.
+This document explicitly defines delegated issuance from validated
+authentication context and an approved Identity Binding, without
+`actor_token`: dedicated-client identity under {{client-assertion-input}}
+or WIT-SVID/X.509-SVID workload identity under {{spiffe-input}}.
 ID-JAG makes that parameter optional and leaves actor processing to
 extensions ({{Section 9.7 of ID-JAG}}); its omission alone does not establish
 this composition.
@@ -2511,10 +2613,10 @@ Appendix A.1 of {{RFC8693}} describes a subject-only request as
 impersonation. {{Section 6.3.1 of ACTOR-PROFILE}} permits authentication-context
 reuse only when the same client assertion is also present as
 `actor_token`, and requires the client subject as `act.sub`.
-Neither defines the dedicated-client mapping specified here.
+Neither defines these mapped authentication-context inputs.
 
 Coordination with Actor Profile and ID-JAG is needed on this explicit
-extension: trusted configuration selects authenticated-client resolution,
+extension: trusted configuration selects the resolution input,
 separate mapping and authorization checks establish the governed actor,
 and the issued ID-JAG contains `act`. Generic Token Exchange or Actor
 Profile support does not advertise support for this composition.
@@ -2558,7 +2660,7 @@ exclusion does not prevent the independently supported uses listed here.
 |---|---|
 | Asynchronous approval with {{AROP}} | No approval transport or completion flow; external approval remains subject to {{external-approval}} and the lifetime limits in {{authorization-lifetime}} |
 | Continuation with {{ICA}} | No ICA issuance or continuation chain; supported renewal follows {{continuing-access}} |
-| X.509-SVID or WIT-SVID actor evidence | Client authentication is supported under {{spiffe-input}}, with a separate supported JWT as actor evidence |
+| General WIMSE WIT/WIC inputs | WIT-SVID and X.509-SVID resolution is defined in {{spiffe-input}}; non-SPIFFE credentials need an explicit OAuth presentation and proof composition |
 | Instance-based resolution or propagated instance context under {{INSTANCE}} | Workload evidence resolves the agent; no per-instance enrollment or continuity protocol is required. Shared workload identity does not distinguish replicas {{SPIFFE-CONCEPTS}} |
 | Client attester endorsement under {{ATTESTER-ENDORSEMENT}} | Attester trust is configured under {{agent-evidence}} |
 | Mutual-TLS-bound ID-JAG | Bound grants use DPoP. Mutual TLS remains available for access-token protection under {{access-token-protection}} |
@@ -2889,6 +2991,10 @@ errors follow {{errors}}; API errors follow {{resource-errors}}.
 | Dedicated-client exchange includes `actor_token` or `actor_token_type`, even a duplicate client assertion | IdP | HTTP 400, `invalid_request`; no switch to actor-evidence mode |
 | Configured actor-evidence exchange omits `actor_token` or its type | IdP | HTTP 400, `invalid_request`; no fallback to dedicated-client resolution |
 | Configured actor-evidence exchange uses an unsupported `actor_token_type` | IdP | HTTP 400, `invalid_request` |
+| Authenticated-workload exchange includes either actor-token parameter | IdP | HTTP 400, `invalid_request`; no resolution-mode switch |
+| WIT-SVID or X.509-SVID authenticates successfully but has no enabled exact Identity Binding | IdP | HTTP 400, `invalid_grant`; authentication alone does not resolve the agent |
+| Valid WIT-SVID proof accompanies an issuance DPoP proof using a different key | IdP | HTTP 400, `invalid_grant`; no grant issued |
+| X.509-SVID is supplied only as request data without the required mutual-TLS client authentication | IdP | Authentication failure under the configured method; no agent resolution |
 | Bound-profile exchange omits its DPoP proof | IdP | HTTP 400, `invalid_request` |
 | Exchange repeats `analysis-auth-1` | IdP | HTTP 400, `invalid_client`; the authentication assertion was already consumed |
 | After a nonce challenge, retry uses a fresh proof but reuses the consumed `analysis-auth-1` assertion | IdP | HTTP 400, `invalid_client`; regenerate `client_assertion` |
@@ -2960,6 +3066,38 @@ resource, scope, tenant, and proof key K are unchanged. The grant also
 expires no later than the JWT-SVID. The same rejection cases apply to
 this binding and Client Association; client-assertion-specific replay
 and equality rules instead follow the JWT-SVID input specification.
+
+# Variant: WIT-SVID or X.509-SVID {#svid-context-example}
+
+This non-normative variant resolves the workload authenticated on the
+exchange request. Trusted configuration selects authenticated-workload
+resolution and an exact Identity Binding from
+`spiffe://platform.example/agents/analysis` to `agent-42`.
+Client Association separately permits that binding. The following
+changes to {{walkthrough}} illustrate WIT-SVID:
+
+| Item | Value or processing |
+|---|---|
+| Authentication method | `spiffe_wit` |
+| `client_id` | `spiffe://platform.example/agents/analysis`, explicitly registered at the IdP |
+| User ID Token | Issued to this authenticated client; not reused from `analysis-client` |
+| `OAuth-Client-Attestation` | A valid WIT-SVID with that SPIFFE ID in `sub` and its workload public key in `cnf.jwk` |
+| `OAuth-Client-Attestation-PoP` | Fresh proof signed by the WIT-SVID key and targeting this IdP |
+| `client_assertion`, `client_assertion_type`, `actor_token`, `actor_token_type` | Absent |
+| Issuance DPoP | Present for the bound profile; signed by the WIT-SVID key |
+| Resolution | Exact trust-domain-qualified SPIFFE ID maps to `agent-42` |
+{: title="WIT-SVID exchange variant"}
+
+For X.509-SVID, configure `spiffe_x509`, replace the two attestation
+headers with mutual-TLS authentication using the X.509-SVID, and retain
+that SPIFFE ID as `client_id` under SPIFFE OAuth. The IdP resolves the
+certificate's exact URI Subject Alternative Name. The bound profile
+still requires issuance DPoP, whose key may differ from the TLS key.
+
+In either case, an authoritative association supplies the downstream
+client identifier. The resulting `act` is unchanged from the walkthrough:
+the IdP issuer and `agent-42`. Redemption follows {{redemption}}; the RAS
+does not receive or validate the original SVID.
 
 # Example: AWS Workload Identity Binding {#aws-example}
 
