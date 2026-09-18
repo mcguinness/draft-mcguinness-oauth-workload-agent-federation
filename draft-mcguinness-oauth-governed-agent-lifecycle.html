@@ -1319,19 +1319,39 @@ new event type, State Record format, SCIM schema, or delivery protocol.<a href="
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
-            <p id="section-toc.1-1.16.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-provisioning-and-disablemen" class="internal xref">Provisioning and Disablement Example</a></p>
+            <p id="section-toc.1-1.16.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-shared-delegated-federation" class="internal xref">Shared Delegated Federation Walkthrough</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.1">
-                <p id="section-toc.1-1.16.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-provision-the-agent" class="internal xref">Provision the Agent</a></p>
+                <p id="section-toc.1-1.16.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-shared-configuration" class="internal xref">Shared Configuration</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.2">
-                <p id="section-toc.1-1.16.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-activate-and-issue-authoriz" class="internal xref">Activate and Issue Authorization</a></p>
+                <p id="section-toc.1-1.16.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-provision-the-agent" class="internal xref">Provision the Agent</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.3">
-                <p id="section-toc.1-1.16.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-disable-through-a-signal" class="internal xref">Disable Through a Signal</a></p>
+                <p id="section-toc.1-1.16.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-activate-and-exchange" class="internal xref">Activate and Exchange</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.4">
-                <p id="section-toc.1-1.16.2.4.1"><a href="#appendix-A.4" class="auto internal xref">A.4</a>.  <a href="#name-delayed-delivery-and-reacti" class="internal xref">Delayed Delivery and Reactivation</a></p>
+                <p id="section-toc.1-1.16.2.4.1"><a href="#appendix-A.4" class="auto internal xref">A.4</a>.  <a href="#name-redeem-and-call-the-api" class="internal xref">Redeem and Call the API</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.5">
+                <p id="section-toc.1-1.16.2.5.1"><a href="#appendix-A.5" class="auto internal xref">A.5</a>.  <a href="#name-optional-ras-refresh-branch" class="internal xref">Optional RAS Refresh Branch</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.6">
+                <p id="section-toc.1-1.16.2.6.1"><a href="#appendix-A.6" class="auto internal xref">A.6</a>.  <a href="#name-disable-through-a-signal" class="internal xref">Disable Through a Signal</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.7">
+                <p id="section-toc.1-1.16.2.7.1"><a href="#appendix-A.7" class="auto internal xref">A.7</a>.  <a href="#name-reactivate-or-recover-a-los" class="internal xref">Reactivate or Recover a Lost Event</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.8">
+                <p id="section-toc.1-1.16.2.8.1"><a href="#appendix-A.8" class="auto internal xref">A.8</a>.  <a href="#name-declared-denial-bounds" class="internal xref">Declared Denial Bounds</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.9">
+                <p id="section-toc.1-1.16.2.9.1"><a href="#appendix-A.9" class="auto internal xref">A.9</a>.  <a href="#name-acceptance-checklist" class="internal xref">Acceptance Checklist</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.9.2.1">
+                    <p id="section-toc.1-1.16.2.9.2.1.1"><a href="#appendix-A.9.1" class="auto internal xref">A.9.1</a>.  <a href="#name-ordering-and-recovery-cases" class="internal xref">Ordering and Recovery Cases</a></p>
+</li>
+                </ul>
 </li>
             </ul>
 </li>
@@ -1424,7 +1444,9 @@ result for an Agent Principal and the receiver obligations that follow.<a href="
 <p id="section-1.1-5">Platform-to-IdP enrollment, Identity Binding administration, individual
 delegation revocation, task cancellation, runtime instance lifecycle,
 and risk scoring are outside this profile. Their boundaries are stated
-in <a href="#relationship-changes" class="auto internal xref">Section 11</a>.<a href="#section-1.1-5" class="pilcrow">¶</a></p>
+in <a href="#relationship-changes" class="auto internal xref">Section 11</a>. <span>[<a href="#AGENT-MANAGEMENT" class="cite xref">AGENT-MANAGEMENT</a>]</span> separately profiles
+platform-to-IdP management of Agent Principals, Identity Bindings, and
+Client Associations; it does not define runtime enrollment.<a href="#section-1.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2081,9 +2103,12 @@ ordering mechanism.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
 additionally requires an administrative diagnostic for conflicting
 equal-version records.<a href="#section-8.3-5" class="pilcrow">¶</a></p>
 <p id="section-8.3-6">A delivery acknowledgment confirms durable acceptance for processing,
-not completed API enforcement. E bounds application delay for the
-guarantee claimed by the Receiver and RAS deployment (<a href="#parameters" class="auto internal xref">Section 3.1</a>).
-SCIM success requires completed application under <a href="#scim-updates" class="auto internal xref">Section 7.3</a>.<a href="#section-8.3-6" class="pilcrow">¶</a></p>
+not completed RAS or API enforcement. Pending restrictions apply under
+<a href="#registry" class="auto internal xref">Section 6</a>; E bounds the delay until restrictions are effective
+throughout the Receiver and RAS deployment (<a href="#parameters" class="auto internal xref">Section 3.1</a>). API denial
+then follows the configured mode's residual bound. SCIM success requires
+completed RAS application under <a href="#scim-updates" class="auto internal xref">Section 7.3</a>, not expiration of every
+API cache entry or offline token.<a href="#section-8.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2106,7 +2131,7 @@ parameter:<a href="#section-9-2" class="pilcrow">¶</a></p>
 =============== NOTE: '\' line wrapping per RFC 8792 ================
 
 urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
-issuer eq "https://idp.example" and
+issuer eq "https://idp.example/" and
 urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
 subject eq "agent-42"
 </pre><a href="#section-9-3" class="pilcrow">¶</a>
@@ -2213,7 +2238,9 @@ authorization requirements succeed.<a href="#section-10.2-2.5.1" class="pilcrow"
 authorization. When the cutoff advances, it <span class="bcp14">MUST</span> invalidate
 authorization whose original grant issuance second is at or before the
 new cutoff. These invalidations are permanent: subsequent activation
-cannot reverse them. They take effect immediately at the RAS; cached
+cannot reverse them. At each RAS component applying the restriction,
+they take effect with that application; pending-state enforcement and
+the deployment-wide delay E follow <a href="#registry" class="auto internal xref">Section 6</a> and <a href="#signals" class="auto internal xref">Section 8</a>. Cached
 decisions and offline access tokens cease API use within the applicable
 mode's bound below.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
 <p id="section-10.2-4">A token request failing these lifecycle checks uses <code>invalid_grant</code> under
@@ -2647,6 +2674,10 @@ event URI and requests registration of the SCIM schema.<a href="#section-14-1" c
 <a href="#section-15.2" class="section-number selfRef">15.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="AGENT-MANAGEMENT">[AGENT-MANAGEMENT]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"SCIM Profile for Agent Federation Management"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-scim-agent-federation</span>, <time datetime="2026-09-18" class="refDate">18 September 2026</time>, <span>&lt;<a href="https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-agent-federation.html">https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-agent-federation.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC7009">[RFC7009]</dt>
         <dd>
 <span class="refAuthor">Lodderstedt, T., Ed.</span>, <span class="refAuthor">Dronia, S.</span>, and <span class="refAuthor">M. Scurtescu</span>, <span class="refTitle">"OAuth 2.0 Token Revocation"</span>, <span class="seriesInfo">RFC 7009</span>, <span class="seriesInfo">DOI 10.17487/RFC7009</span>, <time datetime="2013-08" class="refDate">August 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7009">https://www.rfc-editor.org/rfc/rfc7009</a>&gt;</span>. </dd>
@@ -2682,24 +2713,112 @@ event URI and requests registration of the SCIM schema.<a href="#section-14-1" c
 </div>
 <div id="example">
 <section id="appendix-A">
-      <h2 id="name-provisioning-and-disablemen">
-<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-provisioning-and-disablemen" class="section-name selfRef">Provisioning and Disablement Example</a>
+      <h2 id="name-shared-delegated-federation">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-shared-delegated-federation" class="section-name selfRef">Shared Delegated Federation Walkthrough</a>
       </h2>
-<p id="appendix-A-1">This non-normative example uses an IdP at <code>https://idp.example</code>, a RAS
-at <code>https://ras.example</code>, and governed subject <code>agent-42</code>. It uses
-online introspection, S = 1 second, and issuer-ahead bound D = 2
-seconds. Its five-minute lease is illustrative, not a recommended
-deployment interval. Bearer values and the SET signature are
-placeholders. SCIM locations identify the Receiver's records, not the
-enterprise identity.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
-<div id="provision-the-agent">
+<p id="appendix-A-1">This non-normative walkthrough composes the dedicated-client exchange
+in <span>[<a href="#FEDERATION" class="cite xref">FEDERATION</a>]</span> with the events in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> and this lifecycle
+profile. It is a protocol review scenario, not an executed implementation
+or a set of cryptographic test vectors. The checklist in
+<a href="#acceptance-checklist" class="auto internal xref">Appendix A.9</a> identifies observable acceptance results.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<div id="shared-configuration">
 <section id="appendix-A.1">
-        <h3 id="name-provision-the-agent">
-<a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-provision-the-agent" class="section-name selfRef">Provision the Agent</a>
+        <h3 id="name-shared-configuration">
+<a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-shared-configuration" class="section-name selfRef">Shared Configuration</a>
         </h3>
-<p id="appendix-A.1-1">The connector sends a disabled resource. A prior local administrative
-decision permits creating the corresponding principal.<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
-<div class="lang-http-message sourcecode" id="appendix-A.1-2">
+<p id="appendix-A.1-1">All times below are UTC on September 17, 2026. The parties configure
+bound governed agent access, DPoP-protected API tokens, and online
+introspection on every API request, including when the token is a JWT.
+Local actor policy permits the example operation before disablement.<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-6">
+          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Coordinate</th>
+              <th class="text-left" rowspan="1" colspan="1">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Governing IdP issuer</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://idp.example/</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Agent Principal subject</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>agent-42</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">RAS issuer</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://ras.example/</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">IdP / RAS OAuth clients</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>analysis-client</code> / <code>analysis-api</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">User at IdP for RAS / at API</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>alice-ras</code> / <code>user-108</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Target Tenant</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>acme-data</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Resource</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://api.example/tenants/acme-data/</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Scope</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>files.read</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Grant and access-token proof key</td>
+              <td class="text-left" rowspan="1" colspan="1">K, with thumbprint <code>JKT_K</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">RAS-local agent representation</td>
+              <td class="text-left" rowspan="1" colspan="1">SCIM resource <code>local-108</code>
+</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="appendix-A.1-3">The configured Identity Binding maps the authenticated dedicated client
+to <code>agent-42</code>; Client Association and delegation for Alice are separately
+approved. Alice's ID Token has audience <code>analysis-client</code> and remains
+valid through the issued grant's expiration. Credential and signature
+values in the examples are placeholders.<a href="#appendix-A.1-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-4">For this example, S = 1 second, D = 2 seconds, L = 300 seconds,
+E = 2 seconds, and T = 2 seconds. The short lease illustrates lost-event
+handling; it is not a recommended deployment interval. The lifecycle
+identity equals the ID-JAG actor exactly. SCIM <code>local-108</code> is neither
+Alice's <code>user-108</code> nor the federated agent subject.<a href="#appendix-A.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="provision-the-agent">
+<section id="appendix-A.2">
+        <h3 id="name-provision-the-agent">
+<a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-provision-the-agent" class="section-name selfRef">Provision the Agent</a>
+        </h3>
+<p id="appendix-A.2-1">The connector sends a disabled resource. A prior local administrative
+decision permits creating the corresponding principal.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="appendix-A.2-2">
 <pre>
 POST /scim/v2/Agents HTTP/1.1
 Host: ras.example
@@ -2716,7 +2835,7 @@ Content-Type: application/scim+json
   "active": false,
   "urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent":
   {
-    "issuer": "https://idp.example",
+    "issuer": "https://idp.example/",
     "subject": "agent-42",
     "version": "40",
     "status": "disabled",
@@ -2724,135 +2843,324 @@ Content-Type: application/scim+json
     "assertedAt": "2026-09-17T12:00:00Z"
   }
 }
-</pre><a href="#appendix-A.1-2" class="pilcrow">¶</a>
+</pre><a href="#appendix-A.2-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.1-3">The Receiver returns <code>201 Created</code>, a <code>Location</code> identifying
+<p id="appendix-A.2-3">The request is authorized for Target Tenant <code>acme-data</code>. The Receiver
+returns <code>201 Created</code>, a <code>Location</code> identifying
 <code>https://ras.example/scim/v2/Agents/local-108</code>, and the created resource
 including <code>id: "local-108"</code>. The connector retains that location. The
 agent remains ineligible until both enterprise and local activation
-conditions hold.<a href="#appendix-A.1-3" class="pilcrow">¶</a></p>
+conditions hold.<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="activate-and-issue-authorization">
-<section id="appendix-A.2">
-        <h3 id="name-activate-and-issue-authoriz">
-<a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-activate-and-issue-authoriz" class="section-name selfRef">Activate and Issue Authorization</a>
+<div id="activate-and-exchange">
+<section id="appendix-A.3">
+        <h3 id="name-activate-and-exchange">
+<a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-activate-and-exchange" class="section-name selfRef">Activate and Exchange</a>
         </h3>
-<p id="appendix-A.2-1">At 12:01:00 UTC the Authority issues version 41 with <code>status: "active"</code>,
+<p id="appendix-A.3-1">At 12:01:00 UTC the Authority issues version 41 with <code>status: "active"</code>,
 cutoff 12:01:02, and <code>validUntil</code> 12:06:00. The connector PUTs the
 complete resource with <code>active: true</code>. The Receiver applies it and
-returns <code>200 OK</code>.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.2-2">An ID-JAG issued at 12:01:03 clears the cutoff. An <code>iat</code> at 12:01:03.5
-also clears it; one at 12:01:02.9 does not, because its issuance second
-equals the cutoff. The RAS retains its original issuance second with the
-derived access token and refresh authorization. The API introspects the
-access token on each request.<a href="#appendix-A.2-2" class="pilcrow">¶</a></p>
+returns <code>200 OK</code>.<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-2">At 12:01:03, the client sends Federation's exchange request with Alice's
+ID Token, a fresh <code>private_key_jwt</code> assertion, and a DPoP proof using K.
+It sends no actor-token parameters. The IdP validates the credentials,
+resolves the Agent Principal, and checks Client Association, delegation,
+target authority, and current lifecycle eligibility.<a href="#appendix-A.3-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-3">The resulting <code>grant-1</code> has <code>iat=1789646463</code> (12:01:03),
+<code>exp=1789646763</code> (12:06:03), and the Federation example's user, actor,
+resource, client, scope, and <code>cnf.jkt</code> values. Its issuance second clears
+the cutoff. An <code>iat</code> at 12:01:03.5 also clears it; one at 12:01:02.9
+does not, because its issuance second equals the cutoff.<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="redeem-and-call-the-api">
+<section id="appendix-A.4">
+        <h3 id="name-redeem-and-call-the-api">
+<a href="#appendix-A.4" class="section-number selfRef">A.4. </a><a href="#name-redeem-and-call-the-api" class="section-name selfRef">Redeem and Call the API</a>
+        </h3>
+<p id="appendix-A.4-1">At 12:01:04, <code>analysis-api</code> authenticates to the RAS and redeems
+<code>grant-1</code> with a fresh proof using K. The RAS applies both profiles:<a href="#appendix-A.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-A.4-2.1">
+            <p id="appendix-A.4-2.1.1">Federation validates the grant and proof, translates Alice to
+<code>user-108</code>, correlates <code>agent-42</code> with <code>local-108</code>, and applies the
+actor gate and resource policy.<a href="#appendix-A.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.4-2.2">
+            <p id="appendix-A.4-2.2.1">Lifecycle verifies active state, its lease, local eligibility, and
+<code>floor(grant.iat) &gt; authorizationCutoff</code>.<a href="#appendix-A.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="appendix-A.4-3">The RAS issues Federation's <code>access-1</code>, expiring at 12:11:04, preserving
+the IdP-qualified <code>act</code> and binding the token to K. It retains original
+grant issuance second <code>1789646463</code> with that authorization; the access
+token's <code>iat=1789646464</code> does not replace it.<a href="#appendix-A.4-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.4-4">At 12:01:08, the client requests <code>report-7</code> with that token and a fresh
+DPoP proof. The API introspects, validates the token/proof context, and
+checks user authority, the actor gate, and Target Tenant. A valid JWT
+signature does not skip introspection in this configured mode.<a href="#appendix-A.4-4" class="pilcrow">¶</a></p>
+<p id="appendix-A.4-5">Neither grant nor access-token expiration is an eligibility lease.
+The later token expiration does not permit the RAS to return an active
+introspection result after lifecycle eligibility is lost.<a href="#appendix-A.4-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="optional-ras-refresh-branch">
+<section id="appendix-A.5">
+        <h3 id="name-optional-ras-refresh-branch">
+<a href="#appendix-A.5" class="section-number selfRef">A.5. </a><a href="#name-optional-ras-refresh-branch" class="section-name selfRef">Optional RAS Refresh Branch</a>
+        </h3>
+<p id="appendix-A.5-1">The base walkthrough issues no refresh token. In a separate run with
+explicit RAS refresh policy, the RAS binds refresh authorization to K
+and retains the same user, actor, client, tenant, resource, authority,
+profile, and original grant issuance second. It sets Federation's
+finite absolute authorization expiration and inactivity limit.<a href="#appendix-A.5-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.5-2">A permitted refresh at 12:01:30 can issue a new access token, but its
+new issue time cannot replace <code>1789646463</code> in lifecycle provenance.
+Disablement below invalidates both authorizations. Refresh cannot
+renew a lease or establish a new IdP authorization decision.<a href="#appendix-A.5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="disable-through-a-signal">
-<section id="appendix-A.3">
+<section id="appendix-A.6">
         <h3 id="name-disable-through-a-signal">
-<a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-disable-through-a-signal" class="section-name selfRef">Disable Through a Signal</a>
+<a href="#appendix-A.6" class="section-number selfRef">A.6. </a><a href="#name-disable-through-a-signal" class="section-name selfRef">Disable Through a Signal</a>
         </h3>
-<p id="appendix-A.3-1">At 12:02:00 the Authority disables the agent and publishes version 42.
-Its stream is administratively bound to issuer <code>https://idp.example</code> and
-Target Tenant <code>tenant-7</code>, with the exclusive audience
-<code>https://ras.example/lifecycle/tenant-7/idp-example</code>. The Transmitter
+<p id="appendix-A.6-1">At 12:02:00 the Authority commits disablement, closes issuance at every
+IdP grant issuer, and publishes version 42 under <a href="#conformance" class="auto internal xref">Section 3</a>.
+Its stream is administratively bound to issuer <code>https://idp.example/</code> and
+Target Tenant <code>acme-data</code>, with the exclusive audience
+<code>https://ras.example/lifecycle/acme-data/idp-example</code>. The Transmitter
 sends the event defined in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> with disabled state version
 42, <code>event_timestamp</code> corresponding to 12:02:00, and
 <code>authorization_cutoff</code> corresponding to 12:02:02. Its examples show the
 decoded SET. The stream audience identifies the receiving context; the
-payload identifies the Agent Principal.<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.3-2">The Receiver applies version 42. Redemption and refresh fail with
-<code>invalid_grant</code>; introspection of the previously issued token returns
-<code>{"active":false}</code>. The API denies its next use.<a href="#appendix-A.3-2" class="pilcrow">¶</a></p>
+payload identifies the Agent Principal.<a href="#appendix-A.6-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-2">The Receiver durably accepts version 42 and acknowledges delivery.
+Pending restrictions apply immediately where evaluated; enforcement
+throughout the RAS completes within E. After application, redemption
+and refresh fail with <code>invalid_grant</code>; introspection of either previously
+issued token returns <code>{"active":false}</code>. The API denies requests using
+that result. An introspection decision already in flight remains
+subject to timeout T; the delivery acknowledgment alone is not proof
+that every API has denied access.<a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="delayed-delivery-and-reactivation">
-<section id="appendix-A.4">
-        <h3 id="name-delayed-delivery-and-reacti">
-<a href="#appendix-A.4" class="section-number selfRef">A.4. </a><a href="#name-delayed-delivery-and-reacti" class="section-name selfRef">Delayed Delivery and Reactivation</a>
+<div id="reactivate-or-recover-a-lost-event">
+<section id="appendix-A.7">
+        <h3 id="name-reactivate-or-recover-a-los">
+<a href="#appendix-A.7" class="section-number selfRef">A.7. </a><a href="#name-reactivate-or-recover-a-los" class="section-name selfRef">Reactivate or Recover a Lost Event</a>
         </h3>
-<table class="center" id="table-6">
-          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
+<p id="appendix-A.7-1">At 12:03:00, an independently authorized reactivation creates version 43,
+cutoff 12:03:02, and a new lease ending at 12:08:00. Once it is applied,
+a new grant issued at 12:03:03 can qualify. <code>grant-1</code> and its derived
+refresh authorization cannot: their retained issuance second precedes
+the new cutoff even though <code>grant-1</code> has not yet expired.<a href="#appendix-A.7-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.7-2">The same result holds if the Receiver never received disabled version
+42. Version 43 is a complete snapshot carrying the advanced cutoff.
+Any cached or offline acceptance remains subject to the applicable API
+mode's residual bound; reactivation does not extend it.<a href="#appendix-A.7-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.7-3">In a separate lost-delivery run, neither version 42 nor a later version
+arrives. The last active lease ends at 12:06:00. The Receiver stops
+relying on it without needing a disablement event. A later lease renewal
+can restore eligibility only under <a href="#freshness" class="auto internal xref">Section 10.5</a>; it cannot undo an
+observed revocation or cutoff invalidation.<a href="#appendix-A.7-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="declared-denial-bounds">
+<section id="appendix-A.8">
+        <h3 id="name-declared-denial-bounds">
+<a href="#appendix-A.8" class="section-number selfRef">A.8. </a><a href="#name-declared-denial-bounds" class="section-name selfRef">Declared Denial Bounds</a>
+        </h3>
+<p id="appendix-A.8-1">The configured values give B = L + 2S + E = 304 seconds. From Authority
+disablement, the online-introspection bound is B + T = 306 seconds,
+including loss of notification. Delivered notifications can shorten
+that interval. This is a worst-case deployment bound, not a claim that
+the particular lease above lasts 304 seconds after disablement.<a href="#appendix-A.8-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.8-2">Alternative runs retain the same identity and grant processing:<a href="#appendix-A.8-2" class="pilcrow">¶</a></p>
+<table class="center" id="table-7">
+          <caption><a href="#table-7" class="selfRef">Table 7</a></caption>
 <thead>
             <tr>
-              <th class="text-left" rowspan="1" colspan="1">Subsequent input</th>
-              <th class="text-left" rowspan="1" colspan="1">Result</th>
+              <th class="text-left" rowspan="1" colspan="1">API mode</th>
+              <th class="text-left" rowspan="1" colspan="1">Additional limits</th>
+              <th class="text-left" rowspan="1" colspan="1">Worst-case denial bound</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Delayed SCIM PUT carrying active version 41</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>409</code>; disabled version 42 remains in effect</td>
+              <td class="text-left" rowspan="1" colspan="1">Online introspection</td>
+              <td class="text-left" rowspan="1" colspan="1">T = 2 seconds</td>
+              <td class="text-left" rowspan="1" colspan="1">306 seconds</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Authorized SCIM PUT with identical state 42 and a new display name</td>
-              <td class="text-left" rowspan="1" colspan="1">Descriptive edit applies; lifecycle version, cutoff, and lease remain unchanged</td>
+              <td class="text-left" rowspan="1" colspan="1">Bounded cache</td>
+              <td class="text-left" rowspan="1" colspan="1">T = 2, C = 30 seconds</td>
+              <td class="text-left" rowspan="1" colspan="1">336 seconds</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Descriptive edit with a stale <code>If-Match</code>, when ETags are supported</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>412</code>; no change</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Retransmission of event 42</td>
-              <td class="text-left" rowspan="1" colspan="1">Acknowledged without renewing the lease or changing state</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Applied active 41 with pending disabled 42</td>
-              <td class="text-left" rowspan="1" colspan="1">RAS denies new authorization; API residual bounds still apply</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Applied disabled 42 with pending active 43</td>
-              <td class="text-left" rowspan="1" colspan="1">RAS denies until reactivation is applied</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Different cutoff or status using version 42</td>
-              <td class="text-left" rowspan="1" colspan="1">Rejected and diagnosed as a conflict</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Version 42 differing only in an inactive <code>validUntil</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Duplicate; ignored member does not change eligibility</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">SCIM PUT matching SSF-pending version 42</td>
-              <td class="text-left" rowspan="1" colspan="1">State and authorized edits applied synchronously before success</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">POST against a retired identity's tombstone</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>409</code>; no resource created</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">DELETE of the disabled representation</td>
-              <td class="text-left" rowspan="1" colspan="1">Correlation removed; registry state retained</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Authorized active version 43 with cutoff 12:03:02</td>
-              <td class="text-left" rowspan="1" colspan="1">Grants with issuance seconds after the cutoff can qualify; old tokens stay invalid</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Version 43 delivered without version 42</td>
-              <td class="text-left" rowspan="1" colspan="1">The newer cutoff still rejects the grant issued at 12:01:03</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">No update or renewal after active version 41</td>
-              <td class="text-left" rowspan="1" colspan="1">Authorization is denied when its eligibility lease ends</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Retired version 44 followed by an active version 45</td>
-              <td class="text-left" rowspan="1" colspan="1">Invalid transition; retirement remains terminal</td>
+              <td class="text-left" rowspan="1" colspan="1">Expiring JWT</td>
+              <td class="text-left" rowspan="1" colspan="1">J = 600, P = 1 second; A = 603 seconds</td>
+              <td class="text-left" rowspan="1" colspan="1">907 seconds</td>
             </tr>
           </tbody>
         </table>
-<p id="appendix-A.4-2">In bounded-cache mode an earlier active introspection result may still
+<p id="appendix-A.8-4">These bounds concern new API authorization decisions. They do not
+cancel work already admitted. An implementation exercising one mode
+has not demonstrated the behavior of another.<a href="#appendix-A.8-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="acceptance-checklist">
+<section id="appendix-A.9">
+        <h3 id="name-acceptance-checklist">
+<a href="#appendix-A.9" class="section-number selfRef">A.9. </a><a href="#name-acceptance-checklist" class="section-name selfRef">Acceptance Checklist</a>
+        </h3>
+<p id="appendix-A.9-1">The following is a manual review and deployment-validation checklist,
+not a claim that tests have been executed. All unrelated credentials
+and policy checks succeed in each negative case.<a href="#appendix-A.9-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-8">
+          <caption><a href="#table-8" class="selfRef">Table 8</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Check</th>
+              <th class="text-left" rowspan="1" colspan="1">Expected observation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Identity join</td>
+              <td class="text-left" rowspan="1" colspan="1">ID-JAG <code>act</code>, event <code>sub_id</code>, and SCIM extension identify exactly (<code>https://idp.example/</code>, <code>agent-42</code>)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Tenant isolation</td>
+              <td class="text-left" rowspan="1" colspan="1">Wrong stream audience, governing issuer, or Target Tenant is rejected before changing the registry</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Provisioning boundary</td>
+              <td class="text-left" rowspan="1" colspan="1">A valid active event without an authorized local correlation does not enable redemption</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Grant binding</td>
+              <td class="text-left" rowspan="1" colspan="1">Redemption with a key other than K fails even while the agent is active</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Actor preservation</td>
+              <td class="text-left" rowspan="1" colspan="1">The RAS translates Alice's subject but preserves the qualified actor; <code>local-108</code> never replaces <code>act.sub</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Refresh provenance</td>
+              <td class="text-left" rowspan="1" colspan="1">A refreshed token retains the original grant issuance second and becomes inactive after the same cutoff advance</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Source coordination</td>
+              <td class="text-left" rowspan="1" colspan="1">No new IdP authorization succeeds after committed disablement; no renewal is produced from stale pre-disablement state</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Publication order</td>
+              <td class="text-left" rowspan="1" colspan="1">The disabled snapshot is published only after the IdP issuance gate closes; reactivation does not postdate grants to clear its cutoff</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Enforcement milestones</td>
+              <td class="text-left" rowspan="1" colspan="1">Record acceptance, completed RAS application, and API denial separately; an acknowledgment alone does not satisfy the denial bound</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Migration</td>
+              <td class="text-left" rowspan="1" colspan="1">Existing authorization without recoverable grant provenance cannot enter the lifecycle-governed population</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="appendix-A.9-3">Source coordination requires observation of the Authority and issuing
+nodes; it cannot be established from SET contents. Clock accuracy,
+application delay, and API timeout/cache behavior require operational
+measurement before a deployment claims the calculated bounds.<a href="#appendix-A.9-3" class="pilcrow">¶</a></p>
+<div id="ordering-and-recovery-cases">
+<section id="appendix-A.9.1">
+          <h4 id="name-ordering-and-recovery-cases">
+<a href="#appendix-A.9.1" class="section-number selfRef">A.9.1. </a><a href="#name-ordering-and-recovery-cases" class="section-name selfRef">Ordering and Recovery Cases</a>
+          </h4>
+<table class="center" id="table-9">
+            <caption><a href="#table-9" class="selfRef">Table 9</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Subsequent input</th>
+                <th class="text-left" rowspan="1" colspan="1">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Delayed SCIM PUT carrying active version 41</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>409</code>; disabled version 42 remains in effect</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Authorized SCIM PUT with identical state 42 and a new display name</td>
+                <td class="text-left" rowspan="1" colspan="1">Descriptive edit applies; lifecycle version, cutoff, and lease remain unchanged</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Descriptive edit with a stale <code>If-Match</code>, when ETags are supported</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>412</code>; no change</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Retransmission of event 42</td>
+                <td class="text-left" rowspan="1" colspan="1">Acknowledged without renewing the lease or changing state</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Applied active 41 with pending disabled 42</td>
+                <td class="text-left" rowspan="1" colspan="1">RAS denies new authorization; API residual bounds still apply</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Applied disabled 42 with pending active 43</td>
+                <td class="text-left" rowspan="1" colspan="1">RAS denies until reactivation is applied</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Different cutoff or status using version 42</td>
+                <td class="text-left" rowspan="1" colspan="1">Rejected and diagnosed as a conflict</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Version 42 differing only in an inactive <code>validUntil</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Duplicate; ignored member does not change eligibility</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">SCIM PUT matching SSF-pending version 42</td>
+                <td class="text-left" rowspan="1" colspan="1">State and authorized edits applied synchronously before success</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">POST against a retired identity's tombstone</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>409</code>; no resource created</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">DELETE of the disabled representation</td>
+                <td class="text-left" rowspan="1" colspan="1">Correlation removed; registry state retained</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Authorized active version 43 with cutoff 12:03:02</td>
+                <td class="text-left" rowspan="1" colspan="1">Grants with issuance seconds after the cutoff can qualify; old tokens stay invalid</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Version 43 delivered without version 42</td>
+                <td class="text-left" rowspan="1" colspan="1">The newer cutoff still rejects the grant issued at 12:01:03</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">No update or renewal after active version 41</td>
+                <td class="text-left" rowspan="1" colspan="1">Authorization is denied when its eligibility lease ends</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Retired version 44 followed by an active version 45</td>
+                <td class="text-left" rowspan="1" colspan="1">Invalid transition; retirement remains terminal</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="appendix-A.9.1-2">In bounded-cache mode an earlier active introspection result may still
 be used within C; in expiring-JWT mode the API can accept the old token
 until its bounded expiry. Neither mode allows RAS refresh after the
 disablement is applied. Their longer bounds are explicit in
-<a href="#freshness" class="auto internal xref">Section 10.5</a>.<a href="#appendix-A.4-2" class="pilcrow">¶</a></p>
+<a href="#freshness" class="auto internal xref">Section 10.5</a>.<a href="#appendix-A.9.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 </section>

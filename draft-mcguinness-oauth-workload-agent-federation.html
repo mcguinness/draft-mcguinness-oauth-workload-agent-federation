@@ -2341,7 +2341,9 @@ case; <a href="#aws-example" class="auto internal xref">Appendix E</a> applies t
 an approved Identity Binding or Client Association. Creating and changing
 bindings
 and associations, including imports from platform registries, is an
-administrative act outside this profile (<a href="#operational-guidance" class="auto internal xref">Appendix A.3</a>).<a href="#section-4.3-9" class="pilcrow">¶</a></p>
+administrative act outside this profile (<a href="#operational-guidance" class="auto internal xref">Appendix A.3</a>). The
+SCIM companion <span>[<a href="#AGENT-MANAGEMENT" class="cite xref">AGENT-MANAGEMENT</a>]</span> defines a proposed platform-to-IdP
+management interface for those relationships.<a href="#section-4.3-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="identity-example">
@@ -5665,6 +5667,10 @@ metadata parameters.<a href="#section-13.1-5" class="pilcrow">¶</a></p>
 <a href="#section-14.2" class="section-number selfRef">14.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="AGENT-MANAGEMENT">[AGENT-MANAGEMENT]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"SCIM Profile for Agent Federation Management"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-scim-agent-federation</span>, <time datetime="2026-09-18" class="refDate">18 September 2026</time>, <span>&lt;<a href="https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-agent-federation.html">https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-agent-federation.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="AIMS">[AIMS]</dt>
         <dd>
 <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Lombardo, J.</span>, <span class="refAuthor">Rosomakho, Y.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Steele, N.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"AI Identity Management System"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-aims-00</span>, <time datetime="2026-09-15" class="refDate">15 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-aims-00">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-aims-00</a>&gt;</span>. </dd>
@@ -6026,6 +6032,11 @@ A separate Client Association permits use of that binding, and
 delegation authorization permits the agent to act for Alice.
 Alice's ID Token has audience <code>analysis-client</code>; subject resolution
 produces <code>alice-ras</code> for the RAS and <code>user-108</code> at the resource.<a href="#appendix-B-2" class="pilcrow">¶</a></p>
+<p id="appendix-B-3">The exchange starts at 12:01:03 UTC on September 17, 2026. The lifecycle
+companion's shared walkthrough <span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> uses the same identities,
+Target Tenant <code>acme-data</code>, proof key K, and grant issuance time. It adds
+provisioning, introspection, disablement, and recovery when lifecycle
+enforcement is configured; those checks are not implied by Federation alone.<a href="#appendix-B-3" class="pilcrow">¶</a></p>
 <div id="client-assertion-example">
 <section id="appendix-B.1">
         <h3 id="name-dedicated-client-authentica">
@@ -6040,8 +6051,8 @@ key identifier:<a href="#appendix-B.1-1" class="pilcrow">¶</a></p>
   "iss": "analysis-client",
   "sub": "analysis-client",
   "aud": "https://idp.example/token",
-  "iat": 1789488000,
-  "exp": 1789488060,
+  "iat": 1789646463,
+  "exp": 1789646523,
   "jti": "analysis-auth-1"
 }
 </pre><a href="#appendix-B.1-2" class="pilcrow">¶</a>
@@ -6117,8 +6128,8 @@ an IdP signing-key identifier. Its payload includes:<a href="#appendix-B.2-6" cl
   "iss": "https://idp.example/",
   "sub": "alice-ras",
   "aud": "https://ras.example/",
-  "iat": 1789488000,
-  "exp": 1789488300,
+  "iat": 1789646463,
+  "exp": 1789646763,
   "jti": "grant-1",
   "client_id": "analysis-api",
   "resource": "https://api.example/tenants/acme-data/",
@@ -6193,8 +6204,8 @@ Pragma: no-cache
   "iss": "https://ras.example/",
   "sub": "user-108",
   "aud": "https://api.example/tenants/acme-data/",
-  "iat": 1789488000,
-  "exp": 1789488600,
+  "iat": 1789646464,
+  "exp": 1789647064,
   "jti": "access-1",
   "client_id": "analysis-api",
   "scope": "files.read",
@@ -6244,7 +6255,7 @@ DPoP: API_DPOP_PROOF
   "jti": "api-proof-1",
   "htm": "GET",
   "htu": "https://api.example/tenants/acme-data/files/report-7",
-  "iat": 1789488005,
+  "iat": 1789646468,
   "ath": "ATH_ACCESS_TOKEN"
 }
 </pre><a href="#appendix-B.4-5" class="pilcrow">¶</a>
@@ -6515,7 +6526,7 @@ an illustrative NumericDate value.<a href="#appendix-C-2" class="pilcrow">¶</a>
 {
   "sub": "spiffe://platform.example/accounts/acme/agents/workload-7",
   "aud": ["https://idp.example/"],
-  "exp": 1789488600
+  "exp": 1789647063
 }
 </pre><a href="#appendix-C-4" class="pilcrow">¶</a>
 </div>

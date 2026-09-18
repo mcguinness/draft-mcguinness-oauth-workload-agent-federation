@@ -859,7 +859,9 @@ Table of Contents
    an approved Identity Binding or Client Association.  Creating and
    changing bindings and associations, including imports from platform
    registries, is an administrative act outside this profile
-   (Appendix A.3).
+   (Appendix A.3).  The SCIM companion [AGENT-MANAGEMENT] defines a
+   proposed platform-to-IdP management interface for those
+   relationships.
 
 4.4.  Identity Mapping Example
 
@@ -3543,6 +3545,14 @@ Table of Contents
 
 14.2.  Informative References
 
+   [AGENT-MANAGEMENT]
+              McGuinness, K., "SCIM Profile for Agent Federation
+              Management", Work in Progress, Internet-Draft, draft-
+              mcguinness-scim-agent-federation, 18 September 2026,
+              <https://mcguinness.github.io/draft-mcguinness-oauth-
+              workload-agent-federation/draft-mcguinness-scim-agent-
+              federation.html>.
+
    [AIMS]     Kasselman, P., Lombardo, J., Rosomakho, Y., Campbell, B.,
               Steele, N., and A. Parecki, "AI Identity Management
               System", Work in Progress, Internet-Draft, draft-ietf-
@@ -3861,6 +3871,13 @@ Appendix B.  Walkthrough: Dedicated Client
    ID Token has audience analysis-client; subject resolution produces
    alice-ras for the RAS and user-108 at the resource.
 
+   The exchange starts at 12:01:03 UTC on September 17, 2026.  The
+   lifecycle companion's shared walkthrough [AGENT-LIFECYCLE] uses the
+   same identities, Target Tenant acme-data, proof key K, and grant
+   issuance time.  It adds provisioning, introspection, disablement, and
+   recovery when lifecycle enforcement is configured; those checks are
+   not implied by Federation alone.
+
 B.1.  Dedicated Client Authentication
 
    The client signs this illustrative assertion payload with its
@@ -3871,8 +3888,8 @@ B.1.  Dedicated Client Authentication
      "iss": "analysis-client",
      "sub": "analysis-client",
      "aud": "https://idp.example/token",
-     "iat": 1789488000,
-     "exp": 1789488060,
+     "iat": 1789646463,
+     "exp": 1789646523,
      "jti": "analysis-auth-1"
    }
 
@@ -3938,8 +3955,8 @@ B.2.  Exchange Request and Response
      "iss": "https://idp.example/",
      "sub": "alice-ras",
      "aud": "https://ras.example/",
-     "iat": 1789488000,
-     "exp": 1789488300,
+     "iat": 1789646463,
+     "exp": 1789646763,
      "jti": "grant-1",
      "client_id": "analysis-api",
      "resource": "https://api.example/tenants/acme-data/",
@@ -4005,8 +4022,8 @@ B.3.  Redemption Request and Response
      "iss": "https://ras.example/",
      "sub": "user-108",
      "aud": "https://api.example/tenants/acme-data/",
-     "iat": 1789488000,
-     "exp": 1789488600,
+     "iat": 1789646464,
+     "exp": 1789647064,
      "jti": "access-1",
      "client_id": "analysis-api",
      "scope": "files.read",
@@ -4045,7 +4062,7 @@ B.4.  Protected Resource Request
      "jti": "api-proof-1",
      "htm": "GET",
      "htu": "https://api.example/tenants/acme-data/files/report-7",
-     "iat": 1789488005,
+     "iat": 1789646468,
      "ath": "ATH_ACCESS_TOKEN"
    }
 
@@ -4299,7 +4316,7 @@ Appendix C.  Variant: Shared Platform Client with SPIFFE
    {
      "sub": "spiffe://platform.example/accounts/acme/agents/workload-7",
      "aud": ["https://idp.example/"],
-     "exp": 1789488600
+     "exp": 1789647063
    }
 
    Relative to the dedicated-client exchange, change only these inputs:
