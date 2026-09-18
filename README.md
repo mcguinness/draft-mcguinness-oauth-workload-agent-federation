@@ -12,7 +12,9 @@ authorization remain separate decisions.
 
 The mandatory delegated path uses an ID Token issued for the dedicated
 client, `private_key_jwt` client authentication, a governed ID-JAG, and RFC
-7523 `jwt-bearer` redemption. SPIFFE JWT-SVID, existing platform JWT, and
+7523 `jwt-bearer` redemption. Dedicated-client resolution uses the authenticated
+client context without duplicating its assertion in `actor_token`.
+SPIFFE JWT-SVID, existing platform JWT, and
 Client Attestation inputs are optional. Shared platforms agree on a workload
 input that distinguishes agents behind their SSO client. No new credential
 format or per-replica registration is required.
