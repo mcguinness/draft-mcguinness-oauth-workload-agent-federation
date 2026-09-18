@@ -1,0 +1,674 @@
+
+
+
+
+Web Authorization Protocol                                 K. McGuinness
+Internet-Draft                                               Independent
+Intended status: Standards Track                       18 September 2026
+Expires: 22 March 2027
+
+
+                Governed Agent Lifecycle Events Profile
+           draft-mcguinness-ssf-governed-agent-events-latest
+
+Abstract
+
+   This document defines an event profile of the Shared Signals
+   Framework for Governed Agent lifecycle changes.  Transmitters report
+   an agent's current eligibility, lifecycle version, authorization
+   cutoff, and, when active, eligibility-lease expiration.  Receivers
+   use these assertions under their own authorization policy or a
+   consuming profile.
+
+   The profile reuses SSF subject identification and CAEP common event
+   claims.  An optional SCIM representation maps the event's lifecycle
+   state to an Agent resource.  Delivery and OAuth enforcement are
+   defined separately.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   The latest revision of this draft can be found at
+   https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-
+   federation/draft-mcguinness-ssf-governed-agent-events.html.  Status
+   information for this document may be found at
+   https://datatracker.ietf.org/doc/draft-mcguinness-ssf-governed-agent-
+   events/.
+
+   Discussion of this document takes place on the Web Authorization
+   Protocol Working Group mailing list (mailto:oauth@ietf.org), which is
+   archived at https://mailarchive.ietf.org/arch/browse/oauth/.
+   Subscribe at https://www.ietf.org/mailman/listinfo/oauth/.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/mcguinness/draft-mcguinness-oauth-workload-agent-
+   federation.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 22 March 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction
+     1.1.  Notational Conventions
+   2.  Subject Identification
+   3.  Common Event Claims
+   4.  Event Types
+     4.1.  Agent State Changed
+       4.1.1.  Event-Specific Claims
+       4.1.2.  State Semantics
+       4.1.3.  Examples
+   5.  Lifecycle State Processing
+     5.1.  State Record
+     5.2.  Receiver Processing
+   6.  Security Considerations
+   7.  Privacy Considerations
+   8.  IANA Considerations
+     8.1.  SCIM Schema Registration
+     8.2.  SCIM Schema Registration Template
+   9.  References
+     9.1.  Normative References
+     9.2.  Informative References
+   Appendix A.  SCIM State Representation
+     A.1.  SCIM Representation
+   Appendix B.  Relationship to Existing Events
+   Appendix C.  Document History
+   Author's Address
+
+1.  Introduction
+
+   Governed Agent lifecycle events allow cooperating Transmitters and
+   Receivers to communicate changes in enterprise eligibility.  The
+   subject is the stable issuer-qualified agent described by Governed
+   Agent Federation [FEDERATION], independent of its workload
+   credentials and local resource representations.
+
+   This document profiles Security Event Tokens (SETs) [RFC8417] and the
+   Shared Signals Framework (SSF) [SSF].  It follows the event-
+   definition structure used by [CAEP] and [WISE]: common claims, event-
+   specific claims, subject identification, and examples.
+
+   An event reports state; it does not grant permission.  [LIFECYCLE]
+   defines a consuming profile for SCIM reconciliation and OAuth
+   enforcement, including operational denial bounds.  Those deployment
+   requirements are not implied by support for this event profile.
+
+1.1.  Notational Conventions
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   [BCP14] (RFC2119) (RFC8174) when, and only when, they appear in all
+   capitals, as shown here.
+
+   Transmitter, Receiver, stream, and subject follow [SSF].  A Lifecycle
+   Authority governs the agent's eligibility.  It may authorize a
+   separate Transmitter to send its decisions.
+
+   An implementation produces or consumes the event in Section 4.1 under
+   SSF.  This document does not select a delivery method; consuming
+   profiles can do so through existing SSF mechanisms.  The SCIM
+   representation in Appendix A is optional and does not require an
+   event implementation to operate a SCIM service.
+
+2.  Subject Identification
+
+   The event subject is identified by top-level sub_id, following the
+   SSF rules for new event types.  Its format MUST be iss_sub [RFC9493]:
+
+   *  iss identifies the authority's Governed Agent namespace.
+
+   *  sub identifies the Governed Agent within that namespace.
+
+   Receivers MUST correlate the exact pair without case folding or URI
+   rewriting and authorize the Transmitter to assert state for that
+   namespace.  The SET's top-level iss identifies the Transmitter and
+   need not equal sub_id.iss.  It cannot substitute for the governing
+   issuer.
+
+   The event payload does not repeat the primary subject or define an
+   event-local subject.  Local SCIM identifiers, OAuth client
+   identifiers, and external workload identifiers do not replace the
+   qualified agent.
+
+3.  Common Event Claims
+
+   Events in this profile MAY include the common claims defined in
+   Section 2 of [CAEP].  Their types and meanings are inherited:
+
+        +===================+=====================================+
+        | Claim             | Meaning                             |
+        +===================+=====================================+
+        | event_timestamp   | Time of the event, as a JSON number |
+        |                   | of seconds since the Unix epoch     |
+        +-------------------+-------------------------------------+
+        | initiating_entity | admin, user, policy, or system      |
+        +-------------------+-------------------------------------+
+        | reason_admin      | Localizable administrative          |
+        |                   | explanation                         |
+        +-------------------+-------------------------------------+
+        | reason_user       | Localizable end-user explanation    |
+        +-------------------+-------------------------------------+
+
+                                  Table 1
+
+   The reason claims use CAEP's language-tagged JSON objects, not plain
+   strings.  These claims are optional unless an event definition
+   requires them.  The Agent State Changed event requires
+   event_timestamp and specifies its relationship to lifecycle state
+   below.  The SET's iat remains the time of token issuance; it is not a
+   replacement for event_timestamp.
+
+4.  Event Types
+
+   The provisional base URI for this profile's event types is:
+
+   https://mcguinness.github.io/secevent/agent/
+
+   This author-controlled namespace identifies the events in this
+   individual proposal; it is not an assignment in an OpenID Foundation
+   namespace.
+
+4.1.  Agent State Changed
+
+   Event Type URI:
+
+   https://mcguinness.github.io/secevent/agent/state-changed
+
+   Agent State Changed signals that the Authority has established a new
+   version of a Governed Agent's eligibility state.  This includes
+   initial state, disablement, reactivation, retirement, and renewal of
+   an active eligibility lease.  Renewal changes the state version even
+   when status is unchanged.
+
+   The event carries a complete snapshot so a Receiver can process it
+   without having received every earlier transition.  Separate enabled,
+   disabled, and renewed event types are not needed to reconstruct
+   current state.
+
+4.1.1.  Event-Specific Claims
+
+   These claims appear directly in the event object under its Event Type
+   URI.  There is no nested state wrapper.  Names are case-sensitive;
+   Receivers ignore unrecognized fields under SSF.  Duplicate JSON
+   member names MUST be rejected [RFC8259].
+
+   event_timestamp:  REQUIRED, JSON number.  Time the Authority
+      established this state version, including a lease renewal.  This
+      event requires whole-second NumericDate values [RFC7519].
+      Reissuing the SET does not change this timestamp.
+
+   version:  REQUIRED, JSON string.  Strictly increasing lifecycle
+      version, represented by ASCII decimal digits from 1 through
+      9223372036854775807, without a leading zero.  Comparison is
+      numerical, not lexical; implementations MUST preserve the value
+      without floating-point rounding.
+
+   status:  REQUIRED, JSON string.  One of active, disabled, or retired,
+      with the semantics in Section 4.1.2.
+
+   authorization_cutoff:  REQUIRED, JSON number.  Whole-second
+      NumericDate watermark invalidating authorization issued at or
+      before that instant.  It MUST NOT decrease between state versions.
+      A consuming authorization profile specifies the issuance-time
+      provenance and comparison needed to enforce it.
+
+   valid_until:  REQUIRED when status is active, JSON number.  Exclusive
+      eligibility-lease expiration, as a whole-second NumericDate later
+      than event_timestamp.  For disabled or retired state, it SHOULD be
+      omitted; its presence and value MUST be ignored during lifecycle
+      validation and comparison.
+
+   The whole-second event times are an explicit requirement of this
+   event type, not a restriction on NumericDate generally.  Their SCIM
+   conversion is defined in Appendix A.1.
+
+4.1.2.  State Semantics
+
+         +==========+==============================+=============+
+         | Status   | Meaning                      | Permitted   |
+         |          |                              | next status |
+         +==========+==============================+=============+
+         | active   | Eligible until the effective | active,     |
+         |          | lease deadline, subject to   | disabled,   |
+         |          | independent authorization    | retired     |
+         +----------+------------------------------+-------------+
+         | disabled | Reversible withdrawal of     | disabled,   |
+         |          | eligibility                  | active,     |
+         |          |                              | retired     |
+         +----------+------------------------------+-------------+
+         | retired  | Permanent withdrawal for     | retired     |
+         |          | this qualified identity      |             |
+         +----------+------------------------------+-------------+
+
+                                  Table 2
+
+   A consuming profile can shorten reliance on an active lease.
+   Delivery, replay, or stream heartbeats MUST NOT renew it.  Disabled
+   and retired state do not expire, and retirement protection survives
+   local resource deletion.  A retired qualified identity MUST NOT be
+   reused for a new principal.
+
+   Transitions from active to disabled or retired, and from disabled to
+   active, MUST advance authorization_cutoff.  A transition from
+   disabled to retired need not.  A lease renewal alone does not advance
+   it.  Reactivation cannot revive authorization invalidated by an
+   earlier cutoff.
+
+4.1.3.  Examples
+
+   These non-normative decoded SETs use a Transmitter separately
+   authorized to publish state for https://idp.example.  Protected
+   headers include typ: secevent+jwt, a negotiated signing algorithm,
+   and a key identifier.  Audience interpretation and enforcement follow
+   the consuming profile.
+
+   The first event establishes active state at 12:01:00 UTC on September
+   17, 2026, with a cutoff at 12:01:02 and a lease ending at 12:06:00.
+
+   {
+     "iss": "https://signals.idp.example",
+     "aud": "https://ras.example/lifecycle/tenant-7/idp-example",
+     "iat": 1789646460,
+     "jti": "event-41",
+     "sub_id": {
+       "format": "iss_sub",
+       "iss": "https://idp.example",
+       "sub": "agent-42"
+     },
+     "events": {
+       "https://mcguinness.github.io/secevent/agent/state-changed": {
+         "event_timestamp": 1789646460,
+         "version": "41",
+         "status": "active",
+         "authorization_cutoff": 1789646462,
+         "valid_until": 1789646760,
+         "initiating_entity": "system"
+       }
+     }
+   }
+
+   At 12:02:00, the Authority disables the agent.  The new snapshot
+   advances the cutoff to 12:02:02 and carries no eligibility-lease
+   expiration.
+
+   {
+     "iss": "https://signals.idp.example",
+     "aud": "https://ras.example/lifecycle/tenant-7/idp-example",
+     "iat": 1789646520,
+     "jti": "event-42",
+     "sub_id": {
+       "format": "iss_sub",
+       "iss": "https://idp.example",
+       "sub": "agent-42"
+     },
+     "events": {
+       "https://mcguinness.github.io/secevent/agent/state-changed": {
+         "event_timestamp": 1789646520,
+         "version": "42",
+         "status": "disabled",
+         "authorization_cutoff": 1789646522,
+         "initiating_entity": "admin",
+         "reason_admin": {
+           "en": "Enterprise administrator disabled the agent."
+         }
+       }
+     }
+   }
+
+5.  Lifecycle State Processing
+
+5.1.  State Record
+
+   The State Record is the logical combination of the qualified subject
+   and version, status, authorization_cutoff, event_timestamp, and, when
+   active, valid_until.  It is not a second JSON payload format.  The
+   event and SCIM representations convey this same information through
+   the mapping in Appendix A.1.
+
+   The Authority MUST advance version whenever a lifecycle-relevant
+   value changes and retain the version and cutoff across restart or
+   recovery.  Descriptive SCIM edits and changes to optional reason
+   claims do not change lifecycle state.  Optional claims other than
+   event_timestamp do not participate in state equality.
+
+5.2.  Receiver Processing
+
+   After SSF validation and source authorization, the Receiver MUST:
+
+   1.  Select retained state by the qualified subject within its
+       authorized receiving context.
+
+   2.  Compare version with the highest accepted version, including
+       pending state.  Treat a lower version as stale.
+
+   3.  Treat an equal version as a duplicate only if all lifecycle-
+       relevant values match; otherwise reject it as a conflict.  Ignore
+       valid_until for non-active state and compare numeric times by
+       value.
+
+   4.  Reject a higher version with a decreasing cutoff, a transition
+       out of retirement, or a missing cutoff advance required by
+       Section 4.1.2. event_timestamp does not order records; a decrease
+       alone is not an error.
+
+   5.  Retain accepted state durably.  An older record MUST NOT
+       overwrite newer accepted state.  An expired active snapshot
+       cannot establish eligibility.
+
+   SET deduplication and state ordering are separate.  Neither jti nor
+   SET iat substitutes for version.  Reissuing a SET MUST preserve its
+   lifecycle state, including event_timestamp.
+
+   Stale and duplicate events are acknowledged without changing state.
+   Invalid and conflicting events use the delivery protocol's existing
+   error mechanism; a conflict SHOULD produce an administrative
+   diagnostic.  An acknowledgment is not evidence that resource
+   enforcement has completed.
+
+   A consuming profile specifies clock tolerances, lease limits,
+   application timing, and recovery.  These requirements cannot permit
+   replay to renew a lease or erase retirement protection.  Event
+   discovery and delivery follow SSF, including existing
+   events_supported and stream configuration fields.
+
+6.  Security Considerations
+
+   Receivers apply [SSF] and [RFC8417], including signature, issuer,
+   audience, and subject validation, secevent+jwt typing, and SSF's
+   prohibition on SET exp.  The eligibility lease does not expire the
+   SET itself.
+
+   A valid signature does not authorize the Transmitter for another
+   governing issuer or receiving tenant.  Receivers MUST keep event
+   validation separate from OAuth grants and access tokens.  Local
+   resource permissions remain independent of lifecycle eligibility.
+
+   Rollback protection depends on retained versions and cutoffs.  Loss
+   of retained state requires trusted recovery before relying on active
+   state.  The Authority's truthfulness and the consuming profile's
+   source-coordination and issuance-time rules determine cutoff
+   effectiveness.  Event delivery alone does not guarantee immediate
+   resource denial.
+
+7.  Privacy Considerations
+
+   Stable subjects permit correlation.  Transmitters SHOULD limit events
+   to authorized receiving domains and minimize identifying information
+   in reason_admin and reason_user.  Reasons are explanatory text, not
+   policy inputs or an alternative subject identifier.
+
+8.  IANA Considerations
+
+   The HTTPS event-type identifier uses an author-controlled namespace
+   and requires no IANA event registration.
+
+8.1.  SCIM Schema Registration
+
+   This document requests registration of the extension URI in the SCIM
+   Schema URIs registry under [RFC7643], Section 10.3 using the template
+   below.  The SCIM schema identifier remains a proposed registration.
+
+8.2.  SCIM Schema Registration Template
+
+   The registration template required by [RFC7643], Section 10.3.2 is:
+
+   *  Schema URI: urn:ietf:params:scim:schemas:extension:governed-
+      agent:2.0:Agent
+
+   *  Schema Name: Governed Agent Lifecycle Extension
+
+   *  Intended or Associated Resource Type: Agent
+
+   *  Purpose: Carry the qualified agent identity and authoritative
+      lifecycle state used for provisioning and OAuth enforcement.
+
+   *  Single-value Attributes: issuer, subject, version, status,
+      authorizationCutoff, assertedAt, validUntil, as defined in
+      Section 5.1 and mapped to SCIM types in Appendix A.1.
+
+   *  Multi-valued Attributes: None.
+
+9.  References
+
+9.1.  Normative References
+
+   [CAEP]     OpenID Foundation, "OpenID Continuous Access Evaluation
+              Profile 1.0", 29 August 2025,
+              <https://openid.net/specs/openid-caep-1_0-final.html>.
+
+   [SSF]      OpenID Foundation, "OpenID Shared Signals Framework
+              Specification 1.0", 29 August 2025,
+              <https://openid.net/specs/openid-sharedsignals-framework-
+              1_0-final.html>.
+
+   [RFC3339]  Klyne, G. and C. Newman, "Date and Time on the Internet:
+              Timestamps", RFC 3339, DOI 10.17487/RFC3339, July 2002,
+              <https://www.rfc-editor.org/rfc/rfc3339>.
+
+   [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
+              (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
+              <https://www.rfc-editor.org/rfc/rfc7519>.
+
+   [RFC7643]  Hunt, P., Ed., Grizzle, K., Wahlstroem, E., and C.
+              Mortimore, "System for Cross-domain Identity Management:
+              Core Schema", RFC 7643, DOI 10.17487/RFC7643, September
+              2015, <https://www.rfc-editor.org/rfc/rfc7643>.
+
+   [RFC8259]  Bray, T., Ed., "The JavaScript Object Notation (JSON) Data
+              Interchange Format", STD 90, RFC 8259,
+              DOI 10.17487/RFC8259, December 2017,
+              <https://www.rfc-editor.org/rfc/rfc8259>.
+
+   [RFC8417]  Hunt, P., Ed., Jones, M., Denniss, W., and M. Ansari,
+              "Security Event Token (SET)", RFC 8417,
+              DOI 10.17487/RFC8417, July 2018,
+              <https://www.rfc-editor.org/rfc/rfc8417>.
+
+   [RFC9493]  Backman, A., Ed., Scurtescu, M., and P. Jain, "Subject
+              Identifiers for Security Event Tokens", RFC 9493,
+              DOI 10.17487/RFC9493, December 2023,
+              <https://www.rfc-editor.org/rfc/rfc9493>.
+
+   [BCP14]    Best Current Practice 14,
+              <https://www.rfc-editor.org/info/bcp14>.
+              At the time of writing, this BCP comprises the following:
+
+              Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+              Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+9.2.  Informative References
+
+   [RFC9967]  Hunt, P., Ed., Cam-Winget, N., Kiser, M., and J.
+              Schreiber, "System for Cross-Domain Identity Management
+              (SCIM) Profile for Security Event Tokens (SETs)",
+              RFC 9967, DOI 10.17487/RFC9967, May 2026,
+              <https://www.rfc-editor.org/rfc/rfc9967>.
+
+   [SCIM-AGENT]
+              Wahl, M., Zollner, D., Dingle, P., and I. Kazzouzi, "AI
+              Agent Resource Extension for the System for Cross-domain
+              Identity Management (SCIM)", Work in Progress, Internet-
+              Draft, draft-wzdk-scim-agent-resource-00, 5 June 2026,
+              <https://datatracker.ietf.org/doc/html/draft-wzdk-scim-
+              agent-resource-00>.
+
+   [FEDERATION]
+              McGuinness, K., "OAuth 2.0 Profile for Governed Agent
+              Federation", Work in Progress, Internet-Draft, draft-
+              mcguinness-oauth-workload-agent-federation, 17 September
+              2026, <https://datatracker.ietf.org/doc/html/draft-
+              mcguinness-oauth-workload-agent-federation>.
+
+   [LIFECYCLE]
+              McGuinness, K., "Governed Agent Lifecycle Profile for SCIM
+              and OAuth", Work in Progress, Internet-Draft, draft-
+              mcguinness-oauth-governed-agent-lifecycle, 17 September
+              2026, <https://datatracker.ietf.org/doc/html/draft-
+              mcguinness-oauth-governed-agent-lifecycle>.
+
+   [WISE]     WISE Contributors, "Workload Identity Security Events
+              (WISE) Profile", n.d., <https://github.com/identitymonk/
+              openid-wise/blob/main/openid-wise-profile-1_0.md>.
+
+   [RISC]     OpenID Foundation, "OpenID RISC Profile Specification
+              1.0", 29 August 2025,
+              <https://openid.net/specs/openid-risc-1_0-final.html>.
+
+Appendix A.  SCIM State Representation
+
+   This optional representation exposes the State Record as an extension
+   of an Agent resource [SCIM-AGENT] using [RFC7643].  It lets SCIM and
+   event consumers exchange identical lifecycle values without treating
+   SCIM ETags as lifecycle versions.  It does not require the
+   Transmitter to operate a SCIM service or the Receiver to create a
+   local resource from an event.
+
+A.1.  SCIM Representation
+
+   The extension schema URI is:
+
+   urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent
+
+   Its name is GovernedAgentLifecycle.  The State Record has the
+   following SCIM representation; event field names are not SCIM
+   attribute names.
+
+      +=====================+==========================+===========+
+      | SCIM attribute      | Event source             | SCIM type |
+      +=====================+==========================+===========+
+      | issuer              | sub_id.iss               | string    |
+      +---------------------+--------------------------+-----------+
+      | subject             | sub_id.sub               | string    |
+      +---------------------+--------------------------+-----------+
+      | version             | version                  | string    |
+      +---------------------+--------------------------+-----------+
+      | status              | status                   | string    |
+      +---------------------+--------------------------+-----------+
+      | authorizationCutoff | authorization_cutoff     | dateTime  |
+      +---------------------+--------------------------+-----------+
+      | assertedAt          | event_timestamp          | dateTime  |
+      +---------------------+--------------------------+-----------+
+      | validUntil          | valid_until, when active | dateTime  |
+      +---------------------+--------------------------+-----------+
+
+                                 Table 3
+
+   The three time attributes MUST represent the same instants as their
+   NumericDate event values, using RFC 3339 [RFC3339] UTC with uppercase
+   T and Z, whole-second precision, and seconds from 00 through 59.
+   Conversion counts seconds since 1970-01-01T00:00:00Z, ignoring leap
+   seconds.  Receivers MUST compare instants after conversion, not date
+   strings to JSON numbers.  Neither conversion nor a SCIM read can
+   renew an eligibility lease.
+
+   All attributes are single-valued, returned by default, and have
+   uniqueness none.  All except validUntil have required: true;
+   validUntil has required: false in the schema and is required by this
+   profile only for active state.  SCIM responses omit it for disabled
+   or retired state.  String attributes have caseExact: true.
+   Mutability is readWrite except for immutable issuer and subject.  The
+   consumer enforces uniqueness of the qualified identity within its
+   correlation scope; the individual attributes are not independently
+   unique.
+
+   Providers exposing this representation MUST advertise these
+   characteristics in /Schemas. status has the three canonical values in
+   Section 4.1.2; the other attributes have no enumeration.  SCIM
+   attribute-name matching follows [RFC7643]; the binding decodes those
+   names to the event claim names through the table above before state
+   comparison.  Ambiguous duplicate attributes MUST be rejected.
+
+   The extension represents the same state as an event payload.  A SCIM
+   edit outside the extension does not advance the lifecycle version.
+   SCIM operations and their effect on a local principal are defined by
+   a consuming profile, such as [LIFECYCLE].
+
+Appendix B.  Relationship to Existing Events
+
+   The new event reports a complete eligibility snapshot independent of
+   resource creation, credential issuance, or session revocation.  It
+   also represents lease renewal without a status transition.
+
+     +===========+==================================================+
+     | Existing  | Reuse and boundary                               |
+     | profile   |                                                  |
+     +===========+==================================================+
+     | SCIM      | Full create and PUT events can carry the         |
+     | Events    | lifecycle extension in a resource.  Their        |
+     | [RFC9967] | subject identifies the publisher's SCIM resource |
+     |           | and their version is an ETag; neither replaces   |
+     |           | the qualified agent or lifecycle version.        |
+     +-----------+--------------------------------------------------+
+     | [CAEP]    | Session revocation, token-claim changes, and     |
+     |           | credential changes retain those meanings.  They  |
+     |           | do not by themselves assert agent-wide           |
+     |           | eligibility or renew a lease.                    |
+     +-----------+--------------------------------------------------+
+     | [WISE]    | Workload disabled, enabled, and purged events    |
+     |           | overlap the lifecycle transitions.  They include |
+     |           | workload and credential semantics that need      |
+     |           | explicit mapping to a Governed Agent.            |
+     +-----------+--------------------------------------------------+
+     | [RISC]    | Account transitions can inform lifecycle         |
+     |           | decisions but do not carry this snapshot's       |
+     |           | version, cutoff, and lease contract.             |
+     +-----------+--------------------------------------------------+
+
+                                 Table 4
+
+   A SCIM-based deployment can profile existing full-resource events to
+   transport this state; a notice requires authoritative retrieval.  The
+   event in this document serves consumers that need a qualified agent
+   snapshot without a source SCIM-resource identity or resource-change
+   operation.  It does not supersede those events or treat them as
+   interchangeable.
+
+   The event is proposed for coordination with the relevant event-
+   profile communities.  This document does not assign URIs in the CAEP
+   or WISE namespaces or change their event definitions.
+
+Appendix C.  Document History
+
+   Initial version.
+
+Author's Address
+
+   Karl McGuinness
+   Independent
+   Email: public@karlmcguinness.com

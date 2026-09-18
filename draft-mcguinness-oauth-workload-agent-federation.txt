@@ -90,6 +90,7 @@ Table of Contents
      3.1.  Core Invariants
      3.2.  Authentication, Resolution, and Proof
      3.3.  Canonical Identity and Tenant Boundaries
+     3.4.  Governance Boundary and Execution Independence
    4.  Profiles and Conformance
      4.1.  Grant Paths
      4.2.  Scope and Conformance
@@ -291,10 +292,12 @@ Table of Contents
 2.2.  Terms
 
    Governed Agent:  A stable, non-human authorization principal in the
-      IdP's namespace representing a workload or agent under its
-      governance.  Its identity is independent of the external
-      credentials, execution environments, and OAuth clients used to
-      obtain authorization for it.  It does not necessarily identify an
+      IdP's namespace representing an independently governed actor.  Its
+      identity defines the boundary for independently managed
+      authorization, delegation, attribution, correlation, and
+      disablement.  It is independent of the external credentials,
+      execution environments, and OAuth clients used to obtain
+      authorization for it; it does not necessarily identify an
       execution, process, replica, installation, or OAuth client.
 
    Workload:  An external computational principal identified by accepted
@@ -407,6 +410,11 @@ Table of Contents
 
 3.1.  Core Invariants
 
+   Identity resolution establishes which governed principal participates
+   in a transaction.  It does not establish client authority, user
+   delegation, resource authority, or permission to perform an
+   operation.
+
    This non-normative index summarizes the requirements that connect
    identity resolution to resource enforcement.  The referenced sections
    define their processing rules.
@@ -415,6 +423,11 @@ Table of Contents
       | Invariant   | Required result                     | Defined |
       |             |                                     | in      |
       +=============+=====================================+=========+
+      | Governance  | Actors needing independent          | Section |
+      | boundary    | governance have distinct            | 3.4     |
+      |             | identities; execution topology does |         |
+      |             | not determine identity or authority |         |
+      +-------------+-------------------------------------+---------+
       | Identity    | Authenticated dedicated-client      | Section |
       |             | identity or independently validated | 6.1     |
       |             | workload identity resolves through  |         |
@@ -487,9 +500,10 @@ Table of Contents
    requirement before use as a Governed Agent identifier.
 
    It need not equal an external subject, OAuth client identifier,
-   SPIFFE ID, display name, or instance identifier.  Restarting an
-   execution, replacing a replica, or rotating a key does not by itself
-   create a new authorization principal.
+   SPIFFE ID, display name, or instance identifier.  Identity continuity
+   is an explicit decision by the governing authority to preserve the
+   same principal; it does not imply that the principal's permissions
+   remain unchanged.
 
    A transfer to a different Governance Tenant under a different
    administrative authority MUST create a new Governed Agent identifier
@@ -508,10 +522,8 @@ Table of Contents
 
    Multiple Identity Bindings MAY resolve distinct client or workload
    identities to the same Governed Agent when the IdP approves them as
-   representing the same logical principal.  They share the governed
-   authorization identity downstream.  Clients or workloads that require
-   independent authorization or attribution as principals need separate
-   Governed Agent identities.
+   representing the same governed principal.  They share the governed
+   authorization identity downstream.
 
    The IdP MUST establish an unambiguous Governance Tenant and, before
    issuance, the Target Tenant for the requested RAS and resource.  The
@@ -519,6 +531,31 @@ Table of Contents
    and MUST NOT key agent authorization on a bare sub.  Failure to
    resolve the Governance Tenant uses invalid_grant; failure to resolve
    the Target Tenant for the requested resource uses invalid_target.
+
+3.4.  Governance Boundary and Execution Independence
+
+   Use distinct Governed Agent identities when actors need independently
+   managed authorization, delegation, attribution, local-principal
+   correlation, or lifecycle, including disablement.  Differences in
+   process, replica, session, worker, or credential alone do not require
+   distinct identities.  Sharing those elements does not justify
+   combining actors that require independent governance.
+
+   Multiple executions MAY operate as the same Governed Agent, and an
+   agent MAY move between workloads or execution environments through
+   approved Identity Bindings.  Conversely, one environment MAY host
+   multiple Governed Agents.  The validated resolution input and its
+   Identity Binding MUST distinguish exactly one Governed Agent for each
+   authorization transaction; a shared workload identity alone cannot
+   select among agents.
+
+   Scaling, restarting, rescheduling, migration, or credential rotation
+   MUST NOT by itself create, merge, or transfer Governed Agent
+   authority.  Additional executions, credentials, or bindings do not
+   confer additional permissions.  Each transaction remains subject to
+   the applicable Client Association, delegation authorization, target,
+   and resource policy.  This profile defines no aggregate budget,
+   quota, or concurrency semantics.
 
 4.  Profiles and Conformance
 
@@ -595,6 +632,10 @@ Table of Contents
    [EMA] deployments and adds agent governance before requiring grant
    binding.  The names identify deployment profiles, not assurance
    ratings.
+
+   This profile does not establish trust in previously unknown agent
+   issuers or automatically create Identity Bindings or Governed Agent
+   Correlations from presented credentials.
 
     +============+============================+=======================+
     | Adoption   | Required addition          | Grant protection      |
@@ -2997,40 +3038,56 @@ Table of Contents
    cached introspection results or offline JWTs may remain usable within
    the configured mode's explicit bound.
 
+   Execution termination, Identity Binding disablement, Client
+   Association removal, delegation revocation, and Governed Agent
+   disablement have different effects.  Deployments MUST NOT treat one
+   as evidence that the others have occurred.  In particular, stopping
+   an execution does not revoke credentials or authority held elsewhere.
+
    The following table summarizes the effect after a change is applied
    at the enforcing server; it defines no new propagation mechanism:
 
-   +==================+=====================+==========================+
-   | Administrative   | Effect on new       | Previously issued        |
-   | action           | authorization       | authority                |
-   +==================+=====================+==========================+
-   | Disable one      | No new ID-JAG       | Existing grants and      |
-   | Identity Binding | through that        | RAS tokens need          |
-   | or its Client    | relationship; other | separate revocation      |
-   | Association at   | approved bindings   | or expiry                |
-   | the IdP          | remain available    |                          |
-   +------------------+---------------------+--------------------------+
-   | Disable the      | No new ID-JAG for   | RAS issuance and         |
-   | Governed Agent   | that agent          | refresh stop when the    |
-   | at the IdP       |                     | change reaches and is    |
-   |                  |                     | applied by the RAS       |
-   +------------------+---------------------+--------------------------+
-   | Withdraw the     | No new ID-JAG for   | Existing RAS             |
-   | user's           | that delegation     | authorization can        |
-   | delegation at    |                     | continue until           |
-   | the IdP          |                     | revocation is applied    |
-   |                  |                     | or its absolute          |
-   |                  |                     | expiration               |
-   +------------------+---------------------+--------------------------+
-   | Disable the      | No new access       | API access stops when    |
-   | local agent or   | tokens or refresh   | its actor/user policy    |
-   | user at the RAS  | for that principal  | observes the change,     |
-   |                  |                     | introspection reports    |
-   |                  |                     | inactivity, or the       |
-   |                  |                     | token expires            |
-   +------------------+---------------------+--------------------------+
+   +================+=========================+=======================+
+   | Administrative | Effect on new           | Previously issued     |
+   | action         | authorization           | authority             |
+   +================+=========================+=======================+
+   | Terminate an   | Stops that execution;   | Credentials and       |
+   | execution      | does not disable the    | tokens remain subject |
+   |                | agent or its approved   | to their validation   |
+   |                | relationships           | and revocation rules  |
+   +----------------+-------------------------+-----------------------+
+   | Disable one    | No new ID-JAG through   | Existing grants and   |
+   | Identity       | that binding; other     | RAS tokens need       |
+   | Binding at the | enabled bindings remain | separate revocation   |
+   | IdP            | usable with their own   | or expiry             |
+   |                | Client Associations     |                       |
+   +----------------+-------------------------+-----------------------+
+   | Remove a       | No new ID-JAG through   | Existing grants and   |
+   | Client         | that permission; the    | RAS tokens need       |
+   | Association at | Identity Binding can    | separate revocation   |
+   | the IdP        | remain valid            | or expiry             |
+   +----------------+-------------------------+-----------------------+
+   | Disable the    | No new ID-JAG for that  | RAS issuance and      |
+   | Governed Agent | agent, regardless of    | refresh stop when the |
+   | at the IdP     | binding or client       | change reaches and is |
+   |                |                         | applied by the RAS    |
+   +----------------+-------------------------+-----------------------+
+   | Withdraw the   | No new ID-JAG for that  | Existing RAS          |
+   | user's         | delegation              | authorization can     |
+   | delegation at  |                         | continue until        |
+   | the IdP        |                         | revocation is applied |
+   |                |                         | or its absolute       |
+   |                |                         | expiration            |
+   +----------------+-------------------------+-----------------------+
+   | Disable the    | No new access tokens or | API access stops when |
+   | local agent or | refresh for that        | its actor/user policy |
+   | user at the    | principal               | observes the change,  |
+   | RAS            |                         | introspection reports |
+   |                |                         | inactivity, or the    |
+   |                |                         | token expires         |
+   +----------------+-------------------------+-----------------------+
 
-                                  Table 29
+                                 Table 29
 
    Deployments SHOULD document their maximum disablement delay,
    including propagation and cache freshness.  Without a bound on
@@ -3242,8 +3299,8 @@ Table of Contents
 15.2.  Informative References
 
    [AGENT-LIFECYCLE]
-              McGuinness, K., "Governed Agent Lifecycle State and OAuth
-              Enforcement", Work in Progress, Internet-Draft, draft-
+              McGuinness, K., "Governed Agent Lifecycle Profile for SCIM
+              and OAuth", Work in Progress, Internet-Draft, draft-
               mcguinness-oauth-governed-agent-lifecycle, n.d.,
               <https://mcguinness.github.io/draft-mcguinness-oauth-
               workload-agent-federation/draft-mcguinness-oauth-governed-

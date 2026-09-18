@@ -4,22 +4,19 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>Governed Agent Lifecycle State and OAuth Enforcement</title>
+<title>Governed Agent Lifecycle Profile for SCIM and OAuth</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
-       This document defines Governed Agent Lifecycle State: a versioned,
-transport-independent object expressing whether an issuer-qualified
-agent remains eligible. An eligibility lease limits reliance on active
-state, and an authorization cutoff prevents old authorization from
-reviving after reactivation. 
-       SCIM and Shared Signals bindings carry the same state into a receiver's
-lifecycle registry. A second layer applies that state to OAuth issuance,
-refresh, and resource access with explicit denial bounds. Lifecycle
-eligibility does not establish client authority, user delegation, or
-resource permissions. No new workload credential or delivery protocol
-is defined. 
+       This document profiles SCIM provisioning, Shared Signals, and OAuth for
+the lifecycle of an issuer-qualified Governed Agent. It applies the state
+and events defined by Governed Agent Lifecycle Events Profile to local
+principal correlation, grant redemption, refresh, and API authorization. 
+       An eligibility lease bounds reliance on active state. An authorization
+cutoff prevents old authorization from reviving after reactivation. The
+profile defines deployment requirements and denial bounds; it defines no
+new event type, State Record format, SCIM schema, or delivery protocol. 
     " name="description">
-<meta content="xml2rfc 3.34.0" name="generator">
+<meta content="xml2rfc 3.34.1" name="generator">
 <meta content="OAuth" name="keyword">
 <meta content="agent provisioning" name="keyword">
 <meta content="SCIM" name="keyword">
@@ -27,19 +24,19 @@ is defined.
 <meta content="shared signals" name="keyword">
 <meta content="draft-mcguinness-oauth-governed-agent-lifecycle-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.34.0
+  xml2rfc 3.34.1
     Python 3.14.7
-    ConfigArgParse 1.7.5
+    ConfigArgParse 1.7.7
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
     lxml 6.1.1
     natsort 8.4.0
-    platformdirs 4.11.7
+    platformdirs 4.11.10
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.8.3
+    wcwidth 0.8.4
 -->
 <link href="draft-mcguinness-oauth-governed-agent-lifecycle.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1087,20 +1084,17 @@ svg {
 </dd>
 </dl>
 </div>
-<h1 id="title">Governed Agent Lifecycle State and OAuth Enforcement</h1>
+<h1 id="title">Governed Agent Lifecycle Profile for SCIM and OAuth</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines Governed Agent Lifecycle State: a versioned,
-transport-independent object expressing whether an issuer-qualified
-agent remains eligible. An eligibility lease limits reliance on active
-state, and an authorization cutoff prevents old authorization from
-reviving after reactivation.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">SCIM and Shared Signals bindings carry the same state into a receiver's
-lifecycle registry. A second layer applies that state to OAuth issuance,
-refresh, and resource access with explicit denial bounds. Lifecycle
-eligibility does not establish client authority, user delegation, or
-resource permissions. No new workload credential or delivery protocol
-is defined.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document profiles SCIM provisioning, Shared Signals, and OAuth for
+the lifecycle of an issuer-qualified Governed Agent. It applies the state
+and events defined by Governed Agent Lifecycle Events Profile to local
+principal correlation, grant redemption, refresh, and API authorization.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">An eligibility lease bounds reliance on active state. An authorization
+cutoff prevents old authorization from reviving after reactivation. The
+profile defines deployment requirements and denial bounds; it defines no
+new event type, State Record format, SCIM schema, or delivery protocol.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1194,13 +1188,13 @@ is defined.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-governed-agent-lifecycle-st" class="internal xref">Governed Agent Lifecycle State</a></p>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-lifecycle-state-application" class="internal xref">Lifecycle State Application</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
                 <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-eligibility-lease" class="internal xref">Eligibility Lease</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
-                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-states-and-transitions" class="internal xref">States and Transitions</a></p>
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-activation-and-cutoff-appli" class="internal xref">Activation and Cutoff Application</a></p>
 </li>
             </ul>
 </li>
@@ -1216,7 +1210,7 @@ is defined.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-scim-provisioning" class="internal xref">SCIM Provisioning</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
-                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-state-to-scim-mapping" class="internal xref">State-to-SCIM Mapping</a></p>
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-applying-the-scim-represent" class="internal xref">Applying the SCIM Representation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
                 <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-creation-and-existing-recor" class="internal xref">Creation and Existing Records</a></p>
@@ -1236,7 +1230,7 @@ is defined.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-target-tenant-and-stream-bi" class="internal xref">Target Tenant and Stream Binding</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-event-definition" class="internal xref">Event Definition</a></p>
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-applying-lifecycle-events" class="internal xref">Applying Lifecycle Events</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
                 <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-delivery-and-acceptance" class="internal xref">Delivery and Acceptance</a></p>
@@ -1312,54 +1306,43 @@ is defined.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
             <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.1">
-                <p id="section-toc.1-1.14.2.1.1"><a href="#section-14.1" class="auto internal xref">14.1</a>.  <a href="#name-scim-schema-registration" class="internal xref">SCIM Schema Registration</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.2">
-                <p id="section-toc.1-1.14.2.2.1"><a href="#section-14.2" class="auto internal xref">14.2</a>.  <a href="#name-oauth-uri-registration" class="internal xref">OAuth URI Registration</a></p>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.1">
+                <p id="section-toc.1-1.15.2.1.1"><a href="#section-15.1" class="auto internal xref">15.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.2">
+                <p id="section-toc.1-1.15.2.2.1"><a href="#section-15.2" class="auto internal xref">15.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
 </li>
             </ul>
 </li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
-            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-scim-schema-registration-te" class="internal xref">SCIM Schema Registration Template</a></p>
-</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
-            <p id="section-toc.1-1.16.1"><a href="#section-16" class="auto internal xref">16</a>. <a href="#name-references" class="internal xref">References</a></p>
+            <p id="section-toc.1-1.16.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-provisioning-and-disablemen" class="internal xref">Provisioning and Disablement Example</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.1">
-                <p id="section-toc.1-1.16.2.1.1"><a href="#section-16.1" class="auto internal xref">16.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+                <p id="section-toc.1-1.16.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-provision-the-agent" class="internal xref">Provision the Agent</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.2">
-                <p id="section-toc.1-1.16.2.2.1"><a href="#section-16.2" class="auto internal xref">16.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+                <p id="section-toc.1-1.16.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-activate-and-issue-authoriz" class="internal xref">Activate and Issue Authorization</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.3">
+                <p id="section-toc.1-1.16.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-disable-through-a-signal" class="internal xref">Disable Through a Signal</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.4">
+                <p id="section-toc.1-1.16.2.4.1"><a href="#appendix-A.4" class="auto internal xref">A.4</a>.  <a href="#name-delayed-delivery-and-reacti" class="internal xref">Delayed Delivery and Reactivation</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
-            <p id="section-toc.1-1.17.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-provisioning-and-disablemen" class="internal xref">Provisioning and Disablement Example</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.1">
-                <p id="section-toc.1-1.17.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-provision-the-agent" class="internal xref">Provision the Agent</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.2">
-                <p id="section-toc.1-1.17.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-activate-and-issue-authoriz" class="internal xref">Activate and Issue Authorization</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.3">
-                <p id="section-toc.1-1.17.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-disable-through-a-signal" class="internal xref">Disable Through a Signal</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.4">
-                <p id="section-toc.1-1.17.2.4.1"><a href="#appendix-A.4" class="auto internal xref">A.4</a>.  <a href="#name-delayed-delivery-and-reacti" class="internal xref">Delayed Delivery and Reactivation</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.17.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-relationship-to-event-speci" class="internal xref">Relationship to Event Specifications</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
-            <p id="section-toc.1-1.18.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-relationship-to-existing-wo" class="internal xref">Relationship to Existing Work</a></p>
+            <p id="section-toc.1-1.18.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19">
-            <p id="section-toc.1-1.19.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20">
-            <p id="section-toc.1-1.20.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.19.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1376,9 +1359,9 @@ identifies an agent by the pair (IdP issuer, Governed Agent identifier),
 independently of the workload credentials used to establish it.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">For delegated access, the governed identity is the actor in an Identity
 Assertion JWT Authorization Grant (ID-JAG) <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>. This companion
-uses Security Event Tokens (SETs) <span>[<a href="#RFC8417" class="cite xref">RFC8417</a>]</span> and the Shared Signals
-Framework (SSF) <span>[<a href="#SSF" class="cite xref">SSF</a>]</span> to convey lifecycle changes to the resource
-domain.<a href="#section-1-2" class="pilcrow">¶</a></p>
+profiles Governed Agent Lifecycle Events Profile <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>,
+carried in Security Event Tokens (SETs) <span>[<a href="#RFC8417" class="cite xref">RFC8417</a>]</span> over the Shared
+Signals Framework (SSF) <span>[<a href="#SSF" class="cite xref">SSF</a>]</span>.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <p id="section-1-3">Federation establishes who the agent is. Lifecycle state establishes
 whether that identity remains eligible. SCIM reconciles its local
 representation; Shared Signals accelerates delivery of state changes.
@@ -1430,13 +1413,13 @@ API authorization.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
             <p id="section-1.1-2.4.1">Recover from duplicate, delayed, or missed delivery.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-1.1-3">It reuses the Agent resource in <span>[<a href="#SCIM-AGENT" class="cite xref">SCIM-AGENT</a>]</span>. The extension defined
-here adds federation identity and synchronization semantics. It does not
-replace the Agent resource or define a general agent inventory.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<p id="section-1.1-3">It uses the Agent resource in <span>[<a href="#SCIM-AGENT" class="cite xref">SCIM-AGENT</a>]</span> and the lifecycle extension
+defined in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>. The event specification owns the state and
+wire formats; this document defines their SCIM and OAuth application.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
 <p id="section-1.1-4"><span>[<a href="#SCIM-GOVERNANCE" class="cite xref">SCIM-GOVERNANCE</a>]</span> describes broader administrative lifecycle states.
 <span>[<a href="#WISE" class="cite xref">WISE</a>]</span> describes changes to workloads, credentials, and trust material.
 <span>[<a href="#CAEP" class="cite xref">CAEP</a>]</span> describes continuous-access events. Those mechanisms can supply
-inputs to an authority's decision. The state defined here expresses the
+inputs to an authority's decision. The state applied here expresses the
 result for a Governed Agent and the receiver obligations that follow.<a href="#section-1.1-4" class="pilcrow">¶</a></p>
 <p id="section-1.1-5">Platform-to-IdP enrollment, Identity Binding administration, individual
 delegation revocation, task cancellation, runtime instance lifecycle,
@@ -1478,7 +1461,8 @@ run in the same process.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
         <dd class="break"></dd>
 <dt id="section-2-3.5">Governed Agent Lifecycle State (State Record):</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.6">
-          <p id="section-2-3.6.1">The transport-independent object in <a href="#state-schema" class="auto internal xref">Section 5</a>, containing
+          <p id="section-2-3.6.1">The logical snapshot defined in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> and applied under
+<a href="#state-schema" class="auto internal xref">Section 5</a>, containing
 identity, lifecycle version, status, authorization cutoff, and lease.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -1528,8 +1512,8 @@ Lifecycle Authority's state. Upstream activation cannot clear it.<a href="#secti
         </thead>
         <tbody>
           <tr>
-            <td class="text-left" rowspan="1" colspan="1">Lifecycle state and distribution</td>
-            <td class="text-left" rowspan="1" colspan="1">State Record, eligibility lease, registry ordering, SCIM and Shared Signals bindings, and recovery</td>
+            <td class="text-left" rowspan="1" colspan="1">Lifecycle state application</td>
+            <td class="text-left" rowspan="1" colspan="1">Apply the State Record from <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> through SCIM and SSF to a local registry; reconcile and recover</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">OAuth enforcement</td>
@@ -1537,8 +1521,8 @@ Lifecycle Authority's state. Upstream activation cannot clear it.<a href="#secti
           </tr>
         </tbody>
       </table>
-<p id="section-3-3">The state model is reusable independently of its bindings. Conformance
-requires both layers and the bindings specified here; storing state
+<p id="section-3-3"><span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> defines independent event conformance. Conformance to
+this consuming profile requires both layers below; accepting an event
 alone does not establish an OAuth enforcement guarantee.<a href="#section-3-3" class="pilcrow">¶</a></p>
 <p id="section-3-4">A deployment claiming this profile <span class="bcp14">MUST</span> implement:<a href="#section-3-4" class="pilcrow">¶</a></p>
 <table class="center" id="table-2">
@@ -1763,101 +1747,23 @@ decision.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
 </div>
 <div id="state-schema">
 <section id="section-5">
-      <h2 id="name-governed-agent-lifecycle-st">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-governed-agent-lifecycle-st" class="section-name selfRef">Governed Agent Lifecycle State</a>
+      <h2 id="name-lifecycle-state-application">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-lifecycle-state-application" class="section-name selfRef">Lifecycle State Application</a>
       </h2>
-<p id="section-5-1">A State Record is a complete JSON object, not a SCIM resource or a
-delta. All members except <code>validUntil</code> are <span class="bcp14">REQUIRED</span>; <code>validUntil</code> is
-<span class="bcp14">REQUIRED</span> only for <code>active</code> state. Member names are case-sensitive;
-unknown members have no lifecycle meaning and <span class="bcp14">MUST</span> be ignored. Bindings
-<span class="bcp14">MUST</span> preserve the defined member values and semantics.<a href="#section-5-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-4">
-        <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
-<thead>
-          <tr>
-            <th class="text-left" rowspan="1" colspan="1">Member</th>
-            <th class="text-left" rowspan="1" colspan="1">JSON type</th>
-            <th class="text-left" rowspan="1" colspan="1">Meaning</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>issuer</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">string</td>
-            <td class="text-left" rowspan="1" colspan="1">Governing IdP issuer identifier</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>subject</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">string</td>
-            <td class="text-left" rowspan="1" colspan="1">Governed Agent identifier in that issuer's namespace</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>version</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">string</td>
-            <td class="text-left" rowspan="1" colspan="1">Strictly increasing lifecycle version</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>status</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">string</td>
-            <td class="text-left" rowspan="1" colspan="1">One of <code>active</code>, <code>disabled</code>, or <code>retired</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>authorizationCutoff</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">string</td>
-            <td class="text-left" rowspan="1" colspan="1">Time watermark invalidating authorization issued at or before it</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>assertedAt</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">string</td>
-            <td class="text-left" rowspan="1" colspan="1">Time the Authority produced this State Record</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>validUntil</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">string</td>
-            <td class="text-left" rowspan="1" colspan="1">Exclusive source expiration of the eligibility lease for active state</td>
-          </tr>
-        </tbody>
-      </table>
-<p id="section-5-3">The identity pair <span class="bcp14">MUST</span> remain unchanged for the lifetime of the record.
-The JSON representation follows <span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span>; duplicate member names <span class="bcp14">MUST</span>
-be rejected rather than selecting one value.<a href="#section-5-3" class="pilcrow">¶</a></p>
-<p id="section-5-4">Timestamps <span class="bcp14">MUST</span> use RFC 3339 <span>[<a href="#RFC3339" class="cite xref">RFC3339</a>]</span> UTC with uppercase <code>T</code> and <code>Z</code>,
-whole-second precision, and seconds from 00 through 59. Conversion to
-NumericDate counts seconds since 1970-01-01T00:00:00Z, ignoring leap
-seconds. For active state, <code>validUntil</code> <span class="bcp14">MUST</span> be later than <code>assertedAt</code>.
-For disabled or retired state, it <span class="bcp14">SHOULD</span> be omitted; its presence and
-value <span class="bcp14">MUST</span> be ignored during lifecycle validation and equality
-comparison.<a href="#section-5-4" class="pilcrow">¶</a></p>
-<p id="section-5-5">The Receiver <span class="bcp14">MUST</span> reject a cutoff later than <code>assertedAt + D</code>, using the
-configured issuer-ahead bound in <a href="#parameters" class="auto internal xref">Section 3.1</a>.<a href="#section-5-5" class="pilcrow">¶</a></p>
-<p id="section-5-6"><code>version</code> <span class="bcp14">MUST</span> be a decimal string representing an integer from 1
-through 9223372036854775807, using only ASCII digits and no leading
-zero. Comparison is numerical, not lexical. Implementations <span class="bcp14">MUST</span>
-preserve it without floating-point rounding; a signed 64-bit integer is
-sufficient. The Authority <span class="bcp14">MUST</span> increase it when any compared member
-changes, including a lease renewal; it <span class="bcp14">MUST NOT</span> reuse or reset a
-lifecycle version. Descriptive SCIM changes <span class="bcp14">MUST NOT</span> by themselves
-change the State Record or increment its version.<a href="#section-5-6" class="pilcrow">¶</a></p>
-<p id="section-5-7">The Authority <span class="bcp14">MUST</span> retain the current version and cutoff across
-restarts, backup recovery, and connector changes. Display names,
-ownership, local permissions, and resource modification timestamps are
-not members of this object and do not participate in its version
-sequence.<a href="#section-5-7" class="pilcrow">¶</a></p>
+<p id="section-5-1">The Authority and Receiver <span class="bcp14">MUST</span> use the State Record, version
+comparison, and transition rules defined in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>. This
+profile adds the clock bounds, local registry behavior, and OAuth
+effects below; it does not redefine the state members or event
+semantics.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-2">This document uses SCIM attribute names for registry state. For event input,
+the Receiver <span class="bcp14">MUST</span> apply the mapping in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>: identity comes
+from <code>sub_id</code>, <code>event_timestamp</code> maps to <code>assertedAt</code>, <code>authorization_cutoff</code>
+maps to <code>authorizationCutoff</code>, and <code>valid_until</code> maps to <code>validUntil</code>.
+Time arithmetic compares instants after conversion. An event has no nested
+<code>state</code> object.<a href="#section-5-2" class="pilcrow">¶</a></p>
+<p id="section-5-3">The Receiver <span class="bcp14">MUST</span> reject a cutoff later than <code>assertedAt + D</code>, using the
+configured issuer-ahead bound in <a href="#parameters" class="auto internal xref">Section 3.1</a>. Descriptive SCIM edits
+leave lifecycle state and its version unchanged.<a href="#section-5-3" class="pilcrow">¶</a></p>
 <div id="lease">
 <section id="section-5.1">
         <h3 id="name-eligibility-lease">
@@ -1884,65 +1790,16 @@ remain separate decisions in either case.<a href="#section-5.1-4" class="pilcrow
 </div>
 <div id="transitions">
 <section id="section-5.2">
-        <h3 id="name-states-and-transitions">
-<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-states-and-transitions" class="section-name selfRef">States and Transitions</a>
+        <h3 id="name-activation-and-cutoff-appli">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-activation-and-cutoff-appli" class="section-name selfRef">Activation and Cutoff Application</a>
         </h3>
-<table class="center" id="table-5">
-          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
-<thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">State</th>
-              <th class="text-left" rowspan="1" colspan="1">Meaning</th>
-              <th class="text-left" rowspan="1" colspan="1">Permitted next states</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>active</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Enterprise eligibility within its effective lease deadline, subject to local authorization</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>active</code>, <code>disabled</code>, <code>retired</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>disabled</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Reversible withdrawal of enterprise eligibility</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>disabled</code>, <code>active</code>, <code>retired</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>retired</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Permanent withdrawal for this governed identity</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>retired</code>
-</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-5.2-2">Initial provisioning <span class="bcp14">SHOULD</span> use <code>disabled</code>. Initial <code>active</code> state
-requires explicit enterprise activation and local acceptance; record
-creation alone <span class="bcp14">MUST NOT</span> supply either decision.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
-<p id="section-5.2-3">The following transitions <span class="bcp14">MUST</span> advance the Authorization Cutoff under
-<a href="#cutoff" class="auto internal xref">Section 10.1</a>: <code>active</code> to <code>disabled</code>, <code>active</code> to <code>retired</code>, and <code>disabled</code>
-to <code>active</code>. A transition from <code>disabled</code> to <code>retired</code> need not advance it.
-Other snapshots retain the cutoff unless the Authority intends to
-invalidate additional authorization. The cutoff <span class="bcp14">MUST</span> never decrease.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
-<p id="section-5.2-4">A lease renewal alone advances the version without changing the cutoff.
-Descriptive SCIM edits change neither. Reactivation cannot restore
-authorization invalidated by an earlier cutoff.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
-<p id="section-5.2-5">If whole-second precision prevents a strictly increased cutoff within
-the configured clock bound, the Authority waits before asserting the new
-transition. Disablement still closes the issuance gate immediately.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
-<p id="section-5.2-6">Retirement is terminal. A new principal needs a new governed identifier.
-Deletion of a local SCIM representation <span class="bcp14">MUST NOT</span> permit reuse of the
-retired identity or erase its retirement protection.<a href="#section-5.2-6" class="pilcrow">¶</a></p>
+<p id="section-5.2-1">Initial provisioning <span class="bcp14">SHOULD</span> use disabled state. Initial activation
+requires explicit enterprise and local acceptance; resource creation
+alone <span class="bcp14">MUST NOT</span> supply either decision.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-2">The Authority <span class="bcp14">MUST</span> generate cutoff advances required by <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>
+using <a href="#cutoff" class="auto internal xref">Section 10.1</a>. If clock precision prevents a strict advance within
+the configured bound, it waits before asserting the transition;
+disablement still closes its issuance gate immediately.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1989,42 +1846,30 @@ relax applied restrictions.<a href="#section-6-5" class="pilcrow">¶</a></p>
         <h3 id="name-state-acceptance-and-orderi">
 <a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-state-acceptance-and-orderi" class="section-name selfRef">State Acceptance and Ordering</a>
         </h3>
-<p id="section-6.1-1">Both transport bindings <span class="bcp14">MUST</span> apply the following registry rules:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-1">Both transport bindings <span class="bcp14">MUST</span> apply the State Record validation and
+ordering rules in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>, with these application requirements:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.1-2">
 <li id="section-6.1-2.1">
-            <p id="section-6.1-2.1.1">Authenticate the sender and authorize its issuer namespace and Target
-Tenant before selecting the entry.<a href="#section-6.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-2.1.1">Authorize the sender for the governing issuer and Target Tenant before
+selecting the registry entry.<a href="#section-6.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.1-2.2">
-            <p id="section-6.1-2.2.1">Validate the complete State Record. Reject <code>assertedAt</code> in the future
-by more than 2S; delay alone is not an error.
-Apply the eligibility-lease clamp in <a href="#lease" class="auto internal xref">Section 5.1</a>.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-2.2.1">Reject <code>assertedAt</code> more than 2S in the future and a cutoff beyond
+<code>assertedAt + D</code>. Apply the lease clamp in <a href="#lease" class="auto internal xref">Section 5.1</a>.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.1-2.3">
-            <p id="section-6.1-2.3.1">Compare with the highest accepted lifecycle version, including pending
-state. A lower version is stale. An equal version with identical
-defined member values is a duplicate; different values are a conflict.<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-2.3.1">Include pending accepted state in the version comparison. Map stale,
+conflicting, or invalid input to the SCIM or SSF response rules below.<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.1-2.4">
-            <p id="section-6.1-2.4.1">For a higher version, reject a decreasing cutoff, a transition out of
-retirement, or a transition lacking the cutoff advance in <a href="#transitions" class="auto internal xref">Section 5.2</a>.
-A decreasing <code>assertedAt</code> alone is not an error; version orders state.<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-6.1-2.5">
-            <p id="section-6.1-2.5.1">Persist accepted state. Apply SCIM updates before returning success;
-SSF may acknowledge durable pending state. Application atomically
-advances the applied record and its RAS enforcement state.<a href="#section-6.1-2.5.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-2.4.1">Persist accepted state. SCIM application is synchronous; SSF may
+acknowledge durable pending state. Application atomically advances
+the applied record and its RAS enforcement state.<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-6.1-3">Equality compares the defined members after binding-specific decoding,
-not serialized bytes or member order; ignore <code>validUntil</code> for non-active
-state as specified in <a href="#state-schema" class="auto internal xref">Section 5</a>. An active record beyond its
-effective lease deadline can advance registry state but cannot establish
-active eligibility. Bindings map stale, conflicting, and invalid inputs
-to their existing response mechanisms (<a href="#scim-updates" class="auto internal xref">Section 7.3</a>, <a href="#signals" class="auto internal xref">Section 8</a>).<a href="#section-6.1-3" class="pilcrow">¶</a></p>
-<p id="section-6.1-4">An accepted later version <span class="bcp14">MUST NOT</span> allow an older pending record to
-become current afterward. Complete snapshots and the nondecreasing
-cutoff make intermediate versions unnecessary for recovery.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
+<p id="section-6.1-3">The event specification's equality rule excludes <code>validUntil</code> for
+non-active state. A valid snapshot beyond its effective lease deadline
+can advance registry state without establishing eligibility.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2048,32 +1893,16 @@ PATCH and Bulk are <span class="bcp14">OPTIONAL</span>; if supported, they <span
 atomicity and ordering rules below.<a href="#section-7-3" class="pilcrow">¶</a></p>
 <div id="scim-schema">
 <section id="section-7.1">
-        <h3 id="name-state-to-scim-mapping">
-<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-state-to-scim-mapping" class="section-name selfRef">State-to-SCIM Mapping</a>
+        <h3 id="name-applying-the-scim-represent">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-applying-the-scim-represent" class="section-name selfRef">Applying the SCIM Representation</a>
         </h3>
-<p id="section-7.1-1">The extension schema URI is:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
-<p id="section-7.1-2"><code>urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent</code><a href="#section-7.1-2" class="pilcrow">¶</a></p>
-<p id="section-7.1-3">Its name is <code>GovernedAgentLifecycle</code>. Each State Record member maps to a
-same-named SCIM attribute. <code>authorizationCutoff</code>, <code>assertedAt</code>, and
-<code>validUntil</code> have SCIM type <code>dateTime</code>; the other attributes have type
-<code>string</code>. Their values retain the representation in <a href="#state-schema" class="auto internal xref">Section 5</a>.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
-<p id="section-7.1-4">All attributes are single-valued, returned by default, and have
-uniqueness <code>none</code>. All except <code>validUntil</code> have <code>required: true</code>;
-<code>validUntil</code> has <code>required: false</code> in the schema and is required by this
-profile only for active state. SCIM responses omit it for disabled or
-retired state. String attributes have <code>caseExact: true</code>. Mutability is
-<code>readWrite</code> except for immutable <code>issuer</code> and <code>subject</code>. The registry
-enforces uniqueness of the qualified identity within the Target Tenant;
-the individual attributes are not independently unique.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
-<p id="section-7.1-5">Providers <span class="bcp14">MUST</span> advertise these characteristics in <code>/Schemas</code>. <code>status</code>
-has the three canonical values in <a href="#transitions" class="auto internal xref">Section 5.2</a>; the other attributes
-have no enumeration. SCIM attribute-name matching follows <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>;
-the binding decodes those names to the State Record's canonical names
-before registry comparison. Ambiguous duplicate attributes <span class="bcp14">MUST</span> be
-rejected.<a href="#section-7.1-5" class="pilcrow">¶</a></p>
-<p id="section-7.1-6">The extension is a projection of the registry state. Its enclosing SCIM
-resource can change without changing lifecycle state, and lifecycle
-state can change without a SCIM write.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
+<p id="section-7.1-1">The Receiver <span class="bcp14">MUST</span> use the <code>GovernedAgentLifecycle</code> extension defined by
+<span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>, including its attribute types, case handling, conditional
+<code>validUntil</code> requirement, and immutable identity fields. The extension
+represents applied registry state, whether received through SCIM or SSF.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.1-2">The Receiver <span class="bcp14">MUST</span> enforce uniqueness of the qualified agent identity
+within each Target Tenant. Neither individual identity attribute is
+independently unique.<a href="#section-7.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="creation-and-existing-records">
@@ -2199,7 +2028,7 @@ then:<a href="#section-8.1-3" class="pilcrow">¶</a></p>
             <p id="section-8.1-4.1.1">Validate the SET issuer, signature, and audience against that stream.<a href="#section-8.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.1-4.2">
-            <p id="section-8.1-4.2.1">Require <code>state.issuer</code> to equal the stream's bound governing issuer.<a href="#section-8.1-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-4.2.1">Require <code>sub_id.iss</code> to equal the stream's bound governing issuer.<a href="#section-8.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.1-4.3">
             <p id="section-8.1-4.3.1">Use the stream's bound Target Tenant for the registry lookup.<a href="#section-8.1-4.3.1" class="pilcrow">¶</a></p>
@@ -2214,39 +2043,16 @@ binding <span class="bcp14">MUST</span> be rejected. The Target Tenant scopes lo
 not the qualified identity or its source version sequence.<a href="#section-8.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="event-definition">
+<div id="applying-lifecycle-events">
 <section id="section-8.2">
-        <h3 id="name-event-definition">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-event-definition" class="section-name selfRef">Event Definition</a>
+        <h3 id="name-applying-lifecycle-events">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-applying-lifecycle-events" class="section-name selfRef">Applying Lifecycle Events</a>
         </h3>
-<p id="section-8.2-1">This document defines the SET event type:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
-<p id="section-8.2-2"><code>urn:ietf:params:oauth:event-type:governed-agent-lifecycle</code><a href="#section-8.2-2" class="pilcrow">¶</a></p>
-<p id="section-8.2-3">It carries the Authority's current State Record, including
-eligibility-lease renewals. It is an assertion of enterprise lifecycle
-state, not a command to grant local access.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
-<p id="section-8.2-4">SET validation and delivery follow <span>[<a href="#RFC8417" class="cite xref">RFC8417</a>]</span> and <span>[<a href="#SSF" class="cite xref">SSF</a>]</span>, including
-<code>secevent+jwt</code> typing and SSF's prohibition on <code>exp</code>. The eligibility
-lease is not SET expiration. In addition, the event <span class="bcp14">MUST</span>:<a href="#section-8.2-4" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-8.2-5.1">
-            <p id="section-8.2-5.1.1">Identify the agent using the top-level <code>sub_id</code> with the <code>iss_sub</code>
-format from <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span>.<a href="#section-8.2-5.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-8.2-5.2">
-            <p id="section-8.2-5.2.1">Contain a <code>state</code> member whose value is the State Record object from
-<a href="#state-schema" class="auto internal xref">Section 5</a>, with its members directly in that object. It <span class="bcp14">MUST NOT</span>
-wrap them in a SCIM schema-URN member or include a <code>schemas</code> member.
-Required member names use the spelling in that section. Receivers <span class="bcp14">MUST</span>
-ignore other unknown members; they confer no lifecycle semantics.<a href="#section-8.2-5.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-8.2-5.3">
-            <p id="section-8.2-5.3.1">Have matching <code>sub_id.iss</code> / <code>state.issuer</code> and <code>sub_id.sub</code> /
-<code>state.subject</code> values.<a href="#section-8.2-5.3.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-8.2-6">The event object has no other <span class="bcp14">REQUIRED</span> members. The subject <span class="bcp14">MUST NOT</span> be
-placed in an event-local <code>subject</code> member. A Receiver <span class="bcp14">MUST NOT</span> infer the
-agent's governing issuer from the SET's top-level <code>iss</code>.<a href="#section-8.2-6" class="pilcrow">¶</a></p>
+<p id="section-8.2-1">The Transmitter and Receiver <span class="bcp14">MUST</span> implement the Agent State Changed
+event defined in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>, including its payload, subject
+matching, and validation rules. This profile adds the stream-to-tenant
+binding above and the registry and enforcement requirements below. It
+defines no event identifier or alternative event payload.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="delivery-and-acceptance">
@@ -2257,28 +2063,23 @@ agent's governing issuer from the SET's top-level <code>iss</code>.<a href="#sec
 <p id="section-8.3-1">Both parties <span class="bcp14">MUST</span> support SSF push delivery using <span>[<a href="#RFC8935" class="cite xref">RFC8935</a>]</span>. SSF poll
 delivery <span>[<a href="#RFC8936" class="cite xref">RFC8936</a>]</span> <span class="bcp14">MAY</span> additionally be supported. Mandatory push
 support is this profile's requirement, not a requirement of base SSF.
-The event type is advertised through existing SSF event capability and
-stream configuration fields; no separate discovery protocol is defined.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+Event discovery follows <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> and SSF.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 <p id="section-8.3-2">The Authority <span class="bcp14">MUST</span> arrange delivery of each new State Record through
 SCIM or SSF, and <span class="bcp14">MUST</span> enqueue a lifecycle event on every status or
 cutoff change for each configured target stream.<a href="#section-8.3-2" class="pilcrow">¶</a></p>
 <p id="section-8.3-3">When a stream is paused or delivery fails, the Transmitter retains the
 event for its configured retry period and the connector uses SCIM
 reconciliation. Expiration of that period does not remove the obligation
-to reconcile current state. SCIM and SSF do not need to arrive in the
-same order. Retransmitting a record <span class="bcp14">MUST NOT</span> change its version or
-lease; a lease renewal requires a new State Record with a higher
-version.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
+to reconcile current state. SCIM and SSF can arrive in different orders;
+both apply the common ordering rules in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
 <p id="section-8.3-4">Receivers <span class="bcp14">MUST</span> durably deduplicate SETs by Transmitter issuer and <code>jti</code>
 for the configured delivery retry period. Source-version processing
 remains necessary after the deduplication record expires and across SCIM
 delivery of the same state. Neither <code>jti</code> nor SET <code>iat</code> is a state
 ordering mechanism.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
-<p id="section-8.3-5">Accepted lower-version events and exact duplicates are acknowledged
-without changing state. Invalid or conflicting events use the delivery
-protocol's existing error reporting; this document defines no new
-delivery error code. Conflicting equal-version records <span class="bcp14">MUST</span> also raise
-an administrative diagnostic.<a href="#section-8.3-5" class="pilcrow">¶</a></p>
+<p id="section-8.3-5">Event acknowledgments and errors follow <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>. This profile
+additionally requires an administrative diagnostic for conflicting
+equal-version records.<a href="#section-8.3-5" class="pilcrow">¶</a></p>
 <p id="section-8.3-6">A delivery acknowledgment confirms durable acceptance for processing,
 not completed API enforcement. E bounds application delay for the
 guarantee claimed by the Receiver and RAS deployment (<a href="#parameters" class="auto internal xref">Section 3.1</a>).
@@ -2471,8 +2272,8 @@ governed token population. These are deployment modes, not new OAuth
 profile URIs or assurance levels. A token or validation failure <span class="bcp14">MUST NOT</span>
 select a weaker mode. All modes retain Federation's token protection and
 actor gate.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-6">
-          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
+<table class="center" id="table-4">
+          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Mode</th>
@@ -2599,8 +2400,8 @@ lifetime or successful event delivery.<a href="#section-10.5-3" class="pilcrow">
       </h2>
 <p id="section-11-1">Agent-wide lifecycle state is deliberately distinct from changes to an
 individual relationship:<a href="#section-11-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-7">
-        <caption><a href="#table-7" class="selfRef">Table 7</a></caption>
+<table class="center" id="table-5">
+        <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">Change</th>
@@ -2752,86 +2553,25 @@ attributes can follow local retention policy.<a href="#section-13-2" class="pilc
       <h2 id="name-iana-considerations">
 <a href="#section-14" class="section-number selfRef">14. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<div id="scim-schema-registration">
-<section id="section-14.1">
-        <h3 id="name-scim-schema-registration">
-<a href="#section-14.1" class="section-number selfRef">14.1. </a><a href="#name-scim-schema-registration" class="section-name selfRef">SCIM Schema Registration</a>
-        </h3>
-<p id="section-14.1-1">This document requests registration in the SCIM Schema URIs registry
-under the procedure in <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>], <a href="https://rfc-editor.org/rfc/rfc7643#section-10.3" class="relref">Section 10.3</a></span>. The registration
-template is in <a href="#schema-registration" class="auto internal xref">Section 15</a>.<a href="#section-14.1-1" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="oauth-uri-registration">
-<section id="section-14.2">
-        <h3 id="name-oauth-uri-registration">
-<a href="#section-14.2" class="section-number selfRef">14.2. </a><a href="#name-oauth-uri-registration" class="section-name selfRef">OAuth URI Registration</a>
-        </h3>
-<p id="section-14.2-1">This document requests registration in the OAuth URI registry under
-<span>[<a href="#RFC6755" class="cite xref">RFC6755</a>]</span>:<a href="#section-14.2-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-14.2-2.1">
-            <p id="section-14.2-2.1.1">URN: <code>urn:ietf:params:oauth:event-type:governed-agent-lifecycle</code><a href="#section-14.2-2.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-14.2-2.2">
-            <p id="section-14.2-2.2.1">Common Name: Governed Agent Lifecycle Security Event<a href="#section-14.2-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-14.2-2.3">
-            <p id="section-14.2-2.3.1">Change Controller: IETF<a href="#section-14.2-2.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-14.2-2.4">
-            <p id="section-14.2-2.4.1">Specification Document: <a href="#signals" class="auto internal xref">Section 8</a> of this document.<a href="#section-14.2-2.4.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-14.2-3">The proposed <code>event-type</code> composition uses the RFC 6755 registration
-procedure without creating a separate registry.<a href="#section-14.2-3" class="pilcrow">¶</a></p>
-</section>
-</div>
-</section>
-</div>
-<div id="schema-registration">
-<section id="section-15">
-      <h2 id="name-scim-schema-registration-te">
-<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-scim-schema-registration-te" class="section-name selfRef">SCIM Schema Registration Template</a>
-      </h2>
-<p id="section-15-1">The registration template required by <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>], <a href="https://rfc-editor.org/rfc/rfc7643#section-10.3.2" class="relref">Section 10.3.2</a></span> is:<a href="#section-15-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-15-2.1">
-          <p id="section-15-2.1.1">Schema URI:
-<code>urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent</code><a href="#section-15-2.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-15-2.2">
-          <p id="section-15-2.2.1">Schema Name: Governed Agent Lifecycle Extension<a href="#section-15-2.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-15-2.3">
-          <p id="section-15-2.3.1">Intended or Associated Resource Type: Agent<a href="#section-15-2.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-15-2.4">
-          <p id="section-15-2.4.1">Purpose: Carry the qualified agent identity and authoritative
-lifecycle state used for provisioning and OAuth enforcement.<a href="#section-15-2.4.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-15-2.5">
-          <p id="section-15-2.5.1">Single-value Attributes: <code>issuer</code>, <code>subject</code>, <code>version</code>, <code>status</code>,
-<code>authorizationCutoff</code>, <code>assertedAt</code>, <code>validUntil</code>, as defined in
-<a href="#state-schema" class="auto internal xref">Section 5</a> and mapped to SCIM types in <a href="#scim-schema" class="auto internal xref">Section 7.1</a>.<a href="#section-15-2.5.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-15-2.6">
-          <p id="section-15-2.6.1">Multi-valued Attributes: None.<a href="#section-15-2.6.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
+<p id="section-14-1">This document requests no IANA registrations. <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> defines the
+event URI and requests registration of the SCIM schema.<a href="#section-14-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-combined-references">
-<section id="section-16">
+<section id="section-15">
       <h2 id="name-references">
-<a href="#section-16" class="section-number selfRef">16. </a><a href="#name-references" class="section-name selfRef">References</a>
+<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-16.1">
+<section id="section-15.1">
         <h3 id="name-normative-references">
-<a href="#section-16.1" class="section-number selfRef">16.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-15.1" class="section-number selfRef">15.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
+<dt id="AGENT-EVENTS">[AGENT-EVENTS]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"Governed Agent Lifecycle Events Profile"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-ssf-governed-agent-events</span>, <time datetime="2026-09-17" class="refDate">17 September 2026</time>, <span>&lt;<a href="https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-ssf-governed-agent-events.html">https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-ssf-governed-agent-events.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="FEDERATION">[FEDERATION]</dt>
         <dd>
 <span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth 2.0 Profile for Governed Agent Federation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-workload-agent-federation</span>, <time datetime="2026-09-17" class="refDate">17 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-workload-agent-federation">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-workload-agent-federation</a>&gt;</span>. </dd>
@@ -2847,10 +2587,6 @@ lifecycle state used for provisioning and OAuth enforcement.<a href="#section-15
 <dt id="SSF">[SSF]</dt>
         <dd>
 <span class="refAuthor">OpenID Foundation</span>, <span class="refTitle">"OpenID Shared Signals Framework Specification 1.0"</span>, <time datetime="2025-08-29" class="refDate">29 August 2025</time>, <span>&lt;<a href="https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html">https://openid.net/specs/openid-sharedsignals-framework-1_0-final.html</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC3339">[RFC3339]</dt>
-        <dd>
-<span class="refAuthor">Klyne, G.</span> and <span class="refAuthor">C. Newman</span>, <span class="refTitle">"Date and Time on the Internet: Timestamps"</span>, <span class="seriesInfo">RFC 3339</span>, <span class="seriesInfo">DOI 10.17487/RFC3339</span>, <time datetime="2002-07" class="refDate">July 2002</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3339">https://www.rfc-editor.org/rfc/rfc3339</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC6749">[RFC6749]</dt>
         <dd>
@@ -2876,10 +2612,6 @@ lifecycle state used for provisioning and OAuth enforcement.<a href="#section-15
         <dd>
 <span class="refAuthor">Richer, J., Ed.</span>, <span class="refTitle">"OAuth 2.0 Token Introspection"</span>, <span class="seriesInfo">RFC 7662</span>, <span class="seriesInfo">DOI 10.17487/RFC7662</span>, <time datetime="2015-10" class="refDate">October 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7662">https://www.rfc-editor.org/rfc/rfc7662</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC8259">[RFC8259]</dt>
-        <dd>
-<span class="refAuthor">Bray, T., Ed.</span>, <span class="refTitle">"The JavaScript Object Notation (JSON) Data Interchange Format"</span>, <span class="seriesInfo">STD 90</span>, <span class="seriesInfo">RFC 8259</span>, <span class="seriesInfo">DOI 10.17487/RFC8259</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8259">https://www.rfc-editor.org/rfc/rfc8259</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC8417">[RFC8417]</dt>
         <dd>
 <span class="refAuthor">Hunt, P., Ed.</span>, <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Denniss, W.</span>, and <span class="refAuthor">M. Ansari</span>, <span class="refTitle">"Security Event Token (SET)"</span>, <span class="seriesInfo">RFC 8417</span>, <span class="seriesInfo">DOI 10.17487/RFC8417</span>, <time datetime="2018-07" class="refDate">July 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8417">https://www.rfc-editor.org/rfc/rfc8417</a>&gt;</span>. </dd>
@@ -2896,10 +2628,6 @@ lifecycle state used for provisioning and OAuth enforcement.<a href="#section-15
         <dd>
 <span class="refAuthor">Bertocci, V.</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens"</span>, <span class="seriesInfo">RFC 9068</span>, <span class="seriesInfo">DOI 10.17487/RFC9068</span>, <time datetime="2021-10" class="refDate">October 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9068">https://www.rfc-editor.org/rfc/rfc9068</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC9493">[RFC9493]</dt>
-        <dd>
-<span class="refAuthor">Backman, A., Ed.</span>, <span class="refAuthor">Scurtescu, M.</span>, and <span class="refAuthor">P. Jain</span>, <span class="refTitle">"Subject Identifiers for Security Event Tokens"</span>, <span class="seriesInfo">RFC 9493</span>, <span class="seriesInfo">DOI 10.17487/RFC9493</span>, <time datetime="2023-12" class="refDate">December 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9493">https://www.rfc-editor.org/rfc/rfc9493</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="BCP14">[BCP14]</dt>
       <dd>
 <div class="refInstance">Best Current Practice 14, <span>&lt;<a href="https://www.rfc-editor.org/info/bcp14">https://www.rfc-editor.org/info/bcp14</a>&gt;</span>.<br><span>At the time of writing, this BCP comprises the following:</span>
@@ -2914,15 +2642,11 @@ lifecycle state used for provisioning and OAuth enforcement.<a href="#section-15
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-16.2">
+<section id="section-15.2">
         <h3 id="name-informative-references">
-<a href="#section-16.2" class="section-number selfRef">16.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#section-15.2" class="section-number selfRef">15.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
-<dt id="RFC6755">[RFC6755]</dt>
-        <dd>
-<span class="refAuthor">Campbell, B.</span> and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"An IETF URN Sub-Namespace for OAuth"</span>, <span class="seriesInfo">RFC 6755</span>, <span class="seriesInfo">DOI 10.17487/RFC6755</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6755">https://www.rfc-editor.org/rfc/rfc6755</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC7009">[RFC7009]</dt>
         <dd>
 <span class="refAuthor">Lodderstedt, T., Ed.</span>, <span class="refAuthor">Dronia, S.</span>, and <span class="refAuthor">M. Scurtescu</span>, <span class="refTitle">"OAuth 2.0 Token Revocation"</span>, <span class="seriesInfo">RFC 7009</span>, <span class="seriesInfo">DOI 10.17487/RFC7009</span>, <time datetime="2013-08" class="refDate">August 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7009">https://www.rfc-editor.org/rfc/rfc7009</a>&gt;</span>. </dd>
@@ -3033,39 +2757,15 @@ access token on each request.<a href="#appendix-A.2-2" class="pilcrow">¶</a></p
 <p id="appendix-A.3-1">At 12:02:00 the Authority disables the agent and publishes version 42.
 Its stream is administratively bound to issuer <code>https://idp.example</code> and
 Target Tenant <code>tenant-7</code>, with the exclusive audience
-<code>https://ras.example/lifecycle/tenant-7/idp-example</code>. The decoded SET
-has protected header <code>{"typ":"secevent+jwt"}</code> together with the
-negotiated signing algorithm and key identifier, and this payload:<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-A.3-2">
-<pre>
-{
-  "iss": "https://signals.idp.example",
-  "aud": "https://ras.example/lifecycle/tenant-7/idp-example",
-  "jti": "event-42",
-  "iat": 1789646520,
-  "sub_id": {
-    "format": "iss_sub",
-    "iss": "https://idp.example",
-    "sub": "agent-42"
-  },
-  "events": {
-    "urn:ietf:params:oauth:event-type:governed-agent-lifecycle": {
-      "state": {
-        "issuer": "https://idp.example",
-        "subject": "agent-42",
-        "version": "42",
-        "status": "disabled",
-        "authorizationCutoff": "2026-09-17T12:02:02Z",
-        "assertedAt": "2026-09-17T12:02:00Z"
-      }
-    }
-  }
-}
-</pre><a href="#appendix-A.3-2" class="pilcrow">¶</a>
-</div>
-<p id="appendix-A.3-3">The Receiver applies version 42. Redemption and refresh fail with
+<code>https://ras.example/lifecycle/tenant-7/idp-example</code>. The Transmitter
+sends the event defined in <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span> with disabled state version
+42, <code>event_timestamp</code> corresponding to 12:02:00, and
+<code>authorization_cutoff</code> corresponding to 12:02:02. Its examples show the
+decoded SET. The stream audience identifies the receiving context; the
+payload identifies the governed agent.<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-2">The Receiver applies version 42. Redemption and refresh fail with
 <code>invalid_grant</code>; introspection of the previously issued token returns
-<code>{"active":false}</code>. The API denies its next use.<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
+<code>{"active":false}</code>. The API denies its next use.<a href="#appendix-A.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="delayed-delivery-and-reactivation">
@@ -3073,8 +2773,8 @@ negotiated signing algorithm and key identifier, and this payload:<a href="#appe
         <h3 id="name-delayed-delivery-and-reacti">
 <a href="#appendix-A.4" class="section-number selfRef">A.4. </a><a href="#name-delayed-delivery-and-reacti" class="section-name selfRef">Delayed Delivery and Reactivation</a>
         </h3>
-<table class="center" id="table-8">
-          <caption><a href="#table-8" class="selfRef">Table 8</a></caption>
+<table class="center" id="table-6">
+          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Subsequent input</th>
@@ -3157,30 +2857,21 @@ disablement is applied. Their longer bounds are explicit in
 </div>
 </section>
 </div>
-<div id="relationship-to-existing-work">
+<div id="relationship-to-event-specifications">
 <section id="appendix-B">
-      <h2 id="name-relationship-to-existing-wo">
-<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-relationship-to-existing-wo" class="section-name selfRef">Relationship to Existing Work</a>
+      <h2 id="name-relationship-to-event-speci">
+<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-relationship-to-event-speci" class="section-name selfRef">Relationship to Event Specifications</a>
       </h2>
-<p id="appendix-B-1">The assessed inputs are SCIM Agent Resource -00, SCIM Agent Governance
--00, and the WISE editor's copy. Their evolution can change the most
-appropriate schema and event bindings.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
-<p id="appendix-B-2">This profile deliberately reuses the Agent resource, SCIM operations,
-SET subject identifiers, and SSF delivery. The new material is the
-transport-independent lifecycle state, shared ordering, eligibility
-lease, authorization cutoff, and OAuth enforcement contract.<a href="#appendix-B-2" class="pilcrow">¶</a></p>
-<p id="appendix-B-3">The account-disabled, account-enabled, and account-purged events in
-<span>[<a href="#RISC" class="cite xref">RISC</a>]</span> report account transitions. They do not define this profile's
-shared source version, authorization cutoff, or eligibility lease.
-Those fields must also survive missed transitions and SCIM reconciliation.
-A dedicated event makes those receiver obligations explicit without
-changing the meaning of existing account events. This is a distinction
-in event semantics, not a claim that SSF subjects must be human users.<a href="#appendix-B-3" class="pilcrow">¶</a></p>
-<p id="appendix-B-4">Detailed quarantine workflows, autonomy classifications, and credential
-discovery are not required for that contract. A deployment using richer
-governance states maps them into active, disabled, or retired
-eligibility at the Lifecycle Authority, rather than asking each RAS to
-interpret them.<a href="#appendix-B-4" class="pilcrow">¶</a></p>
+<p id="appendix-B-1">This profile consumes the lifecycle snapshot from <span>[<a href="#AGENT-EVENTS" class="cite xref">AGENT-EVENTS</a>]</span>.
+That specification owns event definitions and their coordination with
+<span>[<a href="#CAEP" class="cite xref">CAEP</a>]</span>, <span>[<a href="#WISE" class="cite xref">WISE</a>]</span>, and <span>[<a href="#RISC" class="cite xref">RISC</a>]</span>; this document does not extend their event
+vocabularies. A future binding to existing SCIM Events would likewise be
+specified separately before this profile could claim support for it.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<p id="appendix-B-2">The essential consumer requirements are authoritative agent correlation,
+shared state ordering, eligibility-lease enforcement, and application of
+the cutoff to retained authorization. A different event carrier cannot
+silently weaken those requirements or substitute a resource ETag for the
+lifecycle version.<a href="#appendix-B-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="document-history">
