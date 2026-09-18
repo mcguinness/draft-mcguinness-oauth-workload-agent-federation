@@ -84,7 +84,7 @@ informative:
 --- abstract
 
 This document profiles SCIM provisioning, Shared Signals, and OAuth for
-the lifecycle of an issuer-qualified Governed Agent. It applies the state
+the lifecycle of an issuer-qualified Agent Principal. It applies the state
 and events defined by Governed Agent Lifecycle Events Profile to local
 principal correlation, grant redemption, refresh, and API authorization.
 
@@ -99,7 +99,7 @@ new event type, State Record format, SCIM schema, or delivery protocol.
 
 Governed Agent Federation {{FEDERATION}} separates agent identity,
 client authority, user delegation, and resource authorization. It
-identifies an agent by the pair (IdP issuer, Governed Agent identifier),
+identifies an agent by the pair (IdP issuer, Agent Principal identifier),
 independently of the workload credentials used to establish it.
 
 For delegated access, the governed identity is the actor in an Identity
@@ -139,7 +139,7 @@ and cutoff, so delayed delivery cannot reverse a newer decision.
 
 This profile defines a complete IdP-to-resource-domain path:
 
-* Provision or explicitly correlate a Governed Agent with a local record.
+* Provision or explicitly correlate an Agent Principal with a local record.
 * Synchronize active, disabled, and retired state.
 * Apply changes to grant redemption, access-token issuance, refresh, and
   API authorization.
@@ -153,7 +153,7 @@ wire formats; this document defines their SCIM and OAuth application.
 {{WISE}} describes changes to workloads, credentials, and trust material.
 {{CAEP}} describes continuous-access events. Those mechanisms can supply
 inputs to an authority's decision. The state applied here expresses the
-result for a Governed Agent and the receiver obligations that follow.
+result for an Agent Principal and the receiver obligations that follow.
 
 Platform-to-IdP enrollment, Identity Binding administration, individual
 delegation revocation, task cancellation, runtime instance lifecycle,
@@ -164,14 +164,14 @@ in {{relationship-changes}}.
 
 {::boilerplate bcp14-tagged-bcp14}
 
-OAuth terms follow {{RFC6749}}. Governed Agent, Identity Binding, Client
+OAuth terms follow {{RFC6749}}. Agent Principal, Identity Binding, Client
 Association, Governance Tenant, Target Tenant, and resource
 authorization server (RAS) follow {{FEDERATION}}. SCIM terms follow
 {{RFC7643}} and {{RFC7644}}; Transmitter, Receiver, and stream follow
 {{SSF}}.
 
 Lifecycle Authority:
-: The IdP responsible for the Governed Agent's enterprise lifecycle
+: The IdP responsible for the Agent Principal's enterprise lifecycle
   state. An authorized connector can deliver that state on its behalf.
 
 Lifecycle Receiver:
@@ -181,7 +181,7 @@ Lifecycle Receiver:
   deployment responsible for atomic state application; they need not
   run in the same process.
 
-Governed Agent Lifecycle State (State Record):
+Agent Principal Lifecycle State (State Record):
 : The logical snapshot defined in {{AGENT-EVENTS}} and applied under
   {{state-schema}}, containing
   identity, lifecycle version, status, authorization cutoff, and lease.
@@ -900,7 +900,7 @@ agent's `act` identity alone is insufficient.
 
 OAuth token revocation {{RFC7009}} remains available to revoke a known
 token at its issuing server. It neither identifies every authorization
-derived from a Governed Agent nor distributes principal lifecycle state
+derived from an Agent Principal nor distributes principal lifecycle state
 across domains. It complements this profile; it does not replace its
 cutoff, ordering, or propagation contract.
 
@@ -913,7 +913,7 @@ without the federation mapping.
 ## Self-Acting Access {#self-acting}
 
 The lifecycle identity is independent of the authorization flow. The
-intended {{WAG}} composition correlates the same Governed Agent with the
+intended {{WAG}} composition correlates the same Agent Principal with the
 same local agent principal used for delegated access.
 
 Delegated access preserves the IdP-qualified actor in `act`; self-acting
@@ -1070,7 +1070,7 @@ sends the event defined in {{AGENT-EVENTS}} with disabled state version
 42, `event_timestamp` corresponding to 12:02:00, and
 `authorization_cutoff` corresponding to 12:02:02. Its examples show the
 decoded SET. The stream audience identifies the receiving context; the
-payload identifies the governed agent.
+payload identifies the Agent Principal.
 
 The Receiver applies version 42. Redemption and refresh fail with
 `invalid_grant`; introspection of the previously issued token returns

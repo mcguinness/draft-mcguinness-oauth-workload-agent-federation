@@ -75,7 +75,7 @@ informative:
 --- abstract
 
 This document defines an event profile of the Shared Signals Framework
-for Governed Agent lifecycle changes. Transmitters report an agent's
+for Agent Principal lifecycle changes. Transmitters report an agent's
 current eligibility, lifecycle version, authorization cutoff, and, when
 active, eligibility-lease expiration. Receivers use these assertions under
 their own authorization policy or a consuming profile.
@@ -88,7 +88,7 @@ Agent resource. Delivery and OAuth enforcement are defined separately.
 
 # Introduction
 
-Governed Agent lifecycle events allow cooperating Transmitters and Receivers
+Agent Principal lifecycle events allow cooperating Transmitters and Receivers
 to communicate changes in enterprise eligibility. The subject is the stable
 issuer-qualified agent described by Governed Agent Federation {{FEDERATION}},
 independent of its workload credentials and local resource representations.
@@ -122,8 +122,8 @@ service.
 The event subject is identified by top-level `sub_id`, following the SSF
 rules for new event types. Its format MUST be `iss_sub` {{RFC9493}}:
 
-* `iss` identifies the authority's Governed Agent namespace.
-* `sub` identifies the Governed Agent within that namespace.
+* `iss` identifies the authority's Agent Principal namespace.
+* `sub` identifies the Agent Principal within that namespace.
 
 Receivers MUST correlate the exact pair without case folding or URI
 rewriting and authorize the Transmitter to assert state for that namespace.
@@ -168,7 +168,7 @@ Event Type URI:
 `https://mcguinness.github.io/secevent/agent/state-changed`
 
 Agent State Changed signals that the Authority has established a new version
-of a Governed Agent's eligibility state. This includes initial state,
+of an Agent Principal's eligibility state. This includes initial state,
 disablement, reactivation, retirement, and renewal of an active eligibility
 lease. Renewal changes the state version even when `status` is unchanged.
 
@@ -461,7 +461,7 @@ represents lease renewal without a status transition.
 |---|---|
 | SCIM Events {{RFC9967}} | Full create and PUT events can carry the lifecycle extension in a resource. Their subject identifies the publisher's SCIM resource and their version is an ETag; neither replaces the qualified agent or lifecycle version. |
 | {{CAEP}} | Session revocation, token-claim changes, and credential changes retain those meanings. They do not by themselves assert agent-wide eligibility or renew a lease. |
-| {{WISE}} | Workload disabled, enabled, and purged events overlap the lifecycle transitions. They include workload and credential semantics that need explicit mapping to a Governed Agent. |
+| {{WISE}} | Workload disabled, enabled, and purged events overlap the lifecycle transitions. They include workload and credential semantics that need explicit mapping to an Agent Principal. |
 | {{RISC}} | Account transitions can inform lifecycle decisions but do not carry this snapshot's version, cutoff, and lease contract. |
 
 A SCIM-based deployment can profile existing full-resource events to

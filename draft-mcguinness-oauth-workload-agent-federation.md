@@ -119,12 +119,12 @@ informative:
 
 This document defines how an identity provider resolves a dedicated
 OAuth client identity or an independently validated workload identity
-to a stable Governed Agent principal. Client authority and user
+to a stable Agent Principal. Client authority and user
 delegation are authorized separately. Resource systems consume the
 issuer-qualified agent identity without interpreting the original
 credential. No new credential format is defined.
 
-The federation model covers self-acting access, with the Governed Agent
+The federation model covers self-acting access, with the Agent Principal
 as subject, and delegated access, with the user as subject and the
 agent as actor. This revision defines a complete delegated profile of
 the Identity Assertion JWT Authorization Grant (ID-JAG), using existing
@@ -141,7 +141,7 @@ Agent platforms establish workload identities. Enterprises govern
 stable authorization principals. Resource systems need to recognize
 those principals without understanding every platform's credentials.
 This document defines how an identity provider (IdP) resolves client or
-workload identity to a Governed Agent, separately authorizes OAuth
+workload identity to an Agent Principal, separately authorizes OAuth
 client use and user delegation, and carries the governed identity into
 the resource domain.
 
@@ -157,7 +157,7 @@ Four independent relationships establish that contract:
 | What enterprise agent does this client or workload identity represent? | Identity Binding |
 | May this OAuth client exercise that agent through this binding? | Client Association |
 | May this agent act for this user toward the requested target and authority? | Delegation Authorization |
-| What resource-local principal represents the IdP-qualified agent? | Governed Agent Correlation |
+| What resource-local principal represents the IdP-qualified agent? | Agent Principal Correlation |
 
 Client and workload credentials are resolution inputs; downstream
 authorization identifies the IdP-governed principal. For delegated access,
@@ -216,8 +216,8 @@ Client:
   an explicit Identity Binding.
 
 Identity Provider (IdP):
-: The OAuth authorization server that resolves validated inputs to a
-  Governed Agent, checks the permitted client and acting relationship,
+: The OAuth authorization server that resolves validated inputs to an
+  Agent Principal, checks the permitted client and acting relationship,
   and issues a grant naming that agent as subject or actor.
 
 Resource Authorization Server (RAS):
@@ -233,10 +233,10 @@ One service can implement several roles.
 
 ## Terms {#terms}
 
-Governed Agent:
+Agent Principal:
 : A stable, non-human authorization principal in the IdP's namespace
-  representing an independently governed actor. Its identity defines
-  the boundary for independently managed authorization, delegation,
+  representing an independently governed workload or agent. Its identity
+  defines the boundary for independently managed authorization, delegation,
   attribution, correlation, and disablement. It is independent of the
   external credentials, execution environments, and OAuth clients used
   to obtain authorization for it; it does not necessarily identify an
@@ -246,28 +246,28 @@ Workload:
 : An external computational principal identified by accepted workload
   evidence. It can span multiple running instances; its identity does
   not necessarily distinguish executions. An Identity Binding resolves
-  that external identity to a Governed Agent.
+  that external identity to an Agent Principal.
 
 Dedicated client:
 : An OAuth client whose authenticated identity maps explicitly to one
-  Governed Agent in the IdP's client-registration context. Dedicated
+  Agent Principal in the IdP's client-registration context. Dedicated
   refers to identity resolution, not to one process, replica, or
   installation.
 
 Shared client:
-: An OAuth client serving multiple Governed Agents. Its authenticated
+: An OAuth client serving multiple Agent Principals. Its authenticated
   client identity alone cannot distinguish those agents; resolution
   requires independently validated workload identity.
 
 Identity Binding:
 : An approved association from an exact client or workload identity,
   qualified by its registration context or credential authority, to one
-  Governed Agent. It is administered in a Governance Tenant and
+  Agent Principal. It is administered in a Governance Tenant and
   establishes identity resolution, not permission to exercise the agent.
 
 Client Association:
-: An approved permission for an authenticated OAuth client to use a
-  Governed Agent through the selected Identity Binding, flow, and
+: An approved permission for an authenticated OAuth client to use an
+  Agent Principal through the selected Identity Binding, flow, and
   credential class. The permission can cover one binding or an explicitly
   authorized set of bindings under {{identity-binding}}. It is an
   authorization-policy relationship, independent of identity resolution.
@@ -279,12 +279,12 @@ Credential class:
   JWT encoding alone does not identify the class.
 
 Delegation Authorization:
-: The IdP's decision that a Governed Agent may act for a user within
+: The IdP's decision that an Agent Principal may act for a user within
   an approved client, tenant, target, and authority context.
 
-Governed Agent Correlation:
-: The RAS's authoritative association of an IdP-qualified Governed
-  Agent with a local principal. Correlation does not grant authority.
+Agent Principal Correlation:
+: The RAS's authoritative association of an IdP-qualified Agent Principal
+  with a local principal. Correlation does not grant authority.
 
 Issuer-bound presenter key:
 : A key the credential issuer has attested belongs to the workload,
@@ -303,16 +303,16 @@ Grant proof key:
   selected input profile.
 
 Governance Tenant:
-: The IdP tenant within whose governance domain the Governed Agent
-  exists and is administered. The Governed Agent identifier remains
+: The IdP tenant within whose governance domain the Agent Principal
+  exists and is administered. The Agent Principal identifier remains
   qualified by the IdP issuer ({{canonical-identity}}), not by the
   tenant.
 
 Target Tenant:
 : The tenant at the RAS in which the agent or user is authorized.
 
-Where the meaning is clear, this document says agent for Governed
-Agent.
+Where the meaning is clear, this document uses agent as shorthand for
+Agent Principal.
 
 # Federation Model {#model}
 
@@ -337,12 +337,12 @@ still determines whether to accept its delegated access.
  agent-42 -- Delegation Authorization --> authority to act for user
 ~~~
 
-External workload identity, Governed Agent identity, and OAuth client
+External workload identity, Agent Principal identity, and OAuth client
 identity are distinct. Identity Binding resolves the agent identity;
 Client Association authorizes client use through the binding, flow,
 and credential class. Its coverage is explicit under {{identity-binding}}.
 
-The IdP is the authority for the Governed Agent: the ID-JAG's `act.iss`
+The IdP is the authority for the Agent Principal: the ID-JAG's `act.iss`
 equals its `iss`, and `act.sub` comes from the IdP's mapping rather than
 forwarding the external subject.
 
@@ -373,10 +373,10 @@ define their processing rules.
 | Invariant | Required result | Defined in |
 |---|---|---|
 | Governance boundary | Actors needing independent governance have distinct identities; execution topology does not determine identity or authority | {{governance-boundary}} |
-| Identity | Authenticated dedicated-client identity or independently validated workload identity resolves through an enabled exact Identity Binding to one active Governed Agent | {{identity-binding}} |
+| Identity | Authenticated dedicated-client identity or independently validated workload identity resolves through an enabled exact Identity Binding to one active Agent Principal | {{identity-binding}} |
 | Client authority | The authenticated client is permitted to use that binding, credential class, and flow | {{identity-binding}} |
 | Delegation | The agent may act for the resolved user in the authorized client, tenant, target, and authority context | {{delegation-authorization}} |
-| Federation | ID-JAG identifies the user in the target subject namespace and the agent as `act.iss` = governing IdP, `act.sub` = Governed Agent | {{subject-resolution}}, {{actor-construction}} |
+| Federation | ID-JAG identifies the user in the target subject namespace and the agent as `act.iss` = governing IdP, `act.sub` = Agent Principal | {{subject-resolution}}, {{actor-construction}} |
 | Resource enforcement | Local user authority, the actor gate, tenant, token authority, and applicable proof requirements all permit the operation | {{agent-correlation}}, {{api-processing}} |
 
 The last three rows describe delegated access. The self-acting WAG
@@ -398,7 +398,7 @@ for another:
 * **Client authentication:** evidence authenticating the OAuth client.
 * **Agent resolution:** resolution of the authenticated dedicated-client
   identity or independently validated workload identity through an
-  Identity Binding to exactly one Governed Agent.
+  Identity Binding to exactly one Agent Principal.
 * **Key possession:** proof that the presenter controls a key, with the
   binding semantics of the proof mechanism.
 
@@ -413,22 +413,22 @@ authenticated client to exercise that agent.
 
 ## Canonical Identity and Tenant Boundaries {#canonical-identity}
 
-The Governed Agent identifier MUST be unique and non-reassignable
+The Agent Principal identifier MUST be unique and non-reassignable
 within the IdP issuer's namespace, across all Governance Tenants sharing
 that issuer identifier. Governance Tenant is not an additional component
 of the downstream agent identity. Tenant-local identifiers MUST be
 qualified to meet this issuer-wide uniqueness requirement before use
-as a Governed Agent identifier.
+as an Agent Principal identifier.
 
 It need not equal an external subject, OAuth client identifier,
 SPIFFE ID, display name, or instance identifier. Identity continuity is
 an explicit decision by the governing authority to preserve the same
 principal; it does not imply that the principal's permissions remain
-unchanged. Governed Agent continuity concerns the authorization
+unchanged. Agent Principal continuity concerns the authorization
 principal, not continuity of a particular execution.
 
 A transfer to a different Governance Tenant under a different
-administrative authority MUST create a new Governed Agent identifier
+administrative authority MUST create a new Agent Principal identifier
 and MUST NOT automatically carry forward delegations or RAS principal
 links. This revision defines no cross-tenant identity migration protocol.
 
@@ -440,7 +440,7 @@ For example:
   same governance domain does not by itself change the principal.
 
 Multiple Identity Bindings MAY resolve distinct client or workload
-identities to the same Governed Agent when the IdP approves them as
+identities to the same Agent Principal when the IdP approves them as
 representing the same governed principal. They share the governed
 authorization identity downstream.
 
@@ -453,23 +453,23 @@ Target Tenant for the requested resource uses `invalid_target`.
 
 ## Governance Boundary and Execution Independence {#governance-boundary}
 
-Use distinct Governed Agent identities when actors need independently
+Use distinct Agent Principal identities when actors need independently
 managed authorization, delegation, attribution, local-principal
 correlation, or lifecycle, including disablement. Differences in process,
 replica, session, worker, or credential alone do not require distinct
 identities. Sharing those elements does not justify combining actors
 that require independent governance.
 
-Multiple executions MAY operate as the same Governed Agent, and an
+Multiple executions MAY operate as the same Agent Principal, and an
 agent MAY move between workloads or execution environments through
 approved Identity Bindings. Conversely, one environment MAY host
-multiple Governed Agents. The validated resolution input and its
-Identity Binding MUST distinguish exactly one Governed Agent for each
+multiple Agent Principals. The validated resolution input and its
+Identity Binding MUST distinguish exactly one Agent Principal for each
 authorization transaction; a shared workload identity alone cannot
 select among agents.
 
 Scaling, restarting, rescheduling, migration, or credential rotation
-MUST NOT by itself create, merge, or transfer Governed Agent authority.
+MUST NOT by itself create, merge, or transfer Agent Principal authority.
 Creating additional executions, replicas, credentials, Identity Bindings,
 or Client Associations does not by itself increase the agent's authority.
 Each transaction remains subject to the applicable Client Association,
@@ -485,10 +485,10 @@ distinguishes their wire-profile status, not their architectural scope:
 
 | Acting relationship | Grant | Profile status |
 |---|---|---|
-| Agent acts as itself | WAG composition; Governed Agent is the subject | Identity and authorization composition in {{wag-flow}} is informative; wire requirements pending {{wag-gaps}} |
-| Agent acts for a user | ID-JAG; user is the subject and Governed Agent is the actor | Complete flow in {{delegated-flow}} |
+| Agent acts as itself | WAG composition; Agent Principal is the subject | Identity and authorization composition in {{wag-flow}} is informative; wire requirements pending {{wag-gaps}} |
+| Agent acts for a user | ID-JAG; user is the subject and Agent Principal is the actor | Complete flow in {{delegated-flow}} |
 
-A Governed Agent is not intrinsically self-acting or delegated. The
+An Agent Principal is not intrinsically self-acting or delegated. The
 authorization transaction determines whether it is represented as the
 subject or as the actor for another subject. Authorization for one
 relationship does not imply authorization for the other.
@@ -539,12 +539,12 @@ The adoption path preserves existing Enterprise-Managed Authorization
 binding. The names identify deployment profiles, not assurance ratings.
 
 This profile does not establish trust in previously unknown agent issuers
-or automatically create Identity Bindings or Governed Agent Correlations
+or automatically create Identity Bindings or Agent Principal Correlations
 from presented credentials.
 
 | Adoption profile | Required addition | Grant protection |
 |---|---|---|
-| Enterprise access | Existing EMA and base ID-JAG; no separate Governed Agent required | Existing deployment policy |
+| Enterprise access | Existing EMA and base ID-JAG; no separate Agent Principal required | Existing deployment policy |
 | Governed agent access | Agent resolution, Identity Binding, Client Association, governed actor, tenant enforcement, and downstream actor gate | Grants without sender constraint permitted only by explicit policy; any binding present is enforced |
 | Bound governed agent access | All governed agent requirements plus DPoP at grant issuance and redemption | `cnf.jkt` and same-key continuity required |
 
@@ -625,8 +625,8 @@ particular storage representation or administrative interface:
   approved key source, algorithms, credential class, and time limits
   under the selected credential specification.
 * **Identity Binding:** An IdP administrator or approved platform-registry
-  import supplies the qualified client or workload identity, Governed
-  Agent, and Governance Tenant.
+  import supplies the qualified client or workload identity, Agent
+  Principal, and Governance Tenant.
 * **Client Association:** The IdP administrator specifies the client,
   permitted binding or binding set, flow, and credential class.
 * **Resolution mode and proof:** IdP policy and client configuration
@@ -664,7 +664,7 @@ Discovery exposes capabilities, not these authorization decisions:
   ({{discovery}}).
 
 Existing workload-federation configuration can supply credential trust
-and exact identity selectors. The Governed Agent mapping and separate
+and exact identity selectors. The Agent Principal mapping and separate
 Client Association are still required, but no new configuration object
 types are prescribed. {{identity-example}} illustrates the shared-client
 case; {{aws-example}} applies the model to an AWS STS workload credential.
@@ -710,7 +710,7 @@ The resulting tokens show which identities change across the boundary:
 |---|---|---|
 | `sub` (Alice) | `alice-ras` | `user-108` |
 | `act.iss` (agent namespace) | `https://idp.example/` | `https://idp.example/` |
-| `act.sub` (Governed Agent) | `agent-42` | `agent-42` |
+| `act.sub` (Agent Principal) | `agent-42` | `agent-42` |
 | `client_id` (client at RAS) | `platform-api` | `platform-api` |
 | `scope` | `files.read` | `files.read` |
 
@@ -776,7 +776,7 @@ this profile's requirements; there is no universal IdP audience:
 ## Dedicated Client Identity {#client-assertion-input}
 
 This mode resolves an authenticated OAuth client identity to its
-explicitly bound Governed Agent. Client authentication uses an
+explicitly bound Agent Principal. Client authentication uses an
 asymmetrically signed assertion under {{RFC7523}}; no separate
 platform-issued credential is required. The common method is
 `private_key_jwt`; other configured asymmetric RFC 7523 methods MAY
@@ -787,7 +787,7 @@ be supported.
 The assertion authenticates the client; it is not independent workload
 evidence. In this explicitly configured mode, the IdP uses the validated
 client-authentication context as the resolution source. The Identity
-Binding determines the Governed Agent; client authentication alone does
+Binding determines the Agent Principal; client authentication alone does
 not authorize its use.
 
 The client MUST present its assertion in `client_assertion`, with
@@ -814,7 +814,7 @@ The IdP MUST:
   Assertion-supplied keys or issuer claims MUST NOT establish trust.
 * **Resolution:** Resolve the exact validated (`iss`, `sub`) in the IdP's
   client-registration
-  context through an enabled Identity Binding to one Governed Agent.
+  context through an enabled Identity Binding to one Agent Principal.
   Then enforce Client Association and delegation authorization separately.
 
 For `private_key_jwt`, apply Section 9 of {{OPENID}}: the assertion issuer
@@ -866,7 +866,7 @@ The client and agent remain distinct principals. This mode does not
 distinguish agents behind one shared client identity; such a client
 MUST present separate supported workload evidence in `actor_token`. An
 additional agent claim in a self-signed client assertion MUST NOT select
-another Governed Agent under this input.
+another Agent Principal under this input.
 
 Assertion signing authenticates the client; it does not bind the ID-JAG
 to that signing key or establish an attested runtime identity. Grant
@@ -909,10 +909,10 @@ the issued grant to the grant proof key, not the JWT-SVID to its
 presenter. A policy requiring issuer-bound presenter proof MUST reject this bearer
 input rather than treat DPoP as that proof ({{credential-requirements}}).
 
-# Governed Agent Resolution {#identity}
+# Agent Principal Resolution {#identity}
 
 Resolution turns validated inputs into principals: the Identity
-Binding resolves a qualified client or workload identity to one Governed Agent,
+Binding resolves a qualified client or workload identity to one Agent Principal,
 subject resolution identifies the user for delegated access, and the
 RAS correlates both to its local principals.
 
@@ -923,12 +923,12 @@ RAS correlates both to its local principals.
 | Dedicated client identity | Trusted assertion issuer and exact client `sub`, qualified by the IdP client-registration context | Common mode under {{client-assertion-input}}; explicit client-to-agent binding |
 | SPIFFE JWT-SVID | Approved trust domain and exact SPIFFE ID in `sub` | Optional input under {{jwt-svid-input}}; native client authentication |
 | Existing platform JWT | Approved issuer and exact subject, with configured additional selectors | Optional input under {{imported-jwt-input}} |
-| Client Attestation whose attested client maps explicitly to one Governed Agent | Trusted attester and validated Client Attestation `sub` under {{agent-evidence}} | The validated `sub` identifies the OAuth client; client-to-agent mapping is explicit |
+| Client Attestation whose attested client maps explicitly to one Agent Principal | Trusted attester and validated Client Attestation `sub` under {{agent-evidence}} | The validated `sub` identifies the OAuth client; client-to-agent mapping is explicit |
 
 After validating the configured resolution input, the IdP MUST:
 
 * Resolve the exact qualified client or workload identity to one active
-  Governed Agent through an enabled Identity Binding; reject missing,
+  Agent Principal through an enabled Identity Binding; reject missing,
   ambiguous, or disabled mappings.
 * Apply exact resolution even when client authentication permits a
   prefix match. A client identifier, including a {{CIMD}} URL,
@@ -939,7 +939,7 @@ NOT establish identity equivalence. The table above defines the
 qualified identity for each input.
 
 Deployments SHOULD permit an Identity Binding to be disabled independently
-of the Governed Agent and its other bindings.
+of the Agent Principal and its other bindings.
 A disabled binding MUST NOT authorize new grant issuance. Disabling
 a binding does not itself revoke outstanding tokens; their treatment
 follows {{status-changes}}.
@@ -952,13 +952,13 @@ MUST NOT substitute the client's identity for the resolved actor.
 A Client Association MAY authorize one or more Identity Bindings. The
 IdP MUST determine explicitly whether the selected binding is within
 that authorization. Authorization of one binding, a credential
-authority, a credential class, or the Governed Agent itself MUST NOT
+authority, a credential class, or the Agent Principal itself MUST NOT
 imply authorization of another binding unless the association's policy
 explicitly includes it. No association overrides a disabled binding.
 Policy representation and evaluation mechanisms are outside this profile.
 
-For a dedicated client, Identity Binding determines which Governed
-Agent the client represents. Client Association independently determines
+For a dedicated client, Identity Binding determines which Agent Principal
+the client represents. Client Association independently determines
 whether that client may exercise the binding in the requested flow.
 Deployments MAY administer both in one registration or policy object;
 their identity and authorization semantics remain distinct.
@@ -966,7 +966,7 @@ their identity and authorization semantics remain distinct.
 A binding can remain valid while permission to use it is withdrawn,
 preserving identity continuity across policy changes. Credential class
 constrains the authorized resolution path even when several classes
-can resolve to the same Governed Agent.
+can resolve to the same Agent Principal.
 
 ## Subject Resolution and Linking {#subject-resolution}
 
@@ -1019,9 +1019,9 @@ User-account links have these constraints:
 
 Linking mechanisms are deployment choices ({{operational-guidance}}).
 
-## Governed Agent Correlation {#agent-correlation}
+## Agent Principal Correlation {#agent-correlation}
 
-The Governed Agent identity is the pair of IdP issuer and agent
+The Agent Principal identity is the pair of IdP issuer and agent
 identifier, carried in ID-JAG as (`act.iss`, `act.sub`).
 The RAS MUST:
 
@@ -1084,14 +1084,14 @@ Issuance and denial follow these rules:
   response under {{RFC8693}}. It MUST return `invalid_scope` if no scope
   can be granted.
 * It MUST NOT issue by dropping a required actor or binding,
-  substituting an external identifier for the Governed Agent, or
+  substituting an external identifier for the Agent Principal, or
   weakening proof requirements.
 * Denied delegation MUST NOT fall back to self-acting access.
 
 ## Delegation Authorization {#delegation-authorization}
 
-Before constructing `act`, the IdP MUST authorize the resolved Governed
-Agent to act for the user in the requested client, tenant, RAS,
+Before constructing `act`, the IdP MUST authorize the resolved Agent
+Principal to act for the user in the requested client, tenant, RAS,
 resource, and authority context. The IdP MUST reject missing, revoked,
 expired, or insufficient delegation authorization. Valid credentials,
 user sign-in, or a shared client MUST NOT imply that authorization or
@@ -1183,7 +1183,7 @@ referenced sections define the requirements.
 |---|---|---|
 | Actor extension | Resolve dedicated-client or workload identity through an Identity Binding; authorize client use through a separate Client Association | {{identity-binding}} |
 | Dedicated-client input | Resolve from authenticated client context with no actor-token parameters; require token-endpoint audience support, explicit configuration for an alternative AS identifier, and single-use `jti` | {{client-assertion-input}} |
-| Actor representation | One actor with the Governed Agent as `act.sub` and the IdP as `act.iss`; replaces Actor Profile's credential-to-actor copying | {{actor-construction}} |
+| Actor representation | One actor with the Agent Principal as `act.sub` and the IdP as `act.iss`; replaces Actor Profile's credential-to-actor copying | {{actor-construction}} |
 | Request narrowing | Configured resolution mode, exactly one resource, and non-empty scope required; actor evidence required outside dedicated-client mode; no incoming actor chain | {{root-request}}, {{actor-inputs}} |
 | Identity and client binding | Resolve users and agents separately; derive downstream `client_id` from an authoritative client-registration association | {{subject-resolution}}, {{agent-correlation}}, {{flow-configuration}} |
 | Grant narrowing | One resource URI (issued as a string; singleton arrays also accepted), scope constraints, and input-specific expiration limits; bound profile requires DPoP and `cnf.jkt` | {{grant-issuance}}, {{redemption-validation}}, {{grant-protection}} |
@@ -1419,7 +1419,7 @@ subject-only impersonation.
 | Dedicated client identity | REQUIRED at the client and IdP for `private_key_jwt`; use is configurable | Authenticated client context; no actor-token parameters; explicit binding under {{client-assertion-input}} |
 | JWT-SVID | OPTIONAL | Identical compact JWT in `actor_token` and `client_assertion`; native JWT-SVID authentication under {{jwt-svid-input}} |
 | Existing platform JWT | OPTIONAL | Existing platform JWT in `actor_token`; validate under {{imported-jwt-input}} and authenticate separately |
-| Client Attestation | OPTIONAL | Identical compact JWT in `actor_token` and `OAuth-Client-Attestation`; attested client maps explicitly to one Governed Agent under {{agent-evidence}} |
+| Client Attestation | OPTIONAL | Identical compact JWT in `actor_token` and `OAuth-Client-Attestation`; attested client maps explicitly to one Agent Principal under {{agent-evidence}} |
 
 The following classification rules apply only to actor-evidence inputs.
 The generic JWT token type retains existing credential formats without
@@ -1472,7 +1472,7 @@ After credential validation, the IdP MUST resolve the agent under
 {{identity}} and authorize issuance under {{authorization}}. The
 ID-JAG MUST contain one `act` object with:
 
-* `sub`: the Governed Agent identifier from the Identity Binding.
+* `sub`: the Agent Principal identifier from the Identity Binding.
 * `iss`: this IdP's issuer identifier.
 
 These values MUST come from the approved mapping, even when source
@@ -1484,8 +1484,8 @@ under {{client-assertion-input}}.
 The object MUST follow {{ACTOR-PROFILE, Section 3.4}}, including its
 `sub_profile` recommendation and unclassified-actor rules. Any
 `sub_profile` MUST reflect the IdP's authoritative classification.
-{{ENTITY-PROFILES}} defines `service` and `ai_agent`; being a Governed
-Agent does not itself establish the `ai_agent` classification.
+{{ENTITY-PROFILES}} defines `service` and `ai_agent`; being an Agent
+Principal does not itself establish the `ai_agent` classification.
 
 ### Grant Issuance {#grant-issuance}
 
@@ -1495,7 +1495,7 @@ and additionally satisfy:
 | Claim | Required result |
 |---|---|
 | `sub` | Same user as the validated subject credential, expressed in the IdP's subject namespace for the RAS |
-| `act` | Governed Agent actor constructed under {{actor-construction}} |
+| `act` | Agent Principal actor constructed under {{actor-construction}} |
 | `cnf.jkt` | Thumbprint of the grant proof key when DPoP is used at issuance; REQUIRED for bound governed agent access ({{grant-protection}}) |
 | `resource` | The authorized resource URI, issued as a JSON string; receivers also accept a single-element array under {{redemption-validation}} |
 | `scope` | Non-empty authorized scope string, no broader than the approved request |
@@ -1591,7 +1591,7 @@ The RAS MUST perform ID-JAG validation and additionally:
      `authorization_details`; reject the grant with `invalid_grant`
      if its authority extends beyond that resource.
 4. **Local authorization:** Resolve the user under
-   {{subject-resolution}} and the Governed Agent actor under
+   {{subject-resolution}} and the Agent Principal actor under
    {{agent-correlation}}. Apply current RAS policy to the user/actor
    relationship under {{actor-authorization}}, client, tenant, and
    resource. A valid grant sets an authority ceiling; it does not
@@ -1803,9 +1803,9 @@ before authorization. This profile specifies the following outcomes:
 |---|---|
 | Invalid subject or agent-resolution credential, disallowed inbound actor chain, or invalid ID-JAG | `invalid_grant` |
 | User cannot be resolved, user or required link is disabled, or subject identifiers conflict | `invalid_grant`; no token or automatic linking fallback |
-| Absent, disabled, or ambiguous Identity Binding, or no active Governed Agent can be resolved | `invalid_grant` |
+| Absent, disabled, or ambiguous Identity Binding, or no active Agent Principal can be resolved | `invalid_grant` |
 | Governance Tenant cannot be resolved unambiguously from trusted identity and configuration context | `invalid_grant` |
-| Resolved Governed Agent, but no Client Association permits the selected binding and flow, or delegation is unauthorized | `actor_unauthorized`, as defined by Actor Profile, with HTTP 400 |
+| Resolved Agent Principal, but no Client Association permits the selected binding and flow, or delegation is unauthorized | `actor_unauthorized`, as defined by Actor Profile, with HTTP 400 |
 
 Agent-resolution credential failures use `invalid_grant` instead of
 the default `invalid_request` described by RFC 8693; this narrowing is
@@ -1846,7 +1846,7 @@ duration. Cross-domain continuity using Identity Continuation Assertion
 The client MUST associate each cached grant, access token, and refresh
 token with its authorized context:
 
-* User and Governed Agent.
+* User and Agent Principal.
 * Governance and Target Tenants.
 * OAuth client registrations, target RAS, and resource.
 * Authority, applicable profile, and proof binding.
@@ -1907,7 +1907,7 @@ not impose those additional modes or their disablement guarantees.
 
 If the API delegates authorization evaluation to a policy decision
 service, it MUST preserve the distinction between the user, the
-issuer-qualified Governed Agent, and the OAuth client, and supply the
+issuer-qualified Agent Principal, and the OAuth client, and supply the
 tenant and token constraints needed to evaluate the requested operation.
 {{AUTHZEN}} provides an optional evaluation interface; this profile
 defines no AuthZEN message mapping and requires no particular policy
@@ -1996,7 +1996,7 @@ An AWS STS example appears in {{aws-example}}.
 ## Client Attestation {#agent-evidence}
 
 Client Attestation is an OPTIONAL agent-resolution input where the
-attested OAuth client identity maps explicitly to one Governed Agent.
+attested OAuth client identity maps explicitly to one Agent Principal.
 
 * **Client presentation:** The client MUST present the identical compact
   JWT in `actor_token` and the `OAuth-Client-Attestation` header and
@@ -2170,7 +2170,7 @@ Before using the delegated path:
 
 # Self-Acting WAG Composition {#wag-flow}
 
-Self-acting access uses the same Governed Agent model as delegated
+Self-acting access uses the same Agent Principal model as delegated
 access, with the agent as subject. This informative section describes
 the identity and authorization composition. IdP issuance and other WAG
 wire requirements remain pending {{wag-gaps}}; this revision defines no
@@ -2181,13 +2181,13 @@ A WAG composition will need to preserve the identity invariants in
 
 | Stage | Intended identity relationship |
 |---|---|
-| Agent resolution at IdP | Validated dedicated-client or workload identity resolves through an approved Identity Binding to one active Governed Agent |
+| Agent resolution at IdP | Validated dedicated-client or workload identity resolves through an approved Identity Binding to one active Agent Principal |
 | Client authorization | A separate Client Association permits the authenticated client to use that binding for self-acting access |
-| IdP-issued WAG | Issuer-qualified `sub` identifies that Governed Agent; no `act` is needed solely to identify its executing instance |
-| WAG to local authorization | The RAS resolves the Governed Agent identity to one local agent principal in the authorized Target Tenant |
+| IdP-issued WAG | Issuer-qualified `sub` identifies that Agent Principal; no `act` is needed solely to identify its executing instance |
+| WAG to local authorization | The RAS resolves the Agent Principal identity to one local agent principal in the authorized Target Tenant |
 | Access token to API | The token identifies the same agent in the RAS's subject namespace; authorization uses that agent's authority |
 
-The intended composition correlates the same Governed Agent to the same
+The intended composition correlates the same Agent Principal to the same
 local agent principal in both paths:
 
 * In delegated access, the access token preserves the IdP-qualified
@@ -2209,7 +2209,7 @@ The profile's security controls carry these deployment costs:
 
 | Requirement | Benefit | Cost |
 |---|---|---|
-| Dedicated-client resolution as the common mode | Reuses deployed client authentication and registered keys | Each client identity resolves to one Governed Agent; proves registered-client identity, not independent runtime or workload provenance |
+| Dedicated-client resolution as the common mode | Reuses deployed client authentication and registered keys | Each client identity resolves to one Agent Principal; proves registered-client identity, not independent runtime or workload provenance |
 | Optional native JWT-SVID input | Reuses SPIFFE issuance, client authentication, and trust-domain validation | JWT-SVID is bearer evidence; deployments requiring issuer-bound presenter proof must select another supported input |
 | Bound profile: DPoP at both token endpoints; grant bound to the grant proof key | A stolen ID-JAG cannot be redeemed without the key | Every client holds and proves a key. Grant binding does not make bearer evidence proof of an issuer-authorized presenter ({{credential-requirements}}) |
 | Bound grants: same key for issuance and redemption | No key-transition protocol to secure | A broker that obtains bound grants must also redeem them ({{flow-configuration}}) |
@@ -2256,8 +2256,8 @@ identifier does not authorize a new proof key.
 
 In dedicated-client resolution, compromise of the client's authentication
 key permits an attacker to authenticate as the resolution source for its
-bound Governed Agent. No independent workload credential is required.
-A normalized Governed Agent identity does not imply uniform runtime
+bound Agent Principal. No independent workload credential is required.
+A normalized Agent Principal identity does not imply uniform runtime
 assurance; assurance depends on the resolution input, verified claims,
 and the credential authority's issuance policy.
 
@@ -2308,7 +2308,7 @@ introspection results or offline JWTs may remain usable within the
 configured mode's explicit bound.
 
 Execution termination, Identity Binding disablement, Client Association
-removal, delegation revocation, and Governed Agent disablement have
+removal, delegation revocation, and Agent Principal disablement have
 different effects. Deployments MUST NOT treat one as evidence that the
 others have occurred. In particular, stopping an execution does not
 revoke credentials or authority held elsewhere.
@@ -2321,7 +2321,7 @@ the enforcing server; it defines no new propagation mechanism:
 | Terminate an execution | Stops that execution; does not disable the agent or its approved relationships | Credentials and tokens remain subject to their validation and revocation rules |
 | Disable one Identity Binding at the IdP | No new ID-JAG through that binding; other enabled bindings remain usable with their own Client Associations | Existing grants and RAS tokens need separate revocation or expiry |
 | Remove a Client Association at the IdP | No new ID-JAG through that permission; the Identity Binding can remain valid | Existing grants and RAS tokens need separate revocation or expiry |
-| Disable the Governed Agent at the IdP | No new ID-JAG for that agent, regardless of binding or client | RAS issuance and refresh stop when the change reaches and is applied by the RAS |
+| Disable the Agent Principal at the IdP | No new ID-JAG for that agent, regardless of binding or client | RAS issuance and refresh stop when the change reaches and is applied by the RAS |
 | Withdraw the user's delegation at the IdP | No new ID-JAG for that delegation | Existing RAS authorization can continue until revocation is applied or its absolute expiration |
 | Disable the local agent or user at the RAS | No new access tokens or refresh for that principal | API access stops when its actor/user policy observes the change, introspection reports inactivity, or the token expires |
 
@@ -2353,7 +2353,7 @@ protocol. Asynchronous approval composition is deferred under
 A stable agent identifier can correlate activity across resources,
 users, and instances. Preserving the same issuer-qualified actor across
 delegated users enables a resource domain to correlate activity performed
-by the same Governed Agent for different users, supporting audit while
+by the same Agent Principal for different users, supporting audit while
 linking those activities.
 
 Issuers SHOULD disclose only the agent attributes needed for the
@@ -2411,7 +2411,7 @@ editor's copies of Identification and Client Attester Endorsement dated
 without specifying it. Coordination is needed on:
 
 * **Issuance:** Dedicated-client or workload-identity resolution at
-  the IdP; the Governed Agent in its namespace as the issued WAG's subject.
+  the IdP; the Agent Principal in its namespace as the issued WAG's subject.
 * **Identifiers:** WAG-owned token-type and JWT-type registrations
   and discovery.
 * **Protection:** Proof-key, audience, nonce, and replay rules at
@@ -2706,7 +2706,7 @@ The access token uses `typ=at+jwt` and the following decoded payload:
 }
 ~~~
 
-The RAS translates Alice's subject while preserving the Governed Agent
+The RAS translates Alice's subject while preserving the Agent Principal
 actor. The dedicated OAuth client identifier does not replace that
 actor, and the access token is bound to the same key K used at both
 token endpoints.
@@ -2898,7 +2898,7 @@ platform-JWT input ({{imported-jwt-input}}) without a new credential format:
 | Exact `sub` | `arn:aws:iam::123456789012:role/AgentRuntime` |
 | Accepted audience | `https://idp.example/token` |
 | Additional selector | `/https:~1~1sts.amazonaws.com~1/aws_account` equals `123456789012` |
-| Identity Binding result | Governed Agent `agent-42` in Governance Tenant `acme` |
+| Identity Binding result | Agent Principal `agent-42` in Governance Tenant `acme` |
 | Client Association | `platform-sso` may use this binding for delegated ID-JAG with the platform-JWT agent-resolution input |
 
 The selector addresses the string `aws_account` within the
@@ -2911,7 +2911,7 @@ The resulting actor is
 
 If several agents share this role, issuer and `sub` identify the
 shared IAM principal, not an individual agent. Mapping those agents to
-distinct Governed Agents requires distinct credential identities or
+distinct Agent Principals requires distinct credential identities or
 additional trusted selectors. A caller-supplied agent name does not
 provide that distinction.
 

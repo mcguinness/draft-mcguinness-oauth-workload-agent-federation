@@ -6,7 +6,7 @@ This is the working area for "OAuth 2.0 Profile for Governed Agent Federation"
 and its lifecycle and Shared Signals companions.
 
 The draft defines how an IdP resolves dedicated OAuth client identities or
-independently validated workload identities to stable Governed Agents.
+independently validated workload identities to stable Agent Principals.
 Identity Binding, Client Association, user delegation, and resource-local
 authorization remain separate decisions.
 
