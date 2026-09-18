@@ -55,23 +55,21 @@ user delegation, and downstream revocation separate.
 
 ## Provisioning and Lifecycle Companion
 
-The lifecycle profile composes SCIM, Shared Signals, and OAuth for the same
-IdP-qualified identity. It applies ordered state to local correlation,
-disablement, reactivation, retirement, and authorization. It defines no new
-event type or SCIM schema.
+The lifecycle profile uses SCIM Agent administrative state and issuer-qualified
+correlation to apply disablement at the RAS. Re-enablement permits new
+authorization decisions without restoring revoked sessions. API enforcement
+still depends on introspection, caching, and token expiry.
 
-The separate event profile defines Agent State Changed with SSF subject
-identification, CAEP common claims, and event-specific lifecycle claims.
-Its SCIM mapping carries the same logical state using SCIM attribute names
-and dateTime values.
-It can be implemented independently of the OAuth enforcement profile.
-The lifecycle profile supplies the configured enforcement modes and denial
-bounds. WAG remains a future composition using the same principal lifecycle.
+The separate Shared Signals profile reuses SCIM change notices and optional
+CAEP session revocation. Notices trigger authoritative retrieval; they do not
+carry a new lifecycle snapshot. Neither companion defines a new event type,
+SCIM schema, eligibility lease, or authorization cutoff. The drafts explicitly
+document that current state cannot recover a missed disable-and-reenable cycle.
 
 * [Lifecycle profile source](draft-mcguinness-oauth-governed-agent-lifecycle.md)
 * [Lifecycle profile editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html)
-* [Event specification source](draft-mcguinness-ssf-governed-agent-events.md)
-* [Event specification editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-ssf-governed-agent-events.html)
+* [Shared Signals profile source](draft-mcguinness-ssf-governed-agent-events.md)
+* [Shared Signals profile editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-ssf-governed-agent-events.html)
 
 ## Contributing
 
