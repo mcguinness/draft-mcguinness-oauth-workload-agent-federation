@@ -55,6 +55,14 @@ normative:
   RFC9449:
   RFC9700:
 informative:
+  AGENT-MANAGEMENT:
+    title: "SCIM Profile for Agent Federation Management"
+    author:
+      - name: Karl McGuinness
+    date: 2026-09-18
+    seriesinfo:
+      Internet-Draft: draft-mcguinness-scim-agent-federation
+    target: https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-agent-federation.html
   AIMS: I-D.ietf-wimse-aims
   AGENT-LIFECYCLE:
     title: "Governed Agent Lifecycle Profile for SCIM and OAuth"
@@ -721,7 +729,9 @@ MUST NOT by themselves establish credential-authority trust or change
 an approved Identity Binding or Client Association. Creating and changing
 bindings
 and associations, including imports from platform registries, is an
-administrative act outside this profile ({{operational-guidance}}).
+administrative act outside this profile ({{operational-guidance}}). The
+SCIM companion {{AGENT-MANAGEMENT}} defines a proposed platform-to-IdP
+management interface for those relationships.
 
 ## Identity Mapping Example {#identity-example}
 
@@ -2729,6 +2739,12 @@ delegation authorization permits the agent to act for Alice.
 Alice's ID Token has audience `analysis-client`; subject resolution
 produces `alice-ras` for the RAS and `user-108` at the resource.
 
+The exchange starts at 12:01:03 UTC on September 17, 2026. The lifecycle
+companion's shared walkthrough {{AGENT-LIFECYCLE}} uses the same identities,
+Target Tenant `acme-data`, proof key K, and grant issuance time. It adds
+provisioning, introspection, disablement, and recovery when lifecycle
+enforcement is configured; those checks are not implied by Federation alone.
+
 ## Dedicated Client Authentication {#client-assertion-example}
 
 The client signs this illustrative assertion payload with its
@@ -2740,8 +2756,8 @@ key identifier:
   "iss": "analysis-client",
   "sub": "analysis-client",
   "aud": "https://idp.example/token",
-  "iat": 1789488000,
-  "exp": 1789488060,
+  "iat": 1789646463,
+  "exp": 1789646523,
   "jti": "analysis-auth-1"
 }
 ~~~
@@ -2814,8 +2830,8 @@ an IdP signing-key identifier. Its payload includes:
   "iss": "https://idp.example/",
   "sub": "alice-ras",
   "aud": "https://ras.example/",
-  "iat": 1789488000,
-  "exp": 1789488300,
+  "iat": 1789646463,
+  "exp": 1789646763,
   "jti": "grant-1",
   "client_id": "analysis-api",
   "resource": "https://api.example/tenants/acme-data/",
@@ -2887,8 +2903,8 @@ The access token uses `typ=at+jwt` and the following decoded payload:
   "iss": "https://ras.example/",
   "sub": "user-108",
   "aud": "https://api.example/tenants/acme-data/",
-  "iat": 1789488000,
-  "exp": 1789488600,
+  "iat": 1789646464,
+  "exp": 1789647064,
   "jti": "access-1",
   "client_id": "analysis-api",
   "scope": "files.read",
@@ -2933,7 +2949,7 @@ The decoded proof header and payload are:
   "jti": "api-proof-1",
   "htm": "GET",
   "htu": "https://api.example/tenants/acme-data/files/report-7",
-  "iat": 1789488005,
+  "iat": 1789646468,
   "ath": "ATH_ACCESS_TOKEN"
 }
 ~~~
@@ -3057,7 +3073,7 @@ an illustrative NumericDate value.
 {
   "sub": "spiffe://platform.example/accounts/acme/agents/workload-7",
   "aud": ["https://idp.example/"],
-  "exp": 1789488600
+  "exp": 1789647063
 }
 ~~~
 

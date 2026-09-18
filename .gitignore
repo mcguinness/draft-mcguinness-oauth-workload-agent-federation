@@ -26,3 +26,5 @@ report.xml
 !requirements.txt
 
 draft-mcguinness-ssf-governed-agent-events.xml
+
+draft-mcguinness-scim-agent-federation.xml

@@ -60,6 +60,14 @@ normative:
   RFC8936:
   RFC9068:
 informative:
+  AGENT-MANAGEMENT:
+    title: "SCIM Profile for Agent Federation Management"
+    author:
+      - name: Karl McGuinness
+    date: 2026-09-18
+    seriesinfo:
+      Internet-Draft: draft-mcguinness-scim-agent-federation
+    target: https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-agent-federation.html
   RFC7009:
   RFC8792:
   SCIM-GOVERNANCE: I-D.kushwaha-scim-agent-governance
@@ -158,7 +166,9 @@ result for an Agent Principal and the receiver obligations that follow.
 Platform-to-IdP enrollment, Identity Binding administration, individual
 delegation revocation, task cancellation, runtime instance lifecycle,
 and risk scoring are outside this profile. Their boundaries are stated
-in {{relationship-changes}}.
+in {{relationship-changes}}. {{AGENT-MANAGEMENT}} separately profiles
+platform-to-IdP management of Agent Principals, Identity Bindings, and
+Client Associations; it does not define runtime enrollment.
 
 # Conventions and Terminology
 
@@ -641,9 +651,12 @@ additionally requires an administrative diagnostic for conflicting
 equal-version records.
 
 A delivery acknowledgment confirms durable acceptance for processing,
-not completed API enforcement. E bounds application delay for the
-guarantee claimed by the Receiver and RAS deployment ({{parameters}}).
-SCIM success requires completed application under {{scim-updates}}.
+not completed RAS or API enforcement. Pending restrictions apply under
+{{registry}}; E bounds the delay until restrictions are effective
+throughout the Receiver and RAS deployment ({{parameters}}). API denial
+then follows the configured mode's residual bound. SCIM success requires
+completed RAS application under {{scim-updates}}, not expiration of every
+API cache entry or offline token.
 
 # Reconciliation and Recovery {#recovery}
 
@@ -661,7 +674,7 @@ parameter:
 =============== NOTE: '\' line wrapping per RFC 8792 ================
 
 urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
-issuer eq "https://idp.example" and
+issuer eq "https://idp.example/" and
 urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent:\
 subject eq "agent-42"
 ~~~
@@ -744,7 +757,9 @@ On disablement or retirement, the RAS MUST invalidate existing derived
 authorization. When the cutoff advances, it MUST invalidate
 authorization whose original grant issuance second is at or before the
 new cutoff. These invalidations are permanent: subsequent activation
-cannot reverse them. They take effect immediately at the RAS; cached
+cannot reverse them. At each RAS component applying the restriction,
+they take effect with that application; pending-state enforcement and
+the deployment-wide delay E follow {{registry}} and {{signals}}. Cached
 decisions and offline access tokens cease API use within the applicable
 mode's bound below.
 
@@ -1000,15 +1015,45 @@ event URI and requests registration of the SCIM schema.
 
 --- back
 
-# Provisioning and Disablement Example {#example}
+# Shared Delegated Federation Walkthrough {#example}
 
-This non-normative example uses an IdP at `https://idp.example`, a RAS
-at `https://ras.example`, and governed subject `agent-42`. It uses
-online introspection, S = 1 second, and issuer-ahead bound D = 2
-seconds. Its five-minute lease is illustrative, not a recommended
-deployment interval. Bearer values and the SET signature are
-placeholders. SCIM locations identify the Receiver's records, not the
-enterprise identity.
+This non-normative walkthrough composes the dedicated-client exchange
+in {{FEDERATION}} with the events in {{AGENT-EVENTS}} and this lifecycle
+profile. It is a protocol review scenario, not an executed implementation
+or a set of cryptographic test vectors. The checklist in
+{{acceptance-checklist}} identifies observable acceptance results.
+
+## Shared Configuration
+
+All times below are UTC on September 17, 2026. The parties configure
+bound governed agent access, DPoP-protected API tokens, and online
+introspection on every API request, including when the token is a JWT.
+Local actor policy permits the example operation before disablement.
+
+| Coordinate | Value |
+|---|---|
+| Governing IdP issuer | `https://idp.example/` |
+| Agent Principal subject | `agent-42` |
+| RAS issuer | `https://ras.example/` |
+| IdP / RAS OAuth clients | `analysis-client` / `analysis-api` |
+| User at IdP for RAS / at API | `alice-ras` / `user-108` |
+| Target Tenant | `acme-data` |
+| Resource | `https://api.example/tenants/acme-data/` |
+| Scope | `files.read` |
+| Grant and access-token proof key | K, with thumbprint `JKT_K` |
+| RAS-local agent representation | SCIM resource `local-108` |
+
+The configured Identity Binding maps the authenticated dedicated client
+to `agent-42`; Client Association and delegation for Alice are separately
+approved. Alice's ID Token has audience `analysis-client` and remains
+valid through the issued grant's expiration. Credential and signature
+values in the examples are placeholders.
+
+For this example, S = 1 second, D = 2 seconds, L = 300 seconds,
+E = 2 seconds, and T = 2 seconds. The short lease illustrates lost-event
+handling; it is not a recommended deployment interval. The lifecycle
+identity equals the ID-JAG actor exactly. SCIM `local-108` is neither
+Alice's `user-108` nor the federated agent subject.
 
 ## Provision the Agent
 
@@ -1031,7 +1076,7 @@ Content-Type: application/scim+json
   "active": false,
   "urn:ietf:params:scim:schemas:extension:governed-agent:2.0:Agent":
   {
-    "issuer": "https://idp.example",
+    "issuer": "https://idp.example/",
     "subject": "agent-42",
     "version": "40",
     "status": "disabled",
@@ -1041,42 +1086,156 @@ Content-Type: application/scim+json
 }
 ~~~
 
-The Receiver returns `201 Created`, a `Location` identifying
+The request is authorized for Target Tenant `acme-data`. The Receiver
+returns `201 Created`, a `Location` identifying
 `https://ras.example/scim/v2/Agents/local-108`, and the created resource
 including `id: "local-108"`. The connector retains that location. The
 agent remains ineligible until both enterprise and local activation
 conditions hold.
 
-## Activate and Issue Authorization
+## Activate and Exchange
 
 At 12:01:00 UTC the Authority issues version 41 with `status: "active"`,
 cutoff 12:01:02, and `validUntil` 12:06:00. The connector PUTs the
 complete resource with `active: true`. The Receiver applies it and
 returns `200 OK`.
 
-An ID-JAG issued at 12:01:03 clears the cutoff. An `iat` at 12:01:03.5
-also clears it; one at 12:01:02.9 does not, because its issuance second
-equals the cutoff. The RAS retains its original issuance second with the
-derived access token and refresh authorization. The API introspects the
-access token on each request.
+At 12:01:03, the client sends Federation's exchange request with Alice's
+ID Token, a fresh `private_key_jwt` assertion, and a DPoP proof using K.
+It sends no actor-token parameters. The IdP validates the credentials,
+resolves the Agent Principal, and checks Client Association, delegation,
+target authority, and current lifecycle eligibility.
+
+The resulting `grant-1` has `iat=1789646463` (12:01:03),
+`exp=1789646763` (12:06:03), and the Federation example's user, actor,
+resource, client, scope, and `cnf.jkt` values. Its issuance second clears
+the cutoff. An `iat` at 12:01:03.5 also clears it; one at 12:01:02.9
+does not, because its issuance second equals the cutoff.
+
+## Redeem and Call the API
+
+At 12:01:04, `analysis-api` authenticates to the RAS and redeems
+`grant-1` with a fresh proof using K. The RAS applies both profiles:
+
+* Federation validates the grant and proof, translates Alice to
+  `user-108`, correlates `agent-42` with `local-108`, and applies the
+  actor gate and resource policy.
+* Lifecycle verifies active state, its lease, local eligibility, and
+  `floor(grant.iat) > authorizationCutoff`.
+
+The RAS issues Federation's `access-1`, expiring at 12:11:04, preserving
+the IdP-qualified `act` and binding the token to K. It retains original
+grant issuance second `1789646463` with that authorization; the access
+token's `iat=1789646464` does not replace it.
+
+At 12:01:08, the client requests `report-7` with that token and a fresh
+DPoP proof. The API introspects, validates the token/proof context, and
+checks user authority, the actor gate, and Target Tenant. A valid JWT
+signature does not skip introspection in this configured mode.
+
+Neither grant nor access-token expiration is an eligibility lease.
+The later token expiration does not permit the RAS to return an active
+introspection result after lifecycle eligibility is lost.
+
+## Optional RAS Refresh Branch
+
+The base walkthrough issues no refresh token. In a separate run with
+explicit RAS refresh policy, the RAS binds refresh authorization to K
+and retains the same user, actor, client, tenant, resource, authority,
+profile, and original grant issuance second. It sets Federation's
+finite absolute authorization expiration and inactivity limit.
+
+A permitted refresh at 12:01:30 can issue a new access token, but its
+new issue time cannot replace `1789646463` in lifecycle provenance.
+Disablement below invalidates both authorizations. Refresh cannot
+renew a lease or establish a new IdP authorization decision.
 
 ## Disable Through a Signal
 
-At 12:02:00 the Authority disables the agent and publishes version 42.
-Its stream is administratively bound to issuer `https://idp.example` and
-Target Tenant `tenant-7`, with the exclusive audience
-`https://ras.example/lifecycle/tenant-7/idp-example`. The Transmitter
+At 12:02:00 the Authority commits disablement, closes issuance at every
+IdP grant issuer, and publishes version 42 under {{conformance}}.
+Its stream is administratively bound to issuer `https://idp.example/` and
+Target Tenant `acme-data`, with the exclusive audience
+`https://ras.example/lifecycle/acme-data/idp-example`. The Transmitter
 sends the event defined in {{AGENT-EVENTS}} with disabled state version
 42, `event_timestamp` corresponding to 12:02:00, and
 `authorization_cutoff` corresponding to 12:02:02. Its examples show the
 decoded SET. The stream audience identifies the receiving context; the
 payload identifies the Agent Principal.
 
-The Receiver applies version 42. Redemption and refresh fail with
-`invalid_grant`; introspection of the previously issued token returns
-`{"active":false}`. The API denies its next use.
+The Receiver durably accepts version 42 and acknowledges delivery.
+Pending restrictions apply immediately where evaluated; enforcement
+throughout the RAS completes within E. After application, redemption
+and refresh fail with `invalid_grant`; introspection of either previously
+issued token returns `{"active":false}`. The API denies requests using
+that result. An introspection decision already in flight remains
+subject to timeout T; the delivery acknowledgment alone is not proof
+that every API has denied access.
 
-## Delayed Delivery and Reactivation
+## Reactivate or Recover a Lost Event
+
+At 12:03:00, an independently authorized reactivation creates version 43,
+cutoff 12:03:02, and a new lease ending at 12:08:00. Once it is applied,
+a new grant issued at 12:03:03 can qualify. `grant-1` and its derived
+refresh authorization cannot: their retained issuance second precedes
+the new cutoff even though `grant-1` has not yet expired.
+
+The same result holds if the Receiver never received disabled version
+42. Version 43 is a complete snapshot carrying the advanced cutoff.
+Any cached or offline acceptance remains subject to the applicable API
+mode's residual bound; reactivation does not extend it.
+
+In a separate lost-delivery run, neither version 42 nor a later version
+arrives. The last active lease ends at 12:06:00. The Receiver stops
+relying on it without needing a disablement event. A later lease renewal
+can restore eligibility only under {{freshness}}; it cannot undo an
+observed revocation or cutoff invalidation.
+
+## Declared Denial Bounds
+
+The configured values give B = L + 2S + E = 304 seconds. From Authority
+disablement, the online-introspection bound is B + T = 306 seconds,
+including loss of notification. Delivered notifications can shorten
+that interval. This is a worst-case deployment bound, not a claim that
+the particular lease above lasts 304 seconds after disablement.
+
+Alternative runs retain the same identity and grant processing:
+
+| API mode | Additional limits | Worst-case denial bound |
+|---|---|---|
+| Online introspection | T = 2 seconds | 306 seconds |
+| Bounded cache | T = 2, C = 30 seconds | 336 seconds |
+| Expiring JWT | J = 600, P = 1 second; A = 603 seconds | 907 seconds |
+
+These bounds concern new API authorization decisions. They do not
+cancel work already admitted. An implementation exercising one mode
+has not demonstrated the behavior of another.
+
+## Acceptance Checklist {#acceptance-checklist}
+
+The following is a manual review and deployment-validation checklist,
+not a claim that tests have been executed. All unrelated credentials
+and policy checks succeed in each negative case.
+
+| Check | Expected observation |
+|---|---|
+| Identity join | ID-JAG `act`, event `sub_id`, and SCIM extension identify exactly (`https://idp.example/`, `agent-42`) |
+| Tenant isolation | Wrong stream audience, governing issuer, or Target Tenant is rejected before changing the registry |
+| Provisioning boundary | A valid active event without an authorized local correlation does not enable redemption |
+| Grant binding | Redemption with a key other than K fails even while the agent is active |
+| Actor preservation | The RAS translates Alice's subject but preserves the qualified actor; `local-108` never replaces `act.sub` |
+| Refresh provenance | A refreshed token retains the original grant issuance second and becomes inactive after the same cutoff advance |
+| Source coordination | No new IdP authorization succeeds after committed disablement; no renewal is produced from stale pre-disablement state |
+| Publication order | The disabled snapshot is published only after the IdP issuance gate closes; reactivation does not postdate grants to clear its cutoff |
+| Enforcement milestones | Record acceptance, completed RAS application, and API denial separately; an acknowledgment alone does not satisfy the denial bound |
+| Migration | Existing authorization without recoverable grant provenance cannot enter the lifecycle-governed population |
+
+Source coordination requires observation of the Authority and issuing
+nodes; it cannot be established from SET contents. Clock accuracy,
+application delay, and API timeout/cache behavior require operational
+measurement before a deployment claims the calculated bounds.
+
+### Ordering and Recovery Cases
 
 | Subsequent input | Result |
 |---|---|

@@ -235,9 +235,13 @@ Reactivation cannot revive authorization invalidated by an earlier cutoff.
 ### Examples {#example}
 
 These non-normative decoded SETs use a Transmitter separately authorized to
-publish state for `https://idp.example`. Protected headers include
+publish state for `https://idp.example/`. Protected headers include
 `typ: secevent+jwt`, a negotiated signing algorithm, and a key identifier.
 Audience interpretation and enforcement follow the consuming profile.
+The shared walkthrough and acceptance checklist in {{LIFECYCLE}} use
+these events with the delegated exchange in {{FEDERATION}}. The stream
+is bound to Target Tenant `acme-data`; the governing issuer spelling,
+including its trailing slash, matches the grant's `act.iss` exactly.
 
 The first event establishes active state at 12:01:00 UTC on September 17,
 2026, with a cutoff at 12:01:02 and a lease ending at 12:06:00.
@@ -245,12 +249,12 @@ The first event establishes active state at 12:01:00 UTC on September 17,
 ~~~ json
 {
   "iss": "https://signals.idp.example",
-  "aud": "https://ras.example/lifecycle/tenant-7/idp-example",
+  "aud": "https://ras.example/lifecycle/acme-data/idp-example",
   "iat": 1789646460,
   "jti": "event-41",
   "sub_id": {
     "format": "iss_sub",
-    "iss": "https://idp.example",
+    "iss": "https://idp.example/",
     "sub": "agent-42"
   },
   "events": {
@@ -272,12 +276,12 @@ the cutoff to 12:02:02 and carries no eligibility-lease expiration.
 ~~~ json
 {
   "iss": "https://signals.idp.example",
-  "aud": "https://ras.example/lifecycle/tenant-7/idp-example",
+  "aud": "https://ras.example/lifecycle/acme-data/idp-example",
   "iat": 1789646520,
   "jti": "event-42",
   "sub_id": {
     "format": "iss_sub",
-    "iss": "https://idp.example",
+    "iss": "https://idp.example/",
     "sub": "agent-42"
   },
   "events": {

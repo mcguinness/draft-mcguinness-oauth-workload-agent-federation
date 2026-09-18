@@ -3,7 +3,7 @@
 # OAuth 2.0 Profile for Governed Agent Federation
 
 This is the working area for "OAuth 2.0 Profile for Governed Agent Federation"
-and its lifecycle and Shared Signals companions.
+and its SCIM management, lifecycle, and Shared Signals companions.
 
 The draft defines how an IdP resolves dedicated OAuth client identities or
 independently validated workload identities to stable Agent Principals.
@@ -14,7 +14,7 @@ The mandatory delegated path uses an ID Token issued for the dedicated
 client, `private_key_jwt` client authentication, a governed ID-JAG, and RFC
 7523 `jwt-bearer` redemption. Dedicated-client resolution uses the authenticated
 client context without duplicating its assertion in `actor_token`.
-SPIFFE JWT-SVID, existing platform JWT, and
+SPIFFE JWT-SVID, WIT-SVID, X.509-SVID, existing platform JWT, and
 Client Attestation inputs are optional. Shared platforms agree on a workload
 input that distinguishes agents behind their SSO client. No new credential
 format or per-replica registration is required.
@@ -41,6 +41,17 @@ Continuation Assertion compositions remain deferred.
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-mcguinness-oauth-workload-agent-federation)
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-workload-agent-federation)
 * [Compare Editor's Copy to Individual Draft](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/#go.draft-mcguinness-oauth-workload-agent-federation.diff)
+
+## Platform-to-IdP SCIM Management
+
+The SCIM management profile provisions Agent Principals and administers
+Identity Bindings and Client Associations at the IdP. It reuses SCIM
+operations, adds a small Agent identity extension and two relationship
+resources, and keeps credential-authority trust, client registration,
+user delegation, and downstream revocation separate.
+
+* [SCIM management profile source](draft-mcguinness-scim-agent-federation.md)
+* [SCIM management editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-agent-federation.html)
 
 ## Provisioning and Lifecycle Companion
 
