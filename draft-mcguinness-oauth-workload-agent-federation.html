@@ -1277,7 +1277,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-delegated-id-jag-profile" class="internal xref">Delegated ID-JAG Profile</a></p>
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-delegated-id-jag-realizatio" class="internal xref">Delegated ID-JAG Realization</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
                 <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-relationship-to-base-specif" class="internal xref">Relationship to Base Specifications</a></p>
@@ -1566,8 +1566,8 @@ identity, client-authority, delegation, and resource-policy decisions.<a href="#
         </tbody>
       </table>
 <p id="section-1-5">Client and workload credentials are resolution inputs; downstream
-authorization identifies the IdP-governed principal. The resource
-authorization server (RAS):<a href="#section-1-5" class="pilcrow">¶</a></p>
+authorization identifies the IdP-governed principal. For delegated access,
+the resource authorization server (RAS):<a href="#section-1-5" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1-6.1">
           <p id="section-1-6.1.1">Translates the user identity into its local namespace.<a href="#section-1-6.1.1" class="pilcrow">¶</a></p>
@@ -1576,7 +1576,8 @@ authorization server (RAS):<a href="#section-1-5" class="pilcrow">¶</a></p>
           <p id="section-1-6.2.1">Preserves the issuer-qualified agent identity.<a href="#section-1-6.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-6.3">
-          <p id="section-1-6.3.1">Correlates that agent with a local authorization record.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
+          <p id="section-1-6.3.1">Correlates that identity with local authorization state without
+replacing it with the local principal's identifier.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-1-7">External credentials, execution environments, and OAuth clients can
@@ -1586,19 +1587,25 @@ change without changing the governed identity.<a href="#section-1-7" class="pilc
 authorization, and representation to extensions. <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span> and
 <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>]</span> authenticate OAuth clients, not the agents a shared
 client serves.<a href="#section-1-8" class="pilcrow">¶</a></p>
-<p id="section-1-9">The federation model (<a href="#model" class="auto internal xref">Section 3</a>) covers two grant paths:<a href="#section-1-9" class="pilcrow">¶</a></p>
+<p id="section-1-9">The federation model (<a href="#model" class="auto internal xref">Section 3</a>) defines identity resolution, client
+authorization, delegation authorization, and resource correlation.
+Grant-specific realizations specify how those relationships are carried
+and enforced:<a href="#section-1-9" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1-10.1">
-          <p id="section-1-10.1.1"><strong>Delegated ID-JAG:</strong> <a href="#delegated-flow" class="auto internal xref">Section 8</a> defines the wire profile.<a href="#section-1-10.1.1" class="pilcrow">¶</a></p>
+          <p id="section-1-10.1.1"><strong>Delegated ID-JAG:</strong> <a href="#delegated-flow" class="auto internal xref">Section 8</a> defines the normative wire
+profile and is the basis for conformance in this revision.<a href="#section-1-10.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-10.2">
-          <p id="section-1-10.2.1"><strong>Self-acting WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 11</a> describes the composition;
+          <p id="section-1-10.2.1"><strong>Self-acting WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 11</a> describes an informative composition;
 <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a> identifies its unresolved wire requirements.<a href="#section-1-10.2.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-1-11">RFC 7523 client assertions, SPIFFE JWT-SVIDs, and the other supported
+<p id="section-1-11">Other grant realizations require their own composition rules; the
+federation model alone does not define their wire behavior.<a href="#section-1-11" class="pilcrow">¶</a></p>
+<p id="section-1-12">RFC 7523 client assertions, SPIFFE JWT-SVIDs, and the other supported
 credentials supply inputs to the same identity model (<a href="#evidence" class="auto internal xref">Section 5</a>,
-<a href="#optional-inputs" class="auto internal xref">Section 9</a>).<a href="#section-1-11" class="pilcrow">¶</a></p>
+<a href="#optional-inputs" class="auto internal xref">Section 9</a>).<a href="#section-1-12" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-terminology">
@@ -1825,7 +1832,9 @@ under <a href="#client-token-reuse" class="auto internal xref">Section 8.8</a>.<
         </h3>
 <p id="section-3.1-1">Identity resolution establishes which governed principal participates
 in a transaction. It does not establish client authority, user delegation,
-resource authority, or permission to perform an operation.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+resource authority, or permission to perform an operation. The identity
+and actor attribution also do not establish a task's purpose, approval,
+or lifecycle.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <p id="section-3.1-2">This non-normative index summarizes the requirements that connect
 identity resolution to resource enforcement. The referenced sections
 define their processing rules.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
@@ -1939,7 +1948,8 @@ as a Governed Agent identifier.<a href="#section-3.3-1" class="pilcrow">¶</a></
 SPIFFE ID, display name, or instance identifier. Identity continuity is
 an explicit decision by the governing authority to preserve the same
 principal; it does not imply that the principal's permissions remain
-unchanged.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
+unchanged. Governed Agent continuity concerns the authorization
+principal, not continuity of a particular execution.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 <p id="section-3.3-3">A transfer to a different Governance Tenant under a different
 administrative authority <span class="bcp14">MUST</span> create a new Governed Agent identifier
 and <span class="bcp14">MUST NOT</span> automatically carry forward delegations or RAS principal
@@ -1987,9 +1997,10 @@ authorization transaction; a shared workload identity alone cannot
 select among agents.<a href="#section-3.4-2" class="pilcrow">¶</a></p>
 <p id="section-3.4-3">Scaling, restarting, rescheduling, migration, or credential rotation
 <span class="bcp14">MUST NOT</span> by itself create, merge, or transfer Governed Agent authority.
-Additional executions, credentials, or bindings do not confer additional
-permissions. Each transaction remains subject to the applicable Client
-Association, delegation authorization, target, and resource policy.
+Creating additional executions, replicas, credentials, Identity Bindings,
+or Client Associations does not by itself increase the agent's authority.
+Each transaction remains subject to the applicable Client Association,
+delegation authorization, target, and resource policy.
 This profile defines no aggregate budget, quota, or concurrency semantics.<a href="#section-3.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2548,7 +2559,9 @@ be supported.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <a href="#section-5.1.1" class="section-number selfRef">5.1.1. </a><a href="#name-presentation-and-resolution" class="section-name selfRef">Presentation and Resolution</a>
           </h4>
 <p id="section-5.1.1-1">The assertion supplies no identity beyond the authenticated client;
-it is not independent workload evidence. Presentation of the same JWT
+it is not independent workload evidence. In this mode, <code>actor_token</code>
+identifies the resolution source; only the configured Identity Binding
+establishes the resulting Governed Agent. Presentation of the same JWT
 as <code>client_assertion</code> and <code>actor_token</code> follows <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00#section-6.3.1.1" class="relref">Section 6.3.1.1</a></span>. This profile explicitly replaces that input's
 subject-copying rule with Governed Agent resolution under
 <a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>; the extension boundary is described in
@@ -2967,8 +2980,6 @@ weakening proof requirements.<a href="#section-7-5.2.1" class="pilcrow">¶</a></
           <p id="section-7-5.3.1">Denied delegation <span class="bcp14">MUST NOT</span> fall back to self-acting access.<a href="#section-7-5.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-7-6">Governed Agent identity and actor attribution do not establish the
-purpose, approval, or lifecycle of a multi-operation task.<a href="#section-7-6" class="pilcrow">¶</a></p>
 <div id="delegation-authorization">
 <section id="section-7.1">
         <h3 id="name-delegation-authorization">
@@ -3073,12 +3084,15 @@ authorization or attribution.<a href="#section-7.3-8" class="pilcrow">¶</a></p>
 </div>
 <div id="delegated-flow">
 <section id="section-8">
-      <h2 id="name-delegated-id-jag-profile">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-delegated-id-jag-profile" class="section-name selfRef">Delegated ID-JAG Profile</a>
+      <h2 id="name-delegated-id-jag-realizatio">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-delegated-id-jag-realizatio" class="section-name selfRef">Delegated ID-JAG Realization</a>
       </h2>
-<p id="section-8-1">This section profiles ID-JAG issuance and redemption using the actor
-extension point in <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-9.7" class="relref">Section 9.7</a></span>. Where it is silent, ID-JAG
-applies unchanged; the text states only additions and narrowings.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-1">This section realizes the federation model as a normative profile of
+ID-JAG issuance and redemption, using the actor extension point in
+<span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-9.7" class="relref">Section 9.7</a></span>. It specifies the wire requirements for carrying
+and enforcing the relationships defined in <a href="#model" class="auto internal xref">Section 3</a>, <a href="#identity" class="auto internal xref">Section 6</a>,
+and <a href="#authorization" class="auto internal xref">Section 7</a>. Where it is silent, ID-JAG applies unchanged;
+the text states only additions and narrowings.<a href="#section-8-1" class="pilcrow">¶</a></p>
 <div id="profile-additions">
 <section id="section-8.1">
         <h3 id="name-relationship-to-base-specif">
@@ -3422,11 +3436,11 @@ for each resource. The IdP <span class="bcp14">MUST</span> reject multiple <code
 with <code>invalid_target</code>.<a href="#section-8.4.1-7" class="pilcrow">¶</a></p>
 <p id="section-8.4.1-8">This profile narrows ID-JAG by requiring <code>actor_token</code>, exactly one
 resource, and a non-empty scope; <code>authorization_details</code> <span class="bcp14">MAY</span>
-accompany <code>scope</code> and is processed under ID-JAG. Requiring scope gives
-this revision a common authorization mechanism through grant issuance,
-redemption, refresh, and API enforcement. Resource-specific
-authorization details can supplement it; RAR-only authorization is
-outside this revision (<a href="#excluded-compositions" class="auto internal xref">Appendix A.2.4</a>).<a href="#section-8.4.1-8" class="pilcrow">¶</a></p>
+accompany <code>scope</code> and is processed under ID-JAG. The scope requirement
+belongs to this ID-JAG realization: it supplies a common authorization
+mechanism through grant issuance, redemption, refresh, and API enforcement.
+Resource-specific authorization details can supplement it; RAR-only
+authorization is outside this revision (<a href="#excluded-compositions" class="auto internal xref">Appendix A.2.4</a>).<a href="#section-8.4.1-8" class="pilcrow">¶</a></p>
 <p id="section-8.4.1-9">One resource per grant avoids carrying different scope ceilings for
 different resources. The IdP <span class="bcp14">MUST</span> constrain all granted scope and
 <code>authorization_details</code> to that resource.<a href="#section-8.4.1-9" class="pilcrow">¶</a></p>
@@ -5017,7 +5031,10 @@ identifier does not authorize a new proof key.<a href="#section-12.3-3" class="p
         </h3>
 <p id="section-12.4-1">In dedicated-client resolution, compromise of the client's authentication
 key permits an attacker to authenticate as the resolution source for its
-bound Governed Agent. No independent workload credential is required.<a href="#section-12.4-1" class="pilcrow">¶</a></p>
+bound Governed Agent. No independent workload credential is required.
+A normalized Governed Agent identity does not imply uniform runtime
+assurance; assurance depends on the resolution input, verified claims,
+and the credential authority's issuance policy.<a href="#section-12.4-1" class="pilcrow">¶</a></p>
 <p id="section-12.4-2">The attacker still needs an acceptable user subject credential and must
 satisfy Client Association and delegation authorization, but existing
 permissions may already authorize the compromised client.<a href="#section-12.4-2" class="pilcrow">¶</a></p>

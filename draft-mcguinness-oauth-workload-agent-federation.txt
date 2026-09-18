@@ -112,7 +112,7 @@ Table of Contents
      7.1.  Delegation Authorization
      7.2.  Authorization Lifetime
      7.3.  Delegated Actor Authorization
-   8.  Delegated ID-JAG Profile
+   8.  Delegated ID-JAG Realization
      8.1.  Relationship to Base Specifications
      8.2.  Prerequisites and Common Capabilities
      8.3.  Grant Protection
@@ -221,14 +221,15 @@ Table of Contents
                                  Table 1
 
    Client and workload credentials are resolution inputs; downstream
-   authorization identifies the IdP-governed principal.  The resource
-   authorization server (RAS):
+   authorization identifies the IdP-governed principal.  For delegated
+   access, the resource authorization server (RAS):
 
    *  Translates the user identity into its local namespace.
 
    *  Preserves the issuer-qualified agent identity.
 
-   *  Correlates that agent with a local authorization record.
+   *  Correlates that identity with local authorization state without
+      replacing it with the local principal's identifier.
 
    External credentials, execution environments, and OAuth clients can
    change without changing the governed identity.
@@ -239,12 +240,20 @@ Table of Contents
    [SPIFFE-OAUTH] authenticate OAuth clients, not the agents a shared
    client serves.
 
-   The federation model (Section 3) covers two grant paths:
+   The federation model (Section 3) defines identity resolution, client
+   authorization, delegation authorization, and resource correlation.
+   Grant-specific realizations specify how those relationships are
+   carried and enforced:
 
-   *  *Delegated ID-JAG:* Section 8 defines the wire profile.
+   *  *Delegated ID-JAG:* Section 8 defines the normative wire profile
+      and is the basis for conformance in this revision.
 
-   *  *Self-acting WAG:* Section 11 describes the composition;
-      Appendix A.1.1 identifies its unresolved wire requirements.
+   *  *Self-acting WAG:* Section 11 describes an informative
+      composition; Appendix A.1.1 identifies its unresolved wire
+      requirements.
+
+   Other grant realizations require their own composition rules; the
+   federation model alone does not define their wire behavior.
 
    RFC 7523 client assertions, SPIFFE JWT-SVIDs, and the other supported
    credentials supply inputs to the same identity model (Section 5,
@@ -413,7 +422,8 @@ Table of Contents
    Identity resolution establishes which governed principal participates
    in a transaction.  It does not establish client authority, user
    delegation, resource authority, or permission to perform an
-   operation.
+   operation.  The identity and actor attribution also do not establish
+   a task's purpose, approval, or lifecycle.
 
    This non-normative index summarizes the requirements that connect
    identity resolution to resource enforcement.  The referenced sections
@@ -503,7 +513,8 @@ Table of Contents
    SPIFFE ID, display name, or instance identifier.  Identity continuity
    is an explicit decision by the governing authority to preserve the
    same principal; it does not imply that the principal's permissions
-   remain unchanged.
+   remain unchanged.  Governed Agent continuity concerns the
+   authorization principal, not continuity of a particular execution.
 
    A transfer to a different Governance Tenant under a different
    administrative authority MUST create a new Governed Agent identifier
@@ -551,11 +562,12 @@ Table of Contents
 
    Scaling, restarting, rescheduling, migration, or credential rotation
    MUST NOT by itself create, merge, or transfer Governed Agent
-   authority.  Additional executions, credentials, or bindings do not
-   confer additional permissions.  Each transaction remains subject to
-   the applicable Client Association, delegation authorization, target,
-   and resource policy.  This profile defines no aggregate budget,
-   quota, or concurrency semantics.
+   authority.  Creating additional executions, replicas, credentials,
+   Identity Bindings, or Client Associations does not by itself increase
+   the agent's authority.  Each transaction remains subject to the
+   applicable Client Association, delegation authorization, target, and
+   resource policy.  This profile defines no aggregate budget, quota, or
+   concurrency semantics.
 
 4.  Profiles and Conformance
 
@@ -991,11 +1003,14 @@ Table of Contents
 5.1.1.  Presentation and Resolution
 
    The assertion supplies no identity beyond the authenticated client;
-   it is not independent workload evidence.  Presentation of the same
-   JWT as client_assertion and actor_token follows [ACTOR-PROFILE],
-   Section 6.3.1.1.  This profile explicitly replaces that input's
-   subject-copying rule with Governed Agent resolution under
-   Section 8.4.4; the extension boundary is described in Appendix A.1.3.
+   it is not independent workload evidence.  In this mode, actor_token
+   identifies the resolution source; only the configured Identity
+   Binding establishes the resulting Governed Agent.  Presentation of
+   the same JWT as client_assertion and actor_token follows
+   [ACTOR-PROFILE], Section 6.3.1.1.  This profile explicitly replaces
+   that input's subject-copying rule with Governed Agent resolution
+   under Section 8.4.4; the extension boundary is described in
+   Appendix A.1.3.
 
    The client MUST present the identical compact JWT in client_assertion
    and actor_token, with client_assertion_type set to
@@ -1352,9 +1367,6 @@ Table of Contents
 
    *  Denied delegation MUST NOT fall back to self-acting access.
 
-   Governed Agent identity and actor attribution do not establish the
-   purpose, approval, or lifecycle of a multi-operation task.
-
 7.1.  Delegation Authorization
 
    Before constructing act, the IdP MUST authorize the resolved Governed
@@ -1444,11 +1456,14 @@ Table of Contents
    actor; the client identifier MUST NOT stand in for the actor in
    authorization or attribution.
 
-8.  Delegated ID-JAG Profile
+8.  Delegated ID-JAG Realization
 
-   This section profiles ID-JAG issuance and redemption using the actor
-   extension point in [ID-JAG], Section 9.7.  Where it is silent, ID-JAG
-   applies unchanged; the text states only additions and narrowings.
+   This section realizes the federation model as a normative profile of
+   ID-JAG issuance and redemption, using the actor extension point in
+   [ID-JAG], Section 9.7.  It specifies the wire requirements for
+   carrying and enforcing the relationships defined in Section 3,
+   Section 6, and Section 7.  Where it is silent, ID-JAG applies
+   unchanged; the text states only additions and narrowings.
 
 8.1.  Relationship to Base Specifications
 
@@ -1716,11 +1731,11 @@ Table of Contents
 
    This profile narrows ID-JAG by requiring actor_token, exactly one
    resource, and a non-empty scope; authorization_details MAY accompany
-   scope and is processed under ID-JAG.  Requiring scope gives this
-   revision a common authorization mechanism through grant issuance,
-   redemption, refresh, and API enforcement.  Resource-specific
-   authorization details can supplement it; RAR-only authorization is
-   outside this revision (Appendix A.2.4).
+   scope and is processed under ID-JAG.  The scope requirement belongs
+   to this ID-JAG realization: it supplies a common authorization
+   mechanism through grant issuance, redemption, refresh, and API
+   enforcement.  Resource-specific authorization details can supplement
+   it; RAR-only authorization is outside this revision (Appendix A.2.4).
 
    One resource per grant avoids carrying different scope ceilings for
    different resources.  The IdP MUST constrain all granted scope and
@@ -2989,7 +3004,10 @@ Table of Contents
    In dedicated-client resolution, compromise of the client's
    authentication key permits an attacker to authenticate as the
    resolution source for its bound Governed Agent.  No independent
-   workload credential is required.
+   workload credential is required.  A normalized Governed Agent
+   identity does not imply uniform runtime assurance; assurance depends
+   on the resolution input, verified claims, and the credential
+   authority's issuance policy.
 
    The attacker still needs an acceptable user subject credential and
    must satisfy Client Association and delegation authorization, but
