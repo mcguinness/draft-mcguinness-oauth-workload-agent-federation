@@ -3,8 +3,7 @@
 # OAuth 2.0 Profile for Governed Agent Federation
 
 This is the working area for "OAuth 2.0 Profile for Governed Agent Federation"
-and its SCIM client management, agent management, lifecycle, and Shared
-Signals companions.
+and its SCIM client management, agent management, and lifecycle companions.
 
 The draft defines how an IdP resolves dedicated OAuth client identities or
 independently validated workload identities to stable Agent Principals.
@@ -62,9 +61,9 @@ The SCIM management profile provisions Agent Principals and administers
 Identity Bindings and Client Associations at the IdP. It reuses SCIM
 operations, adds a small Agent identity extension and two relationship
 resources, and references OAuthClient registrations from the generic profile.
-Dedicated-client bindings reference OAuthClient directly; shared-client
-deployments retain external workload bindings and separately authorize
-client use. Both support CIMD clients without copying their metadata.
+Dedicated-client bindings reference OAuthClient and administer identity
+and client-use permission together. Shared-client deployments retain
+external workload bindings and separate Client Associations. Both support CIMD clients without copying their metadata.
 Credential-authority trust, client registration permission, user delegation,
 and downstream revocation remain separate.
 
@@ -78,16 +77,14 @@ correlation to apply disablement at the RAS. Re-enablement permits new
 authorization decisions without restoring revoked sessions. API enforcement
 still depends on introspection, caching, and token expiry.
 
-The separate Shared Signals profile reuses SCIM change notices and optional
-CAEP session revocation. Notices trigger authoritative retrieval; they do not
-carry a new lifecycle snapshot. Neither companion defines a new event type,
-SCIM schema, eligibility lease, or authorization cutoff. The drafts explicitly
-document that current state cannot recover a missed disable-and-reenable cycle.
+The lifecycle draft also profiles existing SCIM Events and optional CAEP
+revocation. Provisioning and feed events trigger authoritative reconciliation;
+CAEP can revoke all authorization derived from an issuer-qualified ID-JAG
+`jti`. No new event type, eligibility lease, or authorization cutoff is
+defined. Current state cannot recover a missed disable-and-reenable cycle.
 
 * [Lifecycle profile source](draft-mcguinness-oauth-governed-agent-lifecycle.md)
 * [Lifecycle profile editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html)
-* [Shared Signals profile source](draft-mcguinness-ssf-governed-agent-events.md)
-* [Shared Signals profile editor's copy](https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-ssf-governed-agent-events.html)
 
 ## Contributing
 
