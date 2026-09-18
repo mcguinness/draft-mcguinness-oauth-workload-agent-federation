@@ -1533,11 +1533,15 @@ This document defines how an identity provider (IdP) resolves client or
 workload identity to an Agent Principal, separately authorizes OAuth
 client use and user delegation, and carries the governed identity into
 the resource domain.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">A dedicated OAuth client resolves through an explicit client-to-agent
+<p id="section-1-2">Execution identity can be too coarse when one runtime serves several
+actors that need independent governance. It can also be too unstable
+when one actor moves across runtime identities while its authorization
+identity needs to remain stable.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">A dedicated OAuth client resolves through an explicit client-to-agent
 binding. A shared client uses independently validated workload identity
 to distinguish the agents it serves. Both deployments retain separate
-identity, client-authority, delegation, and resource-policy decisions.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">Four independent relationships establish that contract:<a href="#section-1-3" class="pilcrow">¶</a></p>
+identity, client-authority, delegation, and resource-policy decisions.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">Four independent relationships establish that contract:<a href="#section-1-4" class="pilcrow">¶</a></p>
 <table class="center" id="table-1">
         <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
 <thead>
@@ -1565,47 +1569,47 @@ identity, client-authority, delegation, and resource-policy decisions.<a href="#
           </tr>
         </tbody>
       </table>
-<p id="section-1-5">Client and workload credentials are resolution inputs; downstream
+<p id="section-1-6">Client and workload credentials are resolution inputs; downstream
 authorization identifies the IdP-governed principal. For delegated access,
-the resource authorization server (RAS):<a href="#section-1-5" class="pilcrow">¶</a></p>
+the resource authorization server (RAS):<a href="#section-1-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-1-6.1">
-          <p id="section-1-6.1.1">Translates the user identity into its local namespace.<a href="#section-1-6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-1-7.1">
+          <p id="section-1-7.1.1">Translates the user identity into its local namespace.<a href="#section-1-7.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-6.2">
-          <p id="section-1-6.2.1">Preserves the issuer-qualified agent identity.<a href="#section-1-6.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-7.2">
+          <p id="section-1-7.2.1">Preserves the issuer-qualified agent identity.<a href="#section-1-7.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-6.3">
-          <p id="section-1-6.3.1">Correlates that identity with local authorization state without
-replacing it with the local principal's identifier.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-7.3">
+          <p id="section-1-7.3.1">Correlates that identity with local authorization state without
+replacing it with the local principal's identifier.<a href="#section-1-7.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-1-7">External credentials, execution environments, and OAuth clients can
-change without changing the governed identity.<a href="#section-1-7" class="pilcrow">¶</a></p>
-<p id="section-1-8">Existing specifications leave that mapping open. <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines
+<p id="section-1-8">External credentials, execution environments, and OAuth clients can
+change without changing the governed identity.<a href="#section-1-8" class="pilcrow">¶</a></p>
+<p id="section-1-9">Existing specifications leave that mapping open. <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines
 <code>act</code>, while <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-9.7" class="relref">Section 9.7</a></span> leaves actor-token validation,
 authorization, and representation to extensions. <span>[<a href="#ATTEST" class="cite xref">ATTEST</a>]</span> and
 <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>]</span> authenticate OAuth clients, not the agents a shared
-client serves.<a href="#section-1-8" class="pilcrow">¶</a></p>
-<p id="section-1-9">The federation model (<a href="#model" class="auto internal xref">Section 3</a>) defines identity resolution, client
+client serves.<a href="#section-1-9" class="pilcrow">¶</a></p>
+<p id="section-1-10">The federation model (<a href="#model" class="auto internal xref">Section 3</a>) defines identity resolution, client
 authorization, delegation authorization, and resource correlation.
 Grant-specific realizations specify how those relationships are carried
-and enforced:<a href="#section-1-9" class="pilcrow">¶</a></p>
+and enforced:<a href="#section-1-10" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-1-10.1">
-          <p id="section-1-10.1.1"><strong>Delegated ID-JAG:</strong> <a href="#delegated-flow" class="auto internal xref">Section 8</a> defines the normative wire
-profile and is the basis for conformance in this revision.<a href="#section-1-10.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-1-11.1">
+          <p id="section-1-11.1.1"><strong>Delegated ID-JAG:</strong> <a href="#delegated-flow" class="auto internal xref">Section 8</a> defines the normative wire
+profile and is the basis for conformance in this revision.<a href="#section-1-11.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-10.2">
-          <p id="section-1-10.2.1"><strong>Self-acting WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 11</a> describes an informative composition;
-<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a> identifies its unresolved wire requirements.<a href="#section-1-10.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-11.2">
+          <p id="section-1-11.2.1"><strong>Self-acting WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 11</a> describes an informative composition;
+<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a> identifies its unresolved wire requirements.<a href="#section-1-11.2.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-1-11">Other grant realizations require their own composition rules; the
-federation model alone does not define their wire behavior.<a href="#section-1-11" class="pilcrow">¶</a></p>
-<p id="section-1-12">RFC 7523 client assertions, SPIFFE JWT-SVIDs, and the other supported
+<p id="section-1-12">Other grant realizations require their own composition rules; the
+federation model alone does not define their wire behavior.<a href="#section-1-12" class="pilcrow">¶</a></p>
+<p id="section-1-13">RFC 7523 client assertions, SPIFFE JWT-SVIDs, and the other supported
 credentials supply inputs to the same identity model (<a href="#evidence" class="auto internal xref">Section 5</a>,
-<a href="#optional-inputs" class="auto internal xref">Section 9</a>).<a href="#section-1-12" class="pilcrow">¶</a></p>
+<a href="#optional-inputs" class="auto internal xref">Section 9</a>).<a href="#section-1-13" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-terminology">
@@ -1950,31 +1954,35 @@ an explicit decision by the governing authority to preserve the same
 principal; it does not imply that the principal's permissions remain
 unchanged. Agent Principal continuity concerns the authorization
 principal, not continuity of a particular execution or runtime instance.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
-<p id="section-3.3-3">A transfer to a different Governance Tenant under a different
+<p id="section-3.3-3">An Agent Principal identity does not itself prove which runtime or
+execution currently represents the agent; any such assurance comes from
+the validated evidence and proofs required by the resolution-input
+profile (<a href="#evidence" class="auto internal xref">Section 5</a>).<a href="#section-3.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.3-4">A transfer to a different Governance Tenant under a different
 administrative authority <span class="bcp14">MUST</span> create a new Agent Principal identifier
 and <span class="bcp14">MUST NOT</span> automatically carry forward delegations or RAS principal
-links. This revision defines no cross-tenant identity migration protocol.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
-<p id="section-3.3-4">For example:<a href="#section-3.3-4" class="pilcrow">¶</a></p>
+links. This revision defines no cross-tenant identity migration protocol.<a href="#section-3.3-4" class="pilcrow">¶</a></p>
+<p id="section-3.3-5">For example:<a href="#section-3.3-5" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.3-5.1">
-            <p id="section-3.3-5.1.1">Moving an agent to another customer's governance domain creates a
-new identity.<a href="#section-3.3-5.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.3-6.1">
+            <p id="section-3.3-6.1.1">Moving an agent to another customer's governance domain creates a
+new identity.<a href="#section-3.3-6.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.3-5.2">
-            <p id="section-3.3-5.2.1">Renaming a tenant or changing its owner or administrator within the
-same governance domain does not by itself change the principal.<a href="#section-3.3-5.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-3.3-6.2">
+            <p id="section-3.3-6.2.1">Renaming a tenant or changing its owner or administrator within the
+same governance domain does not by itself change the principal.<a href="#section-3.3-6.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-3.3-6">Multiple Identity Bindings <span class="bcp14">MAY</span> resolve distinct client or workload
+<p id="section-3.3-7">Multiple Identity Bindings <span class="bcp14">MAY</span> resolve distinct client or workload
 identities to the same Agent Principal when the IdP approves them as
 representing the same governed principal. They share the governed
-authorization identity downstream.<a href="#section-3.3-6" class="pilcrow">¶</a></p>
-<p id="section-3.3-7">The IdP <span class="bcp14">MUST</span> establish an unambiguous Governance Tenant and, before
+authorization identity downstream.<a href="#section-3.3-7" class="pilcrow">¶</a></p>
+<p id="section-3.3-8">The IdP <span class="bcp14">MUST</span> establish an unambiguous Governance Tenant and, before
 issuance, the Target Tenant for the requested RAS and resource. The RAS
 <span class="bcp14">MUST</span> interpret an agent identifier in its asserted issuer context and
 <span class="bcp14">MUST NOT</span> key agent authorization on a bare <code>sub</code>. Failure to resolve
 the Governance Tenant uses <code>invalid_grant</code>; failure to resolve the
-Target Tenant for the requested resource uses <code>invalid_target</code>.<a href="#section-3.3-7" class="pilcrow">¶</a></p>
+Target Tenant for the requested resource uses <code>invalid_target</code>.<a href="#section-3.3-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="governance-boundary">
