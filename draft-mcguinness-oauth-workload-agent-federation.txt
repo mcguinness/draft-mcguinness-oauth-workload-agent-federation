@@ -119,7 +119,7 @@ Table of Contents
      8.4.  Token Exchange
        8.4.1.  Request
        8.4.2.  Subject Token Validation
-       8.4.3.  Actor Token Validation
+       8.4.3.  Agent Resolution Input Validation
        8.4.4.  Actor Resolution and Construction
        8.4.5.  Grant Issuance
        8.4.6.  Successful Response
@@ -763,9 +763,12 @@ Table of Contents
    *  *Client Association:* The IdP administrator specifies the client,
       permitted binding or binding set, flow, and credential class.
 
-   *  *Resolution input and proof:* IdP policy and client configuration
-      establish the accepted evidence and proof requirements for each
-      binding and client.
+   *  *Resolution mode and proof:* IdP policy and client configuration
+      establish dedicated-client resolution or an actor-evidence input
+      for the client, applicable profile, and target.  Within an actor-
+      evidence mode, they establish accepted credential classes and
+      proof requirements.  Request parameters do not select the
+      resolution mode (Section 8.4.3).
 
    *  *Target:* The IdP administrator configures the RAS issuer,
       resources, Target Tenant, subject namespace, and authority to
@@ -1002,23 +1005,22 @@ Table of Contents
 
 5.1.1.  Presentation and Resolution
 
-   The assertion supplies no identity beyond the authenticated client;
-   it is not independent workload evidence.  In this mode, actor_token
-   identifies the resolution source; only the configured Identity
-   Binding establishes the resulting Governed Agent.  Presentation of
-   the same JWT as client_assertion and actor_token follows
-   [ACTOR-PROFILE], Section 6.3.1.1.  This profile explicitly replaces
-   that input's subject-copying rule with Governed Agent resolution
-   under Section 8.4.4; the extension boundary is described in
-   Appendix A.1.3.
+   The assertion authenticates the client; it is not independent
+   workload evidence.  In this explicitly configured mode, the IdP uses
+   the validated client-authentication context as the resolution source.
+   The Identity Binding determines the Governed Agent; client
+   authentication alone does not authorize its use.
 
-   The client MUST present the identical compact JWT in client_assertion
-   and actor_token, with client_assertion_type set to
-   urn:ietf:params:oauth:client-assertion-type:jwt-bearer.  When trusted
-   configuration requires this dedicated-client input, the IdP MUST
-   reject a non-identical actor_token with invalid_request.  This
-   equality requirement does not apply to a separately configured
-   platform-JWT input accompanying RFC 7523 client authentication.
+   The client MUST present its assertion in client_assertion, with
+   client_assertion_type set to urn:ietf:params:oauth:client-assertion-
+   type:jwt-bearer, and MUST omit actor_token and actor_token_type.  The
+   IdP MUST reject either actor parameter in this mode with
+   invalid_request.
+
+   This profile defines the authenticated-client resolution composition;
+   it is not Actor Profile's dual-presentation input.  Its relationship
+   to Token Exchange and Actor Profile is stated in Appendix A.1.3.
+   Mode selection and missing-evidence handling follow Section 8.4.3.
 
    The IdP MUST:
 
@@ -1075,18 +1077,11 @@ Table of Contents
    *  Replay identifiers MUST be qualified by the validated issuer and
       client.
 
-   Using the assertion in both parameters of one request is one
-   presentation, not a replay.  Following [ACTOR-PROFILE],
-   Section 6.3.1.2, the IdP MUST reuse the successful authentication
-   result, then apply this profile's separate identity mapping and
-   authorization checks.
-
    For a retry of a dedicated-client exchange:
 
-   *  The client MUST generate a new client assertion with a fresh jti
-      and use it in both client_assertion and actor_token.  This also
-      applies after a use_dpop_nonce challenge under [RFC9449],
-      Section 8.
+   *  The client MUST generate a new client_assertion with a fresh jti.
+      This also applies after a use_dpop_nonce challenge under
+      [RFC9449], Section 8.
 
    *  For a nonce retry, the client MUST also generate a fresh DPoP
       proof containing the supplied nonce while retaining the grant
@@ -1473,70 +1468,73 @@ Table of Contents
    identifies this profile's additions and deliberate narrowings; the
    referenced sections define the requirements.
 
-   +==================+=====================================+=========+
-   | Area             | Profile requirement                 | Defined |
-   |                  |                                     | in      |
-   +==================+=====================================+=========+
-   | Actor extension  | Resolve dedicated-client or         | Section |
-   |                  | workload identity through an        | 6.1     |
-   |                  | Identity Binding; authorize client  |         |
-   |                  | use through a separate Client       |         |
-   |                  | Association                         |         |
-   +------------------+-------------------------------------+---------+
-   | Client-assertion | Reuse the validated assertion for   | Section |
-   | input            | actor resolution; require token-    | 5.1     |
-   |                  | endpoint audience support, explicit |         |
-   |                  | configuration for an alternative AS |         |
-   |                  | identifier, and single-use jti      |         |
-   +------------------+-------------------------------------+---------+
-   | Actor            | One actor with the Governed Agent   | Section |
-   | representation   | as act.sub and the IdP as act.iss;  | 8.4.4   |
-   |                  | replaces Actor Profile's            |         |
-   |                  | credential-to-actor copying         |         |
-   +------------------+-------------------------------------+---------+
-   | Request          | Explicit agent-resolution input,    | Section |
-   | narrowing        | exactly one resource, and non-empty | 8.4.1,  |
-   |                  | scope required; no incoming actor   | Section |
-   |                  | chain                               | 8.4.3   |
-   +------------------+-------------------------------------+---------+
-   | Identity and     | Resolve users and agents            | Section |
-   | client binding   | separately; derive downstream       | 6.2,    |
-   |                  | client_id from an authoritative     | Section |
-   |                  | client-registration association     | 6.3,    |
-   |                  |                                     | Section |
-   |                  |                                     | 8.2     |
-   +------------------+-------------------------------------+---------+
-   | Grant narrowing  | One resource URI (issued as a       | Section |
-   |                  | string; singleton arrays also       | 8.4.5,  |
-   |                  | accepted), scope constraints, and   | Section |
-   |                  | input-specific expiration limits;   | 8.5.2,  |
-   |                  | bound profile requires DPoP and     | Section |
-   |                  | cnf.jkt                             | 8.3     |
-   +------------------+-------------------------------------+---------+
-   | Resource         | Preserve actor and tenant context;  | Section |
-   | processing       | enforce the user authority and      | 8.5.3,  |
-   |                  | actor gate with the selected token  | Section |
-   |                  | protection                          | 8.9     |
-   +------------------+-------------------------------------+---------+
-   | Refresh          | Explicit policy, client binding,    | Section |
-   | narrowing        | preservation of proof binding and   | 8.5.7   |
-   |                  | profile, and a finite absolute      |         |
-   |                  | authorization expiration            |         |
-   +------------------+-------------------------------------+---------+
-   | Error processing | Actor credential or resolution      | Section |
-   |                  | failures use invalid_grant rather   | 8.6     |
-   |                  | than RFC 8693's default             |         |
-   |                  | invalid_request; denial for a       |         |
-   |                  | resolved actor uses                 |         |
-   |                  | actor_unauthorized                  |         |
-   +------------------+-------------------------------------+---------+
-   | Profile          | Identify supported governed         | Section |
-   | discovery        | profiles in existing ID-JAG         | 10      |
-   |                  | metadata; trusted policy sets the   |         |
-   |                  | minimum                             |         |
-   +------------------+-------------------------------------+---------+
+    +==================+====================================+=========+
+    | Area             | Profile requirement                | Defined |
+    |                  |                                    | in      |
+    +==================+====================================+=========+
+    | Actor extension  | Resolve dedicated-client or        | Section |
+    |                  | workload identity through an       | 6.1     |
+    |                  | Identity Binding; authorize client |         |
+    |                  | use through a separate Client      |         |
+    |                  | Association                        |         |
+    +------------------+------------------------------------+---------+
+    | Dedicated-client | Resolve from authenticated client  | Section |
+    | input            | context with no actor-token        | 5.1     |
+    |                  | parameters; require token-endpoint |         |
+    |                  | audience support, explicit         |         |
+    |                  | configuration for an alternative   |         |
+    |                  | AS identifier, and single-use jti  |         |
+    +------------------+------------------------------------+---------+
+    | Actor            | One actor with the Governed Agent  | Section |
+    | representation   | as act.sub and the IdP as act.iss; | 8.4.4   |
+    |                  | replaces Actor Profile's           |         |
+    |                  | credential-to-actor copying        |         |
+    +------------------+------------------------------------+---------+
+    | Request          | Configured resolution mode,        | Section |
+    | narrowing        | exactly one resource, and non-     | 8.4.1,  |
+    |                  | empty scope required; actor        | Section |
+    |                  | evidence required outside          | 8.4.3   |
+    |                  | dedicated-client mode; no incoming |         |
+    |                  | actor chain                        |         |
+    +------------------+------------------------------------+---------+
+    | Identity and     | Resolve users and agents           | Section |
+    | client binding   | separately; derive downstream      | 6.2,    |
+    |                  | client_id from an authoritative    | Section |
+    |                  | client-registration association    | 6.3,    |
+    |                  |                                    | Section |
+    |                  |                                    | 8.2     |
+    +------------------+------------------------------------+---------+
+    | Grant narrowing  | One resource URI (issued as a      | Section |
+    |                  | string; singleton arrays also      | 8.4.5,  |
+    |                  | accepted), scope constraints, and  | Section |
+    |                  | input-specific expiration limits;  | 8.5.2,  |
+    |                  | bound profile requires DPoP and    | Section |
+    |                  | cnf.jkt                            | 8.3     |
+    +------------------+------------------------------------+---------+
+    | Resource         | Preserve actor and tenant context; | Section |
+    | processing       | enforce the user authority and     | 8.5.3,  |
+    |                  | actor gate with the selected token | Section |
+    |                  | protection                         | 8.9     |
+    +------------------+------------------------------------+---------+
+    | Refresh          | Explicit policy, client binding,   | Section |
+    | narrowing        | preservation of proof binding and  | 8.5.7   |
+    |                  | profile, and a finite absolute     |         |
+    |                  | authorization expiration           |         |
+    +------------------+------------------------------------+---------+
+    | Error processing | Actor credential or resolution     | Section |
+    |                  | failures use invalid_grant rather  | 8.6     |
+    |                  | than RFC 8693's default            |         |
+    |                  | invalid_request; denial for a      |         |
+    |                  | resolved actor uses                |         |
+    |                  | actor_unauthorized                 |         |
+    +------------------+------------------------------------+---------+
+    | Profile          | Identify supported governed        | Section |
+    | discovery        | profiles in existing ID-JAG        | 10      |
+    |                  | metadata; trusted policy sets the  |         |
+    |                  | minimum                            |         |
+    +------------------+------------------------------------+---------+
 
-                                 Table 10
+                                  Table 10
 
 8.2.  Prerequisites and Common Capabilities
 
@@ -1678,7 +1676,8 @@ Table of Contents
    client_assertion, and client_id where required by the method or
    registration.
 
-   The following parameters are REQUIRED:
+   The following parameters are REQUIRED except where the resolution
+   mode specifies otherwise:
 
    +======================+============================================+
    | Parameter            | Value                                      |
@@ -1698,10 +1697,13 @@ Table of Contents
    |                      | or urn:ietf:params:oauth:token-            |
    |                      | type:refresh_token                         |
    +----------------------+--------------------------------------------+
-   | actor_token          | Direct credential selected under           |
-   |                      | Section 8.4.3                              |
+   | actor_token          | Omitted for dedicated-client               |
+   |                      | resolution; REQUIRED for an actor-         |
+   |                      | evidence input under Section 8.4.3         |
    +----------------------+--------------------------------------------+
-   | actor_token_type     | urn:ietf:params:oauth:token-type:jwt       |
+   | actor_token_type     | Omitted with actor_token; otherwise        |
+   |                      | REQUIRED with value                        |
+   |                      | urn:ietf:params:oauth:token-type:jwt       |
    +----------------------+--------------------------------------------+
    | audience             | One target RAS issuer identifier           |
    +----------------------+--------------------------------------------+
@@ -1729,13 +1731,15 @@ Table of Contents
    for each resource.  The IdP MUST reject multiple resource parameters
    with invalid_target.
 
-   This profile narrows ID-JAG by requiring actor_token, exactly one
-   resource, and a non-empty scope; authorization_details MAY accompany
-   scope and is processed under ID-JAG.  The scope requirement belongs
-   to this ID-JAG realization: it supplies a common authorization
-   mechanism through grant issuance, redemption, refresh, and API
-   enforcement.  Resource-specific authorization details can supplement
-   it; RAR-only authorization is outside this revision (Appendix A.2.4).
+   This profile requires exactly one resource and a non-empty scope.  It
+   requires actor_token for actor-evidence inputs and omits it for
+   configured dedicated-client resolution. authorization_details MAY
+   accompany scope and is processed under ID-JAG.  The scope requirement
+   belongs to this ID-JAG realization: it supplies a common
+   authorization mechanism through grant issuance, redemption, refresh,
+   and API enforcement.  Resource-specific authorization details can
+   supplement it; RAR-only authorization is outside this revision
+   (Appendix A.2.4).
 
    One resource per grant avoids carrying different scope ceilings for
    different resources.  The IdP MUST constrain all granted scope and
@@ -1803,34 +1807,39 @@ Table of Contents
    deployment needs an authorization flow that establishes it before
    unattended exchange can proceed.
 
-8.4.3.  Actor Token Validation
+8.4.3.  Agent Resolution Input Validation
 
-   All agent-resolution inputs carried in actor_token use
-   actor_token_type=urn:ietf:params:oauth:token-type:jwt.  The IdP MUST
-   reject any other actor_token_type with invalid_request.
+   After client authentication, the IdP MUST determine the resolution
+   mode from trusted configuration for the authenticated client,
+   applicable profile, and target.  If that configuration does not
+   establish an unambiguous mode, it MUST reject the request with
+   invalid_request.  The presence or absence of actor-token parameters
+   MUST NOT select or change that mode.
 
-   The generic JWT token type retains existing credential formats
-   without defining new OAuth token types.  Credential semantics come
-   from authenticated request context and trusted configuration, not the
-   generic token type ([RFC8693], Section 3).
+   *  *Dedicated-client resolution:* Use the authenticated client
+      context under Section 5.1.  The IdP MUST reject actor_token or
+      actor_token_type with invalid_request.
 
-   Native inputs reuse the configured client authentication method and
-   its assertion type, under [RFC7523], Section 2.2 or [SPIFFE-OAUTH],
-   Section 3.1.  The equality check below identifies the credential
-   already validated under that method.  In dedicated-client resolution
-   it adds no independent identity evidence.  Platform JWTs instead use
-   a configured credential class.  These paths MUST have mutually
-   exclusive validation rules under [RFC8725], Section 3.12.
+   *  *Actor-evidence input:* The IdP MUST require both actor_token and
+      actor_token_type.  Missing either uses invalid_request.  The type
+      MUST be urn:ietf:params:oauth:token-type:jwt; any other type uses
+      invalid_request.  Missing or rejected evidence MUST NOT trigger
+      dedicated-client resolution.
+
+   Both modes proceed through Section 8.4.4.  A governed request MUST
+   result in the required governed act or fail; omitting actor-token
+   parameters in dedicated-client mode does not request ordinary EMA or
+   subject-only impersonation.
 
      +=============+====================+============================+
      | Input       | Support            | Presentation and           |
      |             |                    | validation                 |
      +=============+====================+============================+
-     | Dedicated   | REQUIRED at the    | Identical compact JWT in   |
-     | client      | client and IdP for | actor_token and            |
-     | identity    | private_key_jwt;   | client_assertion; explicit |
-     |             | use is             | client-to-agent binding    |
-     |             | configurable       | under Section 5.1          |
+     | Dedicated   | REQUIRED at the    | Authenticated client       |
+     | client      | client and IdP for | context; no actor-token    |
+     | identity    | private_key_jwt;   | parameters; explicit       |
+     |             | use is             | binding under Section 5.1  |
+     |             | configurable       |                            |
      +-------------+--------------------+----------------------------+
      | JWT-SVID    | OPTIONAL           | Identical compact JWT in   |
      |             |                    | actor_token and            |
@@ -1853,15 +1862,18 @@ Table of Contents
 
                                   Table 14
 
+   The following classification rules apply only to actor-evidence
+   inputs.  The generic JWT token type retains existing credential
+   formats without defining new OAuth token types.  Credential semantics
+   come from authenticated request context and trusted configuration,
+   not the generic token type ([RFC8693], Section 3).  These paths MUST
+   have mutually exclusive validation rules under [RFC8725],
+   Section 3.12.
+
    The IdP MUST classify the actor_token using these steps:
 
    1.  Select a native credential class when the JWT is byte-identical
        to evidence used by the configured authentication method:
-
-       *  client_assertion with assertion type
-          urn:ietf:params:oauth:client-assertion-type:jwt-bearer, used
-          by the configured RFC 7523 asymmetric authentication method,
-          selects the client-assertion input.
 
        *  client_assertion with assertion type
           urn:ietf:params:oauth:client-assertion-type:jwt-spiffe, used
@@ -1909,9 +1921,11 @@ Table of Contents
 
    *  iss: this IdP's issuer identifier.
 
-   These values MUST come from the approved mapping, even when external
-   and governed identifiers coincide.  This replaces the credential-to-
-   actor copying in [ACTOR-PROFILE], Section 6.3.
+   These values MUST come from the approved mapping, even when source
+   and governed identifiers coincide.  For actor-evidence inputs this
+   replaces credential-to-actor copying in [ACTOR-PROFILE], Section 6.3;
+   for dedicated-client resolution it uses the authenticated client
+   context under Section 5.1.
 
    The object MUST follow [ACTOR-PROFILE], Section 3.4, including its
    sub_profile recommendation and unclassified-actor rules.  Any
@@ -2316,37 +2330,40 @@ Table of Contents
 
    *Request, client authentication, and proof*
 
-     +======================================+=======================+
-     | Failure                              | Error                 |
-     +======================================+=======================+
-     | Missing required request parameter,  | invalid_request       |
-     | unsupported input combination, or    |                       |
-     | ambiguous credential classification  |                       |
-     +--------------------------------------+-----------------------+
-     | Unsupported actor_token_type, or     | invalid_request       |
-     | non-identical assertions when the    |                       |
-     | configured input requires dedicated- |                       |
-     | client resolution                    |                       |
-     +--------------------------------------+-----------------------+
-     | Missing required issuance DPoP       | invalid_request       |
-     | proof, or DPoP supplied to an        |                       |
-     | endpoint that does not support it    |                       |
-     +--------------------------------------+-----------------------+
-     | Failed RFC 7523 client               | invalid_client; other |
-     | authentication, including an         | methods use their     |
-     | assertion also presented as          | specified             |
-     | actor_token                          | authentication errors |
-     +--------------------------------------+-----------------------+
-     | Invalid DPoP proof or required nonce | invalid_dpop_proof or |
-     | challenge                            | use_dpop_nonce, as    |
-     |                                      | specified by RFC 9449 |
-     +--------------------------------------+-----------------------+
-     | Missing required grant binding or    | invalid_grant under   |
-     | redemption proof, unsupported        | Section 8.3 and ID-   |
-     | confirmation, mismatch with grant    | JAG client processing |
-     | cnf.jkt, or authenticated client     |                       |
-     | differing from the grant's client_id |                       |
-     +--------------------------------------+-----------------------+
+   +==========================================+=======================+
+   | Failure                                  | Error                 |
+   +==========================================+=======================+
+   | Missing required request parameter,      | invalid_request       |
+   | unsupported input combination, or        |                       |
+   | ambiguous credential classification      |                       |
+   +------------------------------------------+-----------------------+
+   | No unambiguous configured resolution     | invalid_request; no   |
+   | mode, actor-token parameters in          | mode fallback         |
+   | dedicated-client mode, or missing actor- |                       |
+   | token parameters in actor-evidence mode  |                       |
+   +------------------------------------------+-----------------------+
+   | Unsupported actor_token_type in actor-   | invalid_request       |
+   | evidence mode                            |                       |
+   +------------------------------------------+-----------------------+
+   | Missing required issuance DPoP proof, or | invalid_request       |
+   | DPoP supplied to an endpoint that does   |                       |
+   | not support it                           |                       |
+   +------------------------------------------+-----------------------+
+   | Failed RFC 7523 client authentication    | invalid_client; other |
+   |                                          | methods use their     |
+   |                                          | specified             |
+   |                                          | authentication errors |
+   +------------------------------------------+-----------------------+
+   | Invalid DPoP proof or required nonce     | invalid_dpop_proof or |
+   | challenge                                | use_dpop_nonce, as    |
+   |                                          | specified by RFC 9449 |
+   +------------------------------------------+-----------------------+
+   | Missing required grant binding or        | invalid_grant under   |
+   | redemption proof, unsupported            | Section 8.3 and ID-   |
+   | confirmation, mismatch with grant        | JAG client processing |
+   | cnf.jkt, or authenticated client         |                       |
+   | differing from the grant's client_id     |                       |
+   +------------------------------------------+-----------------------+
 
                                  Table 20
 
@@ -2419,15 +2436,15 @@ Table of Contents
    [RFC9449] at both endpoints; unsupported DPoP and missing required
    issuance proof follow Section 8.3.
 
-   Client authentication failures take precedence over actor-input
-   failures when both parameters carry the same credential.  Error
-   descriptions SHOULD NOT reveal identity, binding, or policy details
-   beyond those disclosed by the error category.  Distinguishing
-   invalid_grant from actor_unauthorized reveals that an actor was
-   resolved but denied authorization, including to a holder of stolen
-   bearer evidence who satisfies the request's other authentication
-   requirements.  It does not distinguish the individual binding-
-   resolution failures.
+   Client authentication failures use the authentication method's error,
+   including when JWT-SVID or Client Attestation also serves as actor
+   evidence.  Error descriptions SHOULD NOT reveal identity, binding, or
+   policy details beyond those disclosed by the error category.
+   Distinguishing invalid_grant from actor_unauthorized reveals that an
+   actor was resolved but denied authorization, including to a holder of
+   stolen bearer evidence who satisfies the request's other
+   authentication requirements.  It does not distinguish the individual
+   binding-resolution failures.
 
 8.7.  Continuing Access
 
@@ -3484,16 +3501,24 @@ A.1.2.  ID-JAG Bound Grants
 
 A.1.3.  Dedicated-Client Identity Mapping
 
-   Actor Profile Section 6.3.1 defines dual presentation of a client
-   assertion and permits reuse of authenticated client context when that
-   same assertion is present as actor_token.  It requires copying the
-   client subject into act.sub; it does not define omission of
-   actor_token or mapping to another principal.
+   This document explicitly defines delegated issuance from
+   authenticated client context and an approved Identity Binding,
+   without actor_token.  ID-JAG makes that parameter optional and leaves
+   actor processing to extensions ([ID-JAG], Section 9.7); its omission
+   alone does not establish this composition.
 
-   This profile keeps the existing presentation and explicitly
-   substitutes the approved Governed Agent mapping under Section 8.4.4.
-   Coordination with Actor Profile is needed on that resolution
-   extension, not on JWT duplication.
+   [RFC8693], Appendix A.1 describes a subject-only request as
+   impersonation.  Actor Profile Section 6.3.1 permits authentication-
+   context reuse only when the same client assertion is also present as
+   actor_token, and requires the client subject as act.sub.  Neither
+   defines the dedicated-client mapping specified here.
+
+   Coordination with Actor Profile and ID-JAG is needed on this explicit
+   extension: trusted configuration selects authenticated-client
+   resolution, separate mapping and authorization checks establish the
+   governed actor, and the issued ID-JAG contains act.  Generic Token
+   Exchange or Actor Profile support does not advertise support for this
+   composition.
 
 A.2.  Deferred Compositions
 
@@ -3630,8 +3655,10 @@ B.1.  Dedicated Client Authentication
      "jti": "analysis-auth-1"
    }
 
-   CLIENT_ASSERTION denotes the same signed compact JWT in both
-   parameters under Section 5.1.  It supplies no independent workload
+   CLIENT_ASSERTION denotes the signed compact JWT presented only in
+   client_assertion under Section 5.1.  The configured Identity Binding
+   resolves the authenticated client to agent-42; no actor-token
+   parameters are sent.  The assertion supplies no independent workload
    identity.  The client assertion expires after 60 seconds; the
    resulting grant can remain valid for 300 seconds.
 
@@ -3646,11 +3673,10 @@ B.2.  Exchange Request and Response
    server nonce is included if challenged.  The same key is proven at
    redemption; JKT_K denotes its public key thumbprint.
 
-   After use_dpop_nonce, retry with a new client assertion in both
-   assertion parameters and a fresh DPoP proof containing the nonce,
-   still signed by K (Section 5.1).  For example, replace assertion
-   jti=analysis-auth-1 with analysis-auth-2; resending analysis-auth-1
-   with only a new proof is a replay.
+   After use_dpop_nonce, retry with a new client_assertion and a fresh
+   DPoP proof containing the nonce, still signed by K (Section 5.1).
+   For example, replace assertion jti=analysis-auth-1 with analysis-
+   auth-2; resending analysis-auth-1 with only a new proof is a replay.
 
    POST /token HTTP/1.1
    Host: idp.example
@@ -3667,8 +3693,6 @@ B.2.  Exchange Request and Response
    &subject_token=ALICE_ID_TOKEN_FOR_ANALYSIS_CLIENT
    &subject_token_type=urn%3Aietf%3Aparams%3Aoauth
    %3Atoken-type%3Aid_token
-   &actor_token=CLIENT_ASSERTION
-   &actor_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
    &audience=https%3A%2F%2Fras.example%2F
    &resource=https%3A%2F%2Fapi.example%2Ftenants%2Facme-data%2F
    &scope=files.read
@@ -3887,25 +3911,33 @@ B.6.  Renewal and Rejection Examples
    |                     | party     |                                |
    +=====================+===========+================================+
    | Dedicated-client    | IdP       | HTTP 400, invalid_request; no  |
-   | exchange has a non- |           | alternate credential-class     |
-   | identical           |           | validation                     |
-   | actor_token         |           |                                |
+   | exchange includes   |           | switch to actor-evidence mode  |
+   | actor_token or      |           |                                |
+   | actor_token_type,   |           |                                |
+   | even a duplicate    |           |                                |
+   | client assertion    |           |                                |
    +---------------------+-----------+--------------------------------+
-   | Exchange uses an    | IdP       | HTTP 400, invalid_request      |
-   | unsupported         |           |                                |
+   | Configured actor-   | IdP       | HTTP 400, invalid_request; no  |
+   | evidence exchange   |           | fallback to dedicated-client   |
+   | omits actor_token   |           | resolution                     |
+   | or its type         |           |                                |
+   +---------------------+-----------+--------------------------------+
+   | Configured actor-   | IdP       | HTTP 400, invalid_request      |
+   | evidence exchange   |           |                                |
+   | uses an unsupported |           |                                |
    | actor_token_type    |           |                                |
    +---------------------+-----------+--------------------------------+
    | Bound-profile       | IdP       | HTTP 400, invalid_request      |
    | exchange omits its  |           |                                |
    | DPoP proof          |           |                                |
    +---------------------+-----------+--------------------------------+
-   | Exchange repeats    | IdP       | HTTP 400, invalid_client; dual |
-   | analysis-auth-1     |           | presentation within one        |
-   |                     |           | request is not a replay        |
+   | Exchange repeats    | IdP       | HTTP 400, invalid_client; the  |
+   | analysis-auth-1     |           | authentication assertion was   |
+   |                     |           | already consumed               |
    +---------------------+-----------+--------------------------------+
    | After a nonce       | IdP       | HTTP 400, invalid_client;      |
-   | challenge, retry    |           | regenerate the assertion in    |
-   | uses a fresh proof  |           | both parameters                |
+   | challenge, retry    |           | regenerate client_assertion    |
+   | uses a fresh proof  |           |                                |
    | but reuses the      |           |                                |
    | consumed analysis-  |           |                                |
    | auth-1 assertion    |           |                                |
@@ -4003,26 +4035,32 @@ Appendix C.  Variant: Shared Platform Client with SPIFFE
 
    Relative to the dedicated-client exchange, change only these inputs:
 
-        +=======================+=================================+
-        | Item                  | Shared-client value             |
-        +=======================+=================================+
-        | IdP client_id         | platform-sso                    |
-        +-----------------------+---------------------------------+
-        | client_assertion_type | urn:ietf:params:oauth:client-   |
-        |                       | assertion-type:jwt-spiffe       |
-        +-----------------------+---------------------------------+
-        | client_assertion and  | The identical compact JWT_SVID  |
-        | actor_token           |                                 |
-        +-----------------------+---------------------------------+
-        | subject_token         | Alice's ID Token with audience  |
-        |                       | platform-sso                    |
-        +-----------------------+---------------------------------+
-        | Identity Binding      | Approved trust domain and exact |
-        |                       | SPIFFE ID resolve to agent-42   |
-        +-----------------------+---------------------------------+
-        | Client Association    | platform-sso may use that       |
-        |                       | binding for delegated ID-JAG    |
-        +-----------------------+---------------------------------+
+       +=======================+===================================+
+       | Item                  | Shared-client value               |
+       +=======================+===================================+
+       | IdP client_id         | platform-sso                      |
+       +-----------------------+-----------------------------------+
+       | client_assertion_type | urn:ietf:params:oauth:client-     |
+       |                       | assertion-type:jwt-spiffe         |
+       +-----------------------+-----------------------------------+
+       | Resolution mode       | Trusted configuration selects the |
+       |                       | JWT-SVID actor-evidence input     |
+       +-----------------------+-----------------------------------+
+       | client_assertion and  | The identical compact JWT_SVID    |
+       | actor_token           |                                   |
+       +-----------------------+-----------------------------------+
+       | actor_token_type      | urn:ietf:params:oauth:token-      |
+       |                       | type:jwt                          |
+       +-----------------------+-----------------------------------+
+       | subject_token         | Alice's ID Token with audience    |
+       |                       | platform-sso                      |
+       +-----------------------+-----------------------------------+
+       | Identity Binding      | Approved trust domain and exact   |
+       |                       | SPIFFE ID resolve to agent-42     |
+       +-----------------------+-----------------------------------+
+       | Client Association    | platform-sso may use that binding |
+       |                       | for delegated ID-JAG              |
+       +-----------------------+-----------------------------------+
 
                                   Table 34
 

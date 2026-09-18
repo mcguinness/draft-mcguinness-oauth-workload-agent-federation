@@ -1298,7 +1298,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                     <p id="section-toc.1-1.8.2.4.2.2.1"><a href="#section-8.4.2" class="auto internal xref">8.4.2</a>.  <a href="#name-subject-token-validation" class="internal xref">Subject Token Validation</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.4.2.3">
-                    <p id="section-toc.1-1.8.2.4.2.3.1"><a href="#section-8.4.3" class="auto internal xref">8.4.3</a>.  <a href="#name-actor-token-validation" class="internal xref">Actor Token Validation</a></p>
+                    <p id="section-toc.1-1.8.2.4.2.3.1"><a href="#section-8.4.3" class="auto internal xref">8.4.3</a>.  <a href="#name-agent-resolution-input-vali" class="internal xref">Agent Resolution Input Validation</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.4.2.4">
                     <p id="section-toc.1-1.8.2.4.2.4.1"><a href="#section-8.4.4" class="auto internal xref">8.4.4</a>.  <a href="#name-actor-resolution-and-constr" class="internal xref">Actor Resolution and Construction</a></p>
@@ -2225,9 +2225,11 @@ Agent, and Governance Tenant.<a href="#section-4.3-3.2.1" class="pilcrow">¶</a>
 permitted binding or binding set, flow, and credential class.<a href="#section-4.3-3.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.3-3.4">
-            <p id="section-4.3-3.4.1"><strong>Resolution input and proof:</strong> IdP policy and client configuration
-establish the accepted evidence and proof requirements for each
-binding and client.<a href="#section-4.3-3.4.1" class="pilcrow">¶</a></p>
+            <p id="section-4.3-3.4.1"><strong>Resolution mode and proof:</strong> IdP policy and client configuration
+establish dedicated-client resolution or an actor-evidence input for
+the client, applicable profile, and target. Within an actor-evidence
+mode, they establish accepted credential classes and proof requirements.
+Request parameters do not select the resolution mode (<a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>).<a href="#section-4.3-3.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.3-3.5">
             <p id="section-4.3-3.5.1"><strong>Target:</strong> The IdP administrator configures the RAS issuer, resources,
@@ -2558,43 +2560,43 @@ be supported.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
           <h4 id="name-presentation-and-resolution">
 <a href="#section-5.1.1" class="section-number selfRef">5.1.1. </a><a href="#name-presentation-and-resolution" class="section-name selfRef">Presentation and Resolution</a>
           </h4>
-<p id="section-5.1.1-1">The assertion supplies no identity beyond the authenticated client;
-it is not independent workload evidence. In this mode, <code>actor_token</code>
-identifies the resolution source; only the configured Identity Binding
-establishes the resulting Governed Agent. Presentation of the same JWT
-as <code>client_assertion</code> and <code>actor_token</code> follows <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00#section-6.3.1.1" class="relref">Section 6.3.1.1</a></span>. This profile explicitly replaces that input's
-subject-copying rule with Governed Agent resolution under
-<a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>; the extension boundary is described in
-<a href="#dedicated-client-coordination" class="auto internal xref">Appendix A.1.3</a>.<a href="#section-5.1.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1.1-2">The client <span class="bcp14">MUST</span> present the identical compact JWT in <code>client_assertion</code>
-and <code>actor_token</code>, with <code>client_assertion_type</code> set to
-<code>urn:ietf:params:oauth:client-assertion-type:jwt-bearer</code>.
-When trusted configuration requires this dedicated-client input, the
-IdP <span class="bcp14">MUST</span> reject a non-identical <code>actor_token</code> with <code>invalid_request</code>.
-This equality requirement does not apply to a separately configured
-platform-JWT input accompanying RFC 7523 client authentication.<a href="#section-5.1.1-2" class="pilcrow">¶</a></p>
-<p id="section-5.1.1-3">The IdP <span class="bcp14">MUST</span>:<a href="#section-5.1.1-3" class="pilcrow">¶</a></p>
+<p id="section-5.1.1-1">The assertion authenticates the client; it is not independent workload
+evidence. In this explicitly configured mode, the IdP uses the validated
+client-authentication context as the resolution source. The Identity
+Binding determines the Governed Agent; client authentication alone does
+not authorize its use.<a href="#section-5.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1.1-2">The client <span class="bcp14">MUST</span> present its assertion in <code>client_assertion</code>, with
+<code>client_assertion_type</code> set to
+<code>urn:ietf:params:oauth:client-assertion-type:jwt-bearer</code>, and <span class="bcp14">MUST</span> omit
+<code>actor_token</code> and <code>actor_token_type</code>. The IdP <span class="bcp14">MUST</span> reject either actor
+parameter in this mode with <code>invalid_request</code>.<a href="#section-5.1.1-2" class="pilcrow">¶</a></p>
+<p id="section-5.1.1-3">This profile defines the authenticated-client resolution composition;
+it is not Actor Profile's dual-presentation input. Its relationship to
+Token Exchange and Actor Profile is stated in
+<a href="#dedicated-client-coordination" class="auto internal xref">Appendix A.1.3</a>. Mode selection and missing-evidence
+handling follow <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>.<a href="#section-5.1.1-3" class="pilcrow">¶</a></p>
+<p id="section-5.1.1-4">The IdP <span class="bcp14">MUST</span>:<a href="#section-5.1.1-4" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1.1-4.1">
-              <p id="section-5.1.1-4.1.1"><strong>Authentication:</strong> Authenticate the client under Sections <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">3</a> and <a href="https://rfc-editor.org/rfc/rfc7523#section-3.2" class="relref">3.2</a> of <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> and
+<li class="normal" id="section-5.1.1-5.1">
+              <p id="section-5.1.1-5.1.1"><strong>Authentication:</strong> Authenticate the client under Sections <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">3</a> and <a href="https://rfc-editor.org/rfc/rfc7523#section-3.2" class="relref">3.2</a> of <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> and
 its configured authentication method, including issuer trust,
 signature, audience, expiration, and replay checks. The assertion's
-<code>sub</code> <span class="bcp14">MUST</span> equal the authenticated IdP <code>client_id</code>.<a href="#section-5.1.1-4.1.1" class="pilcrow">¶</a></p>
+<code>sub</code> <span class="bcp14">MUST</span> equal the authenticated IdP <code>client_id</code>.<a href="#section-5.1.1-5.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5.1.1-4.2">
-              <p id="section-5.1.1-4.2.1"><strong>Key trust:</strong> Use verification keys authorized for that client and
+            <li class="normal" id="section-5.1.1-5.2">
+              <p id="section-5.1.1-5.2.1"><strong>Key trust:</strong> Use verification keys authorized for that client and
 assertion issuer.
-Assertion-supplied keys or issuer claims <span class="bcp14">MUST NOT</span> establish trust.<a href="#section-5.1.1-4.2.1" class="pilcrow">¶</a></p>
+Assertion-supplied keys or issuer claims <span class="bcp14">MUST NOT</span> establish trust.<a href="#section-5.1.1-5.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5.1.1-4.3">
-              <p id="section-5.1.1-4.3.1"><strong>Resolution:</strong> Resolve the exact validated (<code>iss</code>, <code>sub</code>) in the IdP's
+            <li class="normal" id="section-5.1.1-5.3">
+              <p id="section-5.1.1-5.3.1"><strong>Resolution:</strong> Resolve the exact validated (<code>iss</code>, <code>sub</code>) in the IdP's
 client-registration
 context through an enabled Identity Binding to one Governed Agent.
-Then enforce Client Association and delegation authorization separately.<a href="#section-5.1.1-4.3.1" class="pilcrow">¶</a></p>
+Then enforce Client Association and delegation authorization separately.<a href="#section-5.1.1-5.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-5.1.1-5">For <code>private_key_jwt</code>, apply Section 9 of <span>[<a href="#OPENID" class="cite xref">OPENID</a>]</span>: the assertion issuer
-and subject are the client's registered identifier.<a href="#section-5.1.1-5" class="pilcrow">¶</a></p>
+<p id="section-5.1.1-6">For <code>private_key_jwt</code>, apply Section 9 of <span>[<a href="#OPENID" class="cite xref">OPENID</a>]</span>: the assertion issuer
+and subject are the client's registered identifier.<a href="#section-5.1.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="assertion-audience">
@@ -2644,25 +2646,21 @@ remains acceptable.<a href="#section-5.1.3-2.2.1" class="pilcrow">¶</a></p>
               <p id="section-5.1.3-2.3.1">Replay identifiers <span class="bcp14">MUST</span> be qualified by the validated issuer and client.<a href="#section-5.1.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-5.1.3-3">Using the assertion in both parameters of one request is one
-presentation, not a replay. Following <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00#section-6.3.1.2" class="relref">Section 6.3.1.2</a></span>,
-the IdP <span class="bcp14">MUST</span> reuse the successful authentication result, then apply
-this profile's separate identity mapping and authorization checks.<a href="#section-5.1.3-3" class="pilcrow">¶</a></p>
-<p id="section-5.1.3-4">For a retry of a dedicated-client exchange:<a href="#section-5.1.3-4" class="pilcrow">¶</a></p>
+<p id="section-5.1.3-3">For a retry of a dedicated-client exchange:<a href="#section-5.1.3-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1.3-5.1">
-              <p id="section-5.1.3-5.1.1">The client <span class="bcp14">MUST</span> generate a new client assertion with a fresh <code>jti</code>
-and use it in both <code>client_assertion</code> and <code>actor_token</code>. This also
-applies after a <code>use_dpop_nonce</code> challenge under <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>], <a href="https://rfc-editor.org/rfc/rfc9449#section-8" class="relref">Section 8</a></span>.<a href="#section-5.1.3-5.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-5.1.3-4.1">
+              <p id="section-5.1.3-4.1.1">The client <span class="bcp14">MUST</span> generate a new <code>client_assertion</code> with a fresh <code>jti</code>.
+This also applies after a <code>use_dpop_nonce</code> challenge under
+<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>], <a href="https://rfc-editor.org/rfc/rfc9449#section-8" class="relref">Section 8</a></span>.<a href="#section-5.1.3-4.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5.1.3-5.2">
-              <p id="section-5.1.3-5.2.1">For a nonce retry, the client <span class="bcp14">MUST</span> also generate a fresh DPoP proof
-containing the supplied nonce while retaining the grant proof key.<a href="#section-5.1.3-5.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-5.1.3-4.2">
+              <p id="section-5.1.3-4.2.1">For a nonce retry, the client <span class="bcp14">MUST</span> also generate a fresh DPoP proof
+containing the supplied nonce while retaining the grant proof key.<a href="#section-5.1.3-4.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-5.1.3-6">The IdP may already have consumed the previous assertion during
+<p id="section-5.1.3-5">The IdP may already have consumed the previous assertion during
 authentication. Changing only the DPoP proof does not satisfy the
-assertion replay rule.<a href="#section-5.1.3-6" class="pilcrow">¶</a></p>
+assertion replay rule.<a href="#section-5.1.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="identity-and-proof-boundaries">
@@ -3121,8 +3119,8 @@ referenced sections define the requirements.<a href="#section-8.1-1" class="pilc
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Client-assertion input</td>
-              <td class="text-left" rowspan="1" colspan="1">Reuse the validated assertion for actor resolution; require token-endpoint audience support, explicit configuration for an alternative AS identifier, and single-use <code>jti</code>
+              <td class="text-left" rowspan="1" colspan="1">Dedicated-client input</td>
+              <td class="text-left" rowspan="1" colspan="1">Resolve from authenticated client context with no actor-token parameters; require token-endpoint audience support, explicit configuration for an alternative AS identifier, and single-use <code>jti</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>
@@ -3137,7 +3135,7 @@ referenced sections define the requirements.<a href="#section-8.1-1" class="pilc
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Request narrowing</td>
-              <td class="text-left" rowspan="1" colspan="1">Explicit agent-resolution input, exactly one resource, and non-empty scope required; no incoming actor chain</td>
+              <td class="text-left" rowspan="1" colspan="1">Configured resolution mode, exactly one resource, and non-empty scope required; actor evidence required outside dedicated-client mode; no incoming actor chain</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#root-request" class="auto internal xref">Section 8.4.1</a>, <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>
 </td>
@@ -3343,7 +3341,8 @@ parameters or headers required by the configured client-authentication
 method. For RFC 7523 and JWT-SVID authentication these include
 <code>client_assertion_type</code> and <code>client_assertion</code>, and <code>client_id</code> where
 required by the method or registration.<a href="#section-8.4.1-2" class="pilcrow">¶</a></p>
-<p id="section-8.4.1-3">The following parameters are <span class="bcp14">REQUIRED</span>:<a href="#section-8.4.1-3" class="pilcrow">¶</a></p>
+<p id="section-8.4.1-3">The following parameters are <span class="bcp14">REQUIRED</span> except where the resolution mode
+specifies otherwise:<a href="#section-8.4.1-3" class="pilcrow">¶</a></p>
 <table class="center" id="table-13">
             <caption><a href="#table-13" class="selfRef">Table 13</a></caption>
 <thead>
@@ -3387,15 +3386,14 @@ required by the method or registration.<a href="#section-8.4.1-2" class="pilcrow
                 <td class="text-left" rowspan="1" colspan="1">
                   <code>actor_token</code>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Direct credential selected under <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>
+                <td class="text-left" rowspan="1" colspan="1">Omitted for dedicated-client resolution; <span class="bcp14">REQUIRED</span> for an actor-evidence input under <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>
 </td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">
                   <code>actor_token_type</code>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>urn:ietf:params:oauth:token-type:jwt</code>
+                <td class="text-left" rowspan="1" colspan="1">Omitted with <code>actor_token</code>; otherwise <span class="bcp14">REQUIRED</span> with value <code>urn:ietf:params:oauth:token-type:jwt</code>
 </td>
               </tr>
               <tr>
@@ -3434,8 +3432,9 @@ association; it does not convey the IdP's Governance Tenant.<a href="#section-8.
 requiring access to multiple resources <span class="bcp14">MUST</span> obtain a separate ID-JAG
 for each resource. The IdP <span class="bcp14">MUST</span> reject multiple <code>resource</code> parameters
 with <code>invalid_target</code>.<a href="#section-8.4.1-7" class="pilcrow">¶</a></p>
-<p id="section-8.4.1-8">This profile narrows ID-JAG by requiring <code>actor_token</code>, exactly one
-resource, and a non-empty scope; <code>authorization_details</code> <span class="bcp14">MAY</span>
+<p id="section-8.4.1-8">This profile requires exactly one resource and a non-empty scope.
+It requires <code>actor_token</code> for actor-evidence inputs and omits it for
+configured dedicated-client resolution. <code>authorization_details</code> <span class="bcp14">MAY</span>
 accompany <code>scope</code> and is processed under ID-JAG. The scope requirement
 belongs to this ID-JAG realization: it supplies a common authorization
 mechanism through grant issuance, redemption, refresh, and API enforcement.
@@ -3521,23 +3520,33 @@ unattended exchange can proceed.<a href="#section-8.4.2-6" class="pilcrow">¶</a
 </div>
 <div id="actor-inputs">
 <section id="section-8.4.3">
-          <h4 id="name-actor-token-validation">
-<a href="#section-8.4.3" class="section-number selfRef">8.4.3. </a><a href="#name-actor-token-validation" class="section-name selfRef">Actor Token Validation</a>
+          <h4 id="name-agent-resolution-input-vali">
+<a href="#section-8.4.3" class="section-number selfRef">8.4.3. </a><a href="#name-agent-resolution-input-vali" class="section-name selfRef">Agent Resolution Input Validation</a>
           </h4>
-<p id="section-8.4.3-1">All agent-resolution inputs carried in <code>actor_token</code> use
-<code>actor_token_type=urn:ietf:params:oauth:token-type:jwt</code>.
-The IdP <span class="bcp14">MUST</span> reject any other <code>actor_token_type</code> with <code>invalid_request</code>.<a href="#section-8.4.3-1" class="pilcrow">¶</a></p>
-<p id="section-8.4.3-2">The generic JWT token type retains existing credential formats without
-defining new OAuth token types. Credential semantics come from
-authenticated request context and trusted configuration, not the generic
-token type (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-3" class="relref">Section 3</a></span>).<a href="#section-8.4.3-2" class="pilcrow">¶</a></p>
-<p id="section-8.4.3-3">Native inputs reuse the configured client authentication method and its assertion
-type, under <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-2.2" class="relref">Section 2.2</a></span> or <span>[<a href="#SPIFFE-OAUTH" class="cite xref">SPIFFE-OAUTH</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02#section-3.1" class="relref">Section 3.1</a></span>.
-The equality check below identifies the credential already validated
-under that method. In dedicated-client resolution it adds no independent
-identity evidence. Platform JWTs instead use a configured
-credential class. These paths <span class="bcp14">MUST</span> have mutually exclusive validation
-rules under <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.12" class="relref">Section 3.12</a></span>.<a href="#section-8.4.3-3" class="pilcrow">¶</a></p>
+<p id="section-8.4.3-1">After client authentication, the IdP <span class="bcp14">MUST</span> determine the resolution mode
+from trusted configuration for the authenticated client, applicable
+profile, and target. If that configuration does not establish an
+unambiguous mode, it <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code>.
+The presence or absence of actor-token parameters <span class="bcp14">MUST NOT</span> select or
+change that mode.<a href="#section-8.4.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.4.3-2.1">
+              <p id="section-8.4.3-2.1.1"><strong>Dedicated-client resolution:</strong> Use the authenticated client context
+under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>. The IdP <span class="bcp14">MUST</span> reject <code>actor_token</code> or
+<code>actor_token_type</code> with <code>invalid_request</code>.<a href="#section-8.4.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-8.4.3-2.2">
+              <p id="section-8.4.3-2.2.1"><strong>Actor-evidence input:</strong> The IdP <span class="bcp14">MUST</span> require both <code>actor_token</code> and
+<code>actor_token_type</code>. Missing either uses <code>invalid_request</code>. The type
+<span class="bcp14">MUST</span> be <code>urn:ietf:params:oauth:token-type:jwt</code>; any other type uses
+<code>invalid_request</code>. Missing or rejected evidence <span class="bcp14">MUST NOT</span> trigger
+dedicated-client resolution.<a href="#section-8.4.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-8.4.3-3">Both modes proceed through <a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>. A governed request
+<span class="bcp14">MUST</span> result in the required governed <code>act</code> or fail; omitting actor-token
+parameters in dedicated-client mode does not request ordinary EMA or
+subject-only impersonation.<a href="#section-8.4.3-3" class="pilcrow">¶</a></p>
 <table class="center" id="table-14">
             <caption><a href="#table-14" class="selfRef">Table 14</a></caption>
 <thead>
@@ -3552,7 +3561,7 @@ rules under <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="h
                 <td class="text-left" rowspan="1" colspan="1">Dedicated client identity</td>
                 <td class="text-left" rowspan="1" colspan="1">
                   <span class="bcp14">REQUIRED</span> at the client and IdP for <code>private_key_jwt</code>; use is configurable</td>
-                <td class="text-left" rowspan="1" colspan="1">Identical compact JWT in <code>actor_token</code> and <code>client_assertion</code>; explicit client-to-agent binding under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>
+                <td class="text-left" rowspan="1" colspan="1">Authenticated client context; no actor-token parameters; explicit binding under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>
 </td>
               </tr>
               <tr>
@@ -3580,60 +3589,60 @@ rules under <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="h
               </tr>
             </tbody>
           </table>
-<p id="section-8.4.3-5">The IdP <span class="bcp14">MUST</span> classify the <code>actor_token</code> using these steps:<a href="#section-8.4.3-5" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-8.4.3-6">
-<li id="section-8.4.3-6.1">
-              <p id="section-8.4.3-6.1.1">Select a native credential class when the JWT is
+<p id="section-8.4.3-5">The following classification rules apply only to actor-evidence inputs.
+The generic JWT token type retains existing credential formats without
+defining new OAuth token types. Credential semantics come from
+authenticated request context and trusted configuration, not the generic
+token type (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-3" class="relref">Section 3</a></span>). These paths <span class="bcp14">MUST</span> have mutually
+exclusive validation rules under <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.12" class="relref">Section 3.12</a></span>.<a href="#section-8.4.3-5" class="pilcrow">¶</a></p>
+<p id="section-8.4.3-6">The IdP <span class="bcp14">MUST</span> classify the <code>actor_token</code> using these steps:<a href="#section-8.4.3-6" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-8.4.3-7">
+<li id="section-8.4.3-7.1">
+              <p id="section-8.4.3-7.1.1">Select a native credential class when the JWT is
 byte-identical to evidence used by the configured authentication
-method:<a href="#section-8.4.3-6.1.1" class="pilcrow">¶</a></p>
+method:<a href="#section-8.4.3-7.1.1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-8.4.3-6.1.2.1">
-                  <p id="section-8.4.3-6.1.2.1.1"><code>client_assertion</code> with assertion type
-<code>urn:ietf:params:oauth:client-assertion-type:jwt-bearer</code>, used by
-the configured RFC 7523 asymmetric authentication method, selects
-the client-assertion input.<a href="#section-8.4.3-6.1.2.1.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-8.4.3-6.1.2.2">
-                  <p id="section-8.4.3-6.1.2.2.1"><code>client_assertion</code> with assertion type
+<li class="normal" id="section-8.4.3-7.1.2.1">
+                  <p id="section-8.4.3-7.1.2.1.1"><code>client_assertion</code> with assertion type
 <code>urn:ietf:params:oauth:client-assertion-type:jwt-spiffe</code>, used for
-JWT-SVID authentication, selects JWT-SVID.<a href="#section-8.4.3-6.1.2.2.1" class="pilcrow">¶</a></p>
+JWT-SVID authentication, selects JWT-SVID.<a href="#section-8.4.3-7.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
-                <li class="normal" id="section-8.4.3-6.1.2.3">
-                  <p id="section-8.4.3-6.1.2.3.1"><code>OAuth-Client-Attestation</code> used for Client Attestation
-authentication selects Client Attestation.<a href="#section-8.4.3-6.1.2.3.1" class="pilcrow">¶</a></p>
+                <li class="normal" id="section-8.4.3-7.1.2.2">
+                  <p id="section-8.4.3-7.1.2.2.1"><code>OAuth-Client-Attestation</code> used for Client Attestation
+authentication selects Client Attestation.<a href="#section-8.4.3-7.1.2.2.1" class="pilcrow">¶</a></p>
 </li>
               </ul>
 </li>
-            <li id="section-8.4.3-6.2">
-              <p id="section-8.4.3-6.2.1">Otherwise, an issuer and credential class configured for the
+            <li id="section-8.4.3-7.2">
+              <p id="section-8.4.3-7.2.1">Otherwise, an issuer and credential class configured for the
 authenticated client's existing platform JWT input select that
 input. Apply its configured classification rules under
-<a href="#imported-jwt-input" class="auto internal xref">Section 9.1</a>; a generic <code>typ=JWT</code> alone is insufficient.<a href="#section-8.4.3-6.2.1" class="pilcrow">¶</a></p>
+<a href="#imported-jwt-input" class="auto internal xref">Section 9.1</a>; a generic <code>typ=JWT</code> alone is insufficient.<a href="#section-8.4.3-7.2.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
-<p id="section-8.4.3-7">The IdP <span class="bcp14">MUST</span> reject a credential matching no configured class or more
+<p id="section-8.4.3-8">The IdP <span class="bcp14">MUST</span> reject a credential matching no configured class or more
 than one class with <code>invalid_request</code>. Classification selects validation
-rules; unverified claims do not establish trust.<a href="#section-8.4.3-7" class="pilcrow">¶</a></p>
-<p id="section-8.4.3-8">Within one token
+rules; unverified claims do not establish trust.<a href="#section-8.4.3-8" class="pilcrow">¶</a></p>
+<p id="section-8.4.3-9">Within one token
 request, once a credential class is selected, the IdP <span class="bcp14">MUST NOT</span> validate
 the credential under another class after rejection by the selected
-class's validation or authorization rules.<a href="#section-8.4.3-8" class="pilcrow">¶</a></p>
-<p id="section-8.4.3-9">For Client Attestation, the authentication method determines proof use:<a href="#section-8.4.3-9" class="pilcrow">¶</a></p>
+class's validation or authorization rules.<a href="#section-8.4.3-9" class="pilcrow">¶</a></p>
+<p id="section-8.4.3-10">For Client Attestation, the authentication method determines proof use:<a href="#section-8.4.3-10" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-8.4.3-10.1">
-              <p id="section-8.4.3-10.1.1">With <code>attest_jwt_client_auth</code>, any grant proof key <span class="bcp14">MUST</span> match the
+<li class="normal" id="section-8.4.3-11.1">
+              <p id="section-8.4.3-11.1.1">With <code>attest_jwt_client_auth</code>, any grant proof key <span class="bcp14">MUST</span> match the
 attestation's confirmation key, narrowing ATTEST's allowance for a
-separate DPoP key.<a href="#section-8.4.3-10.1.1" class="pilcrow">¶</a></p>
+separate DPoP key.<a href="#section-8.4.3-11.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-8.4.3-10.2">
-              <p id="section-8.4.3-10.2.1">With <code>attest_jwt_client_auth_dpop</code>, the keys are already one and its
-DPoP proof serves both roles.<a href="#section-8.4.3-10.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-8.4.3-11.2">
+              <p id="section-8.4.3-11.2.1">With <code>attest_jwt_client_auth_dpop</code>, the keys are already one and its
+DPoP proof serves both roles.<a href="#section-8.4.3-11.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-8.4.3-11">ATTEST's errors apply.<a href="#section-8.4.3-11" class="pilcrow">¶</a></p>
-<p id="section-8.4.3-12">To preserve the single user-to-agent relationship, the IdP <span class="bcp14">MUST</span> reject
+<p id="section-8.4.3-12">ATTEST's errors apply.<a href="#section-8.4.3-12" class="pilcrow">¶</a></p>
+<p id="section-8.4.3-13">To preserve the single user-to-agent relationship, the IdP <span class="bcp14">MUST</span> reject
 an <code>actor_token</code> or ID Token containing <code>act</code>, and a refresh-token
-subject whose retained authorization contains an actor chain.<a href="#section-8.4.3-12" class="pilcrow">¶</a></p>
+subject whose retained authorization contains an actor chain.<a href="#section-8.4.3-13" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-construction">
@@ -3652,9 +3661,11 @@ ID-JAG <span class="bcp14">MUST</span> contain one <code>act</code> object with:
               <p id="section-8.4.4-2.2.1"><code>iss</code>: this IdP's issuer identifier.<a href="#section-8.4.4-2.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-8.4.4-3">These values <span class="bcp14">MUST</span> come from the approved mapping, even when external
-and governed identifiers coincide. This replaces the credential-to-actor
-copying in <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00#section-6.3" class="relref">Section 6.3</a></span>.<a href="#section-8.4.4-3" class="pilcrow">¶</a></p>
+<p id="section-8.4.4-3">These values <span class="bcp14">MUST</span> come from the approved mapping, even when source
+and governed identifiers coincide. For actor-evidence inputs this
+replaces credential-to-actor copying in <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00#section-6.3" class="relref">Section 6.3</a></span>;
+for dedicated-client resolution it uses the authenticated client context
+under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>.<a href="#section-8.4.4-3" class="pilcrow">¶</a></p>
 <p id="section-8.4.4-4">The object <span class="bcp14">MUST</span> follow <span>[<a href="#ACTOR-PROFILE" class="cite xref">ACTOR-PROFILE</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00#section-3.4" class="relref">Section 3.4</a></span>, including its
 <code>sub_profile</code> recommendation and unclassified-actor rules. Any
 <code>sub_profile</code> <span class="bcp14">MUST</span> reflect the IdP's authoritative classification.
@@ -4213,7 +4224,12 @@ before authorization. This profile specifies the following outcomes:<a href="#se
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Unsupported <code>actor_token_type</code>, or non-identical assertions when the configured input requires dedicated-client resolution</td>
+              <td class="text-left" rowspan="1" colspan="1">No unambiguous configured resolution mode, actor-token parameters in dedicated-client mode, or missing actor-token parameters in actor-evidence mode</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_request</code>; no mode fallback</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Unsupported <code>actor_token_type</code> in actor-evidence mode</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_request</code>
 </td>
@@ -4225,8 +4241,7 @@ before authorization. This profile specifies the following outcomes:<a href="#se
 </td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Failed RFC 7523 client authentication, including an assertion also presented as <code>actor_token</code>
-</td>
+              <td class="text-left" rowspan="1" colspan="1">Failed RFC 7523 client authentication</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <code>invalid_client</code>; other methods use their specified authentication errors</td>
             </tr>
@@ -4328,8 +4343,9 @@ intentional.
 When DPoP is used, proof and nonce errors follow <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> at both
 endpoints; unsupported DPoP and missing required issuance proof follow
 <a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#section-8.6-8" class="pilcrow">¶</a></p>
-<p id="section-8.6-9">Client authentication failures take precedence over actor-input failures
-when both parameters carry the same credential. Error descriptions
+<p id="section-8.6-9">Client authentication failures use the authentication method's error,
+including when JWT-SVID or Client Attestation also serves as actor
+evidence. Error descriptions
 <span class="bcp14">SHOULD NOT</span> reveal identity, binding, or policy details beyond those
 disclosed by the error category. Distinguishing <code>invalid_grant</code>
 from <code>actor_unauthorized</code> reveals that an actor was resolved but denied
@@ -5510,15 +5526,21 @@ dependency on JWT DPoP Grant.<a href="#appendix-A.1.2-1" class="pilcrow">¶</a><
           <h4 id="name-dedicated-client-identity-m">
 <a href="#appendix-A.1.3" class="section-number selfRef">A.1.3. </a><a href="#name-dedicated-client-identity-m" class="section-name selfRef">Dedicated-Client Identity Mapping</a>
           </h4>
-<p id="appendix-A.1.3-1">Actor Profile Section 6.3.1 defines dual presentation of a client
-assertion and permits reuse of authenticated client context when that
-same assertion is present as <code>actor_token</code>. It requires copying the
-client subject into <code>act.sub</code>; it does not define omission of
-<code>actor_token</code> or mapping to another principal.<a href="#appendix-A.1.3-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.1.3-2">This profile keeps the
-existing presentation and explicitly substitutes the approved Governed
-Agent mapping under <a href="#actor-construction" class="auto internal xref">Section 8.4.4</a>. Coordination with Actor
-Profile is needed on that resolution extension, not on JWT duplication.<a href="#appendix-A.1.3-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.1.3-1">This document explicitly defines delegated issuance from authenticated
+client context and an approved Identity Binding, without <code>actor_token</code>.
+ID-JAG makes that parameter optional and leaves actor processing to
+extensions (<span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-9.7" class="relref">Section 9.7</a></span>); its omission alone does not establish
+this composition.<a href="#appendix-A.1.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.1.3-2"><span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#appendix-A.1" class="relref">Appendix A.1</a></span> describes a subject-only request as
+impersonation. Actor Profile Section 6.3.1 permits authentication-context
+reuse only when the same client assertion is also present as
+<code>actor_token</code>, and requires the client subject as <code>act.sub</code>.
+Neither defines the dedicated-client mapping specified here.<a href="#appendix-A.1.3-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.1.3-3">Coordination with Actor Profile and ID-JAG is needed on this explicit
+extension: trusted configuration selects authenticated-client resolution,
+separate mapping and authorization checks establish the governed actor,
+and the issued ID-JAG contains <code>act</code>. Generic Token Exchange or Actor
+Profile support does not advertise support for this composition.<a href="#appendix-A.1.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -5710,8 +5732,10 @@ key identifier:<a href="#appendix-B.1-1" class="pilcrow">¶</a></p>
 }
 </pre><a href="#appendix-B.1-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-B.1-3"><code>CLIENT_ASSERTION</code> denotes the same signed compact JWT in both
-parameters under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>. It supplies no independent
+<p id="appendix-B.1-3"><code>CLIENT_ASSERTION</code> denotes the signed compact JWT presented only in
+<code>client_assertion</code> under <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>. The configured
+Identity Binding resolves the authenticated client to <code>agent-42</code>;
+no actor-token parameters are sent. The assertion supplies no independent
 workload identity. The client assertion expires after 60 seconds;
 the resulting grant can remain valid for 300 seconds.<a href="#appendix-B.1-3" class="pilcrow">¶</a></p>
 </section>
@@ -5728,9 +5752,9 @@ concatenate their lines before sending.<a href="#appendix-B.2-1" class="pilcrow"
 <code>htu=https://idp.example/token</code>, a current <code>iat</code>, and a unique <code>jti</code>.
 A server nonce is included if challenged. The same key is proven at
 redemption; <code>JKT_K</code> denotes its public key thumbprint.<a href="#appendix-B.2-2" class="pilcrow">¶</a></p>
-<p id="appendix-B.2-3">After <code>use_dpop_nonce</code>, retry with a new client assertion in both
-assertion parameters and a fresh DPoP proof containing the nonce,
-still signed by K (<a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>). For example, replace
+<p id="appendix-B.2-3">After <code>use_dpop_nonce</code>, retry with a new <code>client_assertion</code> and a fresh
+DPoP proof containing the nonce, still signed by K
+(<a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>). For example, replace
 assertion <code>jti=analysis-auth-1</code> with <code>analysis-auth-2</code>; resending
 <code>analysis-auth-1</code> with only a new proof is a replay.<a href="#appendix-B.2-3" class="pilcrow">¶</a></p>
 <div class="lang-http-message sourcecode" id="appendix-B.2-4">
@@ -5750,8 +5774,6 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &amp;subject_token=ALICE_ID_TOKEN_FOR_ANALYSIS_CLIENT
 &amp;subject_token_type=urn%3Aietf%3Aparams%3Aoauth
 %3Atoken-type%3Aid_token
-&amp;actor_token=CLIENT_ASSERTION
-&amp;actor_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
 &amp;audience=https%3A%2F%2Fras.example%2F
 &amp;resource=https%3A%2F%2Fapi.example%2Ftenants%2Facme-data%2F
 &amp;scope=files.read
@@ -6016,13 +6038,17 @@ errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API 
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Dedicated-client exchange has a non-identical <code>actor_token</code>
-</td>
+              <td class="text-left" rowspan="1" colspan="1">Dedicated-client exchange includes <code>actor_token</code> or <code>actor_token_type</code>, even a duplicate client assertion</td>
               <td class="text-left" rowspan="1" colspan="1">IdP</td>
-              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_request</code>; no alternate credential-class validation</td>
+              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_request</code>; no switch to actor-evidence mode</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Exchange uses an unsupported <code>actor_token_type</code>
+              <td class="text-left" rowspan="1" colspan="1">Configured actor-evidence exchange omits <code>actor_token</code> or its type</td>
+              <td class="text-left" rowspan="1" colspan="1">IdP</td>
+              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_request</code>; no fallback to dedicated-client resolution</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Configured actor-evidence exchange uses an unsupported <code>actor_token_type</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">IdP</td>
               <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_request</code>
@@ -6038,12 +6064,13 @@ errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API 
               <td class="text-left" rowspan="1" colspan="1">Exchange repeats <code>analysis-auth-1</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">IdP</td>
-              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_client</code>; dual presentation within one request is not a replay</td>
+              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_client</code>; the authentication assertion was already consumed</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">After a nonce challenge, retry uses a fresh proof but reuses the consumed <code>analysis-auth-1</code> assertion</td>
               <td class="text-left" rowspan="1" colspan="1">IdP</td>
-              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_client</code>; regenerate the assertion in both parameters</td>
+              <td class="text-left" rowspan="1" colspan="1">HTTP 400, <code>invalid_client</code>; regenerate <code>client_assertion</code>
+</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Exchange contains a second <code>resource</code> parameter</td>
@@ -6163,10 +6190,22 @@ an illustrative NumericDate value.<a href="#appendix-C-2" class="pilcrow">¶</a>
 </td>
           </tr>
           <tr>
+            <td class="text-left" rowspan="1" colspan="1">Resolution mode</td>
+            <td class="text-left" rowspan="1" colspan="1">Trusted configuration selects the JWT-SVID actor-evidence input</td>
+          </tr>
+          <tr>
             <td class="text-left" rowspan="1" colspan="1">
               <code>client_assertion</code> and <code>actor_token</code>
 </td>
             <td class="text-left" rowspan="1" colspan="1">The identical compact <code>JWT_SVID</code>
+</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>actor_token_type</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>urn:ietf:params:oauth:token-type:jwt</code>
 </td>
           </tr>
           <tr>
