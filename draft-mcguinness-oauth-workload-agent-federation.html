@@ -4556,10 +4556,9 @@ cannot outlive an expiration unknown to the API.<a href="#section-8.5.6-2.4.1" c
           </ul>
 <p id="section-8.5.6-3">The processing in <a href="#api-processing" class="auto internal xref">Section 8.9</a> applies to the introspected
 context exactly as to JWT claims. Deployments also applying
-<span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> use that companion's configured enforcement mode:
-online introspection forbids active-response reuse, while bounded
-introspection caching imposes an explicit cache interval in addition
-to the limits above.<a href="#section-8.5.6-3" class="pilcrow">¶</a></p>
+<span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> also apply its administrative-state and session-revocation
+checks. That companion describes the propagation and caching limits; it
+does not require a different introspection protocol.<a href="#section-8.5.6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="ras-refresh">
@@ -4948,11 +4947,10 @@ the requested operation. Missing, ambiguous, or conflicting tenant
 context <span class="bcp14">MUST</span> result in denial.<a href="#section-8.9-4.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-8.9-5"><span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> adds lifecycle enforcement when that companion is
-configured. Its expiring-JWT mode retains offline validation with an
-explicit token-lifetime ceiling; its introspection modes bound the
-time an active response can be relied upon. This document alone does
-not impose those additional modes or their disablement guarantees.<a href="#section-8.9-5" class="pilcrow">¶</a></p>
+<p id="section-8.9-5"><span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> adds provisioning and disablement behavior when
+configured. Offline JWT validation and cached introspection retain their
+limits: neither necessarily observes a newly applied RAS revocation
+immediately. The companion defines no universal end-to-end denial bound.<a href="#section-8.9-5" class="pilcrow">¶</a></p>
 <p id="section-8.9-6">If the API delegates authorization evaluation to a policy decision
 service, it <span class="bcp14">MUST</span> preserve the distinction between the user, the
 issuer-qualified Agent Principal, and the OAuth client, and supply the
@@ -5393,11 +5391,12 @@ limits.<a href="#section-11.6-1" class="pilcrow">¶</a></p>
 <p id="section-11.6-2">Cross-system disablement and revocation need the mechanisms in
 <a href="#lifecycle-gap" class="auto internal xref">Appendix A.3.1</a>; without a signal or online check, issued tokens
 remain usable until expiration.<a href="#section-11.6-2" class="pilcrow">¶</a></p>
-<p id="section-11.6-3">For deployments applying <span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span>, that companion defines
-ordered state propagation, reactivation cutoffs, and mode-specific
-denial bounds. Its RAS enforcement stops issuance and refresh; cached
-introspection results or offline JWTs may remain usable within the
-configured mode's explicit bound.<a href="#section-11.6-3" class="pilcrow">¶</a></p>
+<p id="section-11.6-3">For deployments applying <span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span>, that companion profiles
+SCIM administrative state, optional change notices, and session revocation.
+Applied disablement stops RAS issuance and refresh and revokes associated
+sessions. Cached introspection results or offline JWTs can remain usable
+until their acceptance limits. Current active state alone cannot recover
+a missed disable-and-reenable transition or invalidate every old grant.<a href="#section-11.6-3" class="pilcrow">¶</a></p>
 <p id="section-11.6-4">Execution termination, Identity Binding disablement, Client Association
 removal, delegation revocation, and Agent Principal disablement have
 different effects. Deployments <span class="bcp14">MUST NOT</span> treat one as evidence that the
@@ -6001,14 +6000,14 @@ blocks, not a lifecycle propagation contract.<a href="#appendix-A.3-3" class="pi
           <h4 id="name-provisioning-and-disablemen">
 <a href="#appendix-A.3.1" class="section-number selfRef">A.3.1. </a><a href="#name-provisioning-and-disablemen" class="section-name selfRef">Provisioning and Disablement</a>
           </h4>
-<p id="appendix-A.3.1-1">Consistent record correlation and disablement across IdP and RAS need a
-lifecycle specification defining issuer-qualified correlation,
-authoritative properties, update ordering, freshness bounds,
-missed-event recovery, and the effect on outstanding tokens. The companion
-<span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> defines a proposed SCIM and Shared Signals composition
-for those requirements. It is not required for conformance to this
-federation profile; <a href="#agent-correlation" class="auto internal xref">Section 6.3</a> and <a href="#status-changes" class="auto internal xref">Section 11.6</a> state
-the guarantees of this document alone.<a href="#appendix-A.3.1-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.3.1-1">Consistent correlation and disablement across IdP and RAS need an agreed
+provisioning and enforcement contract. <span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> profiles SCIM,
+optional Shared Signals, and the effects of applied changes on authorization.
+It distinguishes current administrative state from revocation history and
+states the limits of missed-event recovery and token enforcement. Stronger
+guarantees across unobserved transitions require an additional composition.
+The companion is not required for conformance to this federation profile;
+<a href="#agent-correlation" class="auto internal xref">Section 6.3</a> and <a href="#status-changes" class="auto internal xref">Section 11.6</a> state this document's guarantees.<a href="#appendix-A.3.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -6034,9 +6033,9 @@ Alice's ID Token has audience <code>analysis-client</code>; subject resolution
 produces <code>alice-ras</code> for the RAS and <code>user-108</code> at the resource.<a href="#appendix-B-2" class="pilcrow">¶</a></p>
 <p id="appendix-B-3">The exchange starts at 12:01:03 UTC on September 17, 2026. The lifecycle
 companion's shared walkthrough <span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> uses the same identities,
-Target Tenant <code>acme-data</code>, proof key K, and grant issuance time. It adds
-provisioning, introspection, disablement, and recovery when lifecycle
-enforcement is configured; those checks are not implied by Federation alone.<a href="#appendix-B-3" class="pilcrow">¶</a></p>
+Target Tenant <code>acme-data</code> and grant issuance time. It adds SCIM provisioning,
+introspection, disablement, and reactivation, including the limit when an
+entire transition is missed. Those checks are not implied by Federation alone.<a href="#appendix-B-3" class="pilcrow">¶</a></p>
 <div id="client-assertion-example">
 <section id="appendix-B.1">
         <h3 id="name-dedicated-client-authentica">
