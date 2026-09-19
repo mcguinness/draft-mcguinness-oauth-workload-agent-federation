@@ -17,10 +17,10 @@ credential. No new credential format is defined.
 as subject, and delegated access, with the user as subject and the
 agent as actor. This document defines a complete delegated profile of
 the Identity Assertion JWT Authorization Grant (ID-JAG), using existing
-client assertions and workload credentials. It describes the self-acting
-composition with the Workload Authorization Grant (WAG); its wire
-requirements remain pending upstream coordination, and no WAG wire
-conformance is claimed. 
+client assertions and workload credentials. It also defines a
+self-acting realization in which the IdP issues a Workload Authorization
+Grant (WAG) naming the Agent Principal as subject, proposed for
+coordination with WAG; its identifiers are provisional. 
     " name="description">
 <meta content="xml2rfc 3.34.1" name="generator">
 <meta content="OAuth" name="keyword">
@@ -1103,10 +1103,10 @@ credential. No new credential format is defined.<a href="#section-abstract-1" cl
 as subject, and delegated access, with the user as subject and the
 agent as actor. This document defines a complete delegated profile of
 the Identity Assertion JWT Authorization Grant (ID-JAG), using existing
-client assertions and workload credentials. It describes the self-acting
-composition with the Workload Authorization Grant (WAG); its wire
-requirements remain pending upstream coordination, and no WAG wire
-conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+client assertions and workload credentials. It also defines a
+self-acting realization in which the IdP issues a Workload Authorization
+Grant (WAG) naming the Agent Principal as subject, proposed for
+coordination with WAG; its identifiers are provisional.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1391,7 +1391,30 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-self-acting-wag-composition" class="internal xref">Self-Acting WAG Composition</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-self-acting-wag-realization" class="internal xref">Self-Acting WAG Realization</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-differences-from-delegated-" class="internal xref">Differences from Delegated Access</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-issuance-request" class="internal xref">Issuance Request</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3">
+                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-issuance-processing" class="internal xref">Issuance Processing</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4">
+                <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="auto internal xref">10.4</a>.  <a href="#name-redemption-and-access-token" class="internal xref">Redemption and Access Tokens</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.5">
+                <p id="section-toc.1-1.10.2.5.1"><a href="#section-10.5" class="auto internal xref">10.5</a>.  <a href="#name-resource-processing" class="internal xref">Resource Processing</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.6">
+                <p id="section-toc.1-1.10.2.6.1"><a href="#section-10.6" class="auto internal xref">10.6</a>.  <a href="#name-errors" class="internal xref">Errors</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.7">
+                <p id="section-toc.1-1.10.2.7.1"><a href="#section-10.7" class="auto internal xref">10.7</a>.  <a href="#name-profile-identifiers" class="internal xref">Profile Identifiers</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
             <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
@@ -1427,6 +1450,9 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.1">
                 <p id="section-toc.1-1.13.2.1.1"><a href="#section-13.1" class="auto internal xref">13.1</a>.  <a href="#name-id-jag-grant-profile-uris" class="internal xref">ID-JAG Grant Profile URIs</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.2">
+                <p id="section-toc.1-1.13.2.2.1"><a href="#section-13.2" class="auto internal xref">13.2</a>.  <a href="#name-wag-grant-profile-uris" class="internal xref">WAG Grant Profile URIs</a></p>
 </li>
             </ul>
 </li>
@@ -1628,8 +1654,8 @@ profile and is the basis for conformance in this document.<a href="#section-1-12
 </li>
         <li class="normal" id="section-1-12.2">
           <p id="section-1-12.2.1"><strong>Self-acting Workload Authorization Grant (WAG):</strong> <a href="#wag-flow" class="auto internal xref">Section 10</a>
-describes an informative composition;
-<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a> identifies its unresolved wire requirements.<a href="#section-1-12.2.1" class="pilcrow">¶</a></p>
+defines the self-acting realization; its identifiers are provisional
+pending WAG coordination (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>).<a href="#section-1-12.2.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-1-13">Other grant realizations require their own composition rules; the
@@ -1778,46 +1804,53 @@ JWT encoding alone does not identify the class.<a href="#section-2.2-1.14.1" cla
 an approved client, tenant, target, and authority context.<a href="#section-2.2-1.16.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.17">Agent Principal Correlation:</dt>
+<dt id="section-2.2-1.17">Agent Authorization:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.18">
-            <p id="section-2.2-1.18.1">The RAS's authoritative association of an IdP-qualified Agent Principal
-with a local principal. Correlation does not grant authority.<a href="#section-2.2-1.18.1" class="pilcrow">¶</a></p>
+            <p id="section-2.2-1.18.1">The IdP's decision that an Agent Principal may access a target on its
+own behalf within an approved client, tenant, target, and authority
+context. It is the self-acting counterpart of Delegation Authorization.<a href="#section-2.2-1.18.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.19">Issuer-bound presenter key:</dt>
+<dt id="section-2.2-1.19">Agent Principal Correlation:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.20">
-            <p id="section-2.2-1.20.1">A key the credential issuer has attested belongs to the workload,
-such as a Client Attestation's confirmation key. It shows that the
-credential authority authorized the key.<a href="#section-2.2-1.20.1" class="pilcrow">¶</a></p>
+            <p id="section-2.2-1.20.1">The RAS's authoritative association of an IdP-qualified Agent Principal
+with a local principal. Correlation does not grant authority.<a href="#section-2.2-1.20.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.21">Request proof key:</dt>
+<dt id="section-2.2-1.21">Issuer-bound presenter key:</dt>
           <dd style="margin-left: 1.5em" id="section-2.2-1.22">
-            <p id="section-2.2-1.22.1">A key the presenter proves in the request without issuer attestation,
+            <p id="section-2.2-1.22.1">A key the credential issuer has attested belongs to the workload,
+such as a Client Attestation's confirmation key. It shows that the
+credential authority authorized the key.<a href="#section-2.2-1.22.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.2-1.23">Request proof key:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.24">
+            <p id="section-2.2-1.24.1">A key the presenter proves in the request without issuer attestation,
 as with Demonstrating Proof of Possession (DPoP) <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>
 accompanying bearer evidence. It shows possession alone
-(<a href="#credential-requirements" class="auto internal xref">Section 5.4</a>).<a href="#section-2.2-1.22.1" class="pilcrow">¶</a></p>
+(<a href="#credential-requirements" class="auto internal xref">Section 5.4</a>).<a href="#section-2.2-1.24.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.23">Grant proof key:</dt>
-          <dd style="margin-left: 1.5em" id="section-2.2-1.24">
-            <p id="section-2.2-1.24.1">The DPoP key proven when requesting an ID-JAG and bound into that
+<dt id="section-2.2-1.25">Grant proof key:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.26">
+            <p id="section-2.2-1.26.1">The DPoP key proven when requesting an ID-JAG and bound into that
 grant for redemption. A bearer JWT-SVID does not authorize this key;
 any association with an issuer-bound presenter key follows the
-selected input profile.<a href="#section-2.2-1.24.1" class="pilcrow">¶</a></p>
+selected input profile.<a href="#section-2.2-1.26.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.25">Governance Tenant:</dt>
-          <dd style="margin-left: 1.5em" id="section-2.2-1.26">
-            <p id="section-2.2-1.26.1">The IdP tenant within whose governance domain the Agent Principal
+<dt id="section-2.2-1.27">Governance Tenant:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.28">
+            <p id="section-2.2-1.28.1">The IdP tenant within whose governance domain the Agent Principal
 exists and is administered. The Agent Principal identifier remains
 qualified by the IdP issuer (<a href="#canonical-identity" class="auto internal xref">Section 3.3</a>), not by the
-tenant.<a href="#section-2.2-1.26.1" class="pilcrow">¶</a></p>
+tenant.<a href="#section-2.2-1.28.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-2.2-1.27">Target Tenant:</dt>
-          <dd style="margin-left: 1.5em" id="section-2.2-1.28">
-            <p id="section-2.2-1.28.1">The tenant at the RAS in which the agent or user is authorized.<a href="#section-2.2-1.28.1" class="pilcrow">¶</a></p>
+<dt id="section-2.2-1.29">Target Tenant:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.2-1.30">
+            <p id="section-2.2-1.30.1">The tenant at the RAS in which the agent or user is authorized.<a href="#section-2.2-1.30.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1939,7 +1972,7 @@ define their processing rules.<a href="#section-3.1-2" class="pilcrow">¶</a></p
           </tbody>
         </table>
 <p id="section-3.1-4">The last three rows describe delegated access. The self-acting WAG
-composition uses the same governed identity and client authorization,
+realization uses the same governed identity and client authorization,
 with the agent as subject exercising its own authority (<a href="#wag-flow" class="auto internal xref">Section 10</a>).<a href="#section-3.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2084,9 +2117,8 @@ distinguishes their wire-profile status, not their architectural scope:<a href="
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Agent acts as itself</td>
-              <td class="text-left" rowspan="1" colspan="1">WAG composition; Agent Principal is the subject</td>
-              <td class="text-left" rowspan="1" colspan="1">Identity and authorization composition in <a href="#wag-flow" class="auto internal xref">Section 10</a> is informative; wire requirements pending <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>
-</td>
+              <td class="text-left" rowspan="1" colspan="1">WAG; Agent Principal is the subject</td>
+              <td class="text-left" rowspan="1" colspan="1">Realization in <a href="#wag-flow" class="auto internal xref">Section 10</a>; token-type, JWT-type, and profile identifiers provisional pending WAG coordination (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>)</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Agent acts for a user</td>
@@ -2189,7 +2221,8 @@ credential or the resulting access token.<a href="#section-4.2-4" class="pilcrow
 document's governed profiles. Existing EMA deployments need no changes
 to continue on that path. Adding <code>act</code> alone does not establish governed
 agent conformance: identity resolution and actor authorization are also
-required. These adoption profiles apply to delegated ID-JAG, not WAG.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+required. The adoption profiles apply to both realizations, each under
+its own URIs (<a href="#metadata" class="auto internal xref">Section 9</a>).<a href="#section-4.2-5" class="pilcrow">¶</a></p>
 <p id="section-4.2-6">Unless explicitly limited to bound grants or a named profile, the
 requirements below apply to both governed profiles. Conformance claims
 <span class="bcp14">MUST</span> identify the supported profile by its URI (<a href="#metadata" class="auto internal xref">Section 9</a>),
@@ -2228,10 +2261,11 @@ client-assertion path. The platform JWT input is the common
 shared-client input; other shared-client inputs remain bilateral.<a href="#section-4.2-7.5.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.2-7.6">
-            <p id="section-4.2-7.6.1"><strong>WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 10</a> describes the self-acting identity and
-authorization composition informatively. This document claims no WAG
-wire conformance while the requirements in <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a> remain
-unresolved.<a href="#section-4.2-7.6.1" class="pilcrow">¶</a></p>
+            <p id="section-4.2-7.6.1"><strong>WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 10</a> defines the self-acting realization under the
+same adoption profiles and its own provisional profile URIs. Its
+token-type and JWT-type identifiers await WAG coordination
+(<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>); conformance claims name the provisional URIs until
+then.<a href="#section-4.2-7.6.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-4.2-8">The mandatory interoperability path uses an ID Token subject and
@@ -2571,6 +2605,13 @@ from the underlying protocols are summarized in <a href="#profile-additions" cla
               <td class="text-left" rowspan="1" colspan="1">Configure capabilities, advertise support, and process failures</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#metadata" class="auto internal xref">Section 9</a>, <a href="#errors" class="auto internal xref">Section 8.6</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">IdP, RAS, and API</td>
+              <td class="text-left" rowspan="1" colspan="1">Issue, redeem, and enforce the self-acting WAG realization</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <a href="#wag-flow" class="auto internal xref">Section 10</a>
 </td>
             </tr>
             <tr>
@@ -3348,8 +3389,8 @@ can resolve to the same Agent Principal.<a href="#section-6.1-10" class="pilcrow
 <a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-subject-resolution-and-link" class="section-name selfRef">Subject Resolution and Linking</a>
         </h3>
 <p id="section-6.2-1">For ID-JAG, subject resolution identifies the user and linking
-associates that identity with a local account. The intended self-acting
-composition is described informatively in <a href="#wag-flow" class="auto internal xref">Section 10</a>.
+associates that identity with a local account. Self-acting access
+resolves the agent as subject under <a href="#wag-flow" class="auto internal xref">Section 10</a>.
 Subject identifiers, tenant relationships, and <code>aud_sub</code>, <code>aud_tenant</code>,
 and <code>sub_id</code> follow Sections 3.1, 5, and 6 of <span>[<a href="#ID-JAG" class="cite xref">ID-JAG</a>]</span>; this profile adds
 the following.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
@@ -5068,6 +5109,14 @@ actor-specific rejection details outside the trust domain.<a href="#section-8.9.
           <p id="section-9-2.2.1"><strong>Bound governed agent access:</strong>
             <code>urn:ietf:params:oauth:grant-profile:id-jag-agent-federation</code><a href="#section-9-2.2.1" class="pilcrow">¶</a></p>
 </li>
+        <li class="normal" id="section-9-2.3">
+          <p id="section-9-2.3.1"><strong>Self-acting governed agent access (provisional):</strong>
+            <code>urn:ietf:params:oauth:grant-profile:wag-governed-agent</code><a href="#section-9-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.4">
+          <p id="section-9-2.4.1"><strong>Self-acting bound governed agent access (provisional):</strong>
+            <code>urn:ietf:params:oauth:grant-profile:wag-agent-federation</code><a href="#section-9-2.4.1" class="pilcrow">¶</a></p>
+</li>
       </ul>
 <p id="section-9-3">The existing agent-federation URI retains its mandatory grant-binding
 requirements. Enterprise access uses the base
@@ -5086,7 +5135,9 @@ particular workload-evidence protection, or access-token protection.<a href="#se
 <li class="normal" id="section-9.1-2.1">
             <p id="section-9.1-2.1.1"><strong>RAS:</strong> Include each supported governed profile URI and the base
 <code>urn:ietf:params:oauth:grant-profile:id-jag</code> in
-<code>authorization_grant_profiles_supported</code>.<a href="#section-9.1-2.1.1" class="pilcrow">¶</a></p>
+<code>authorization_grant_profiles_supported</code>. The self-acting URIs use the
+same parameter; that use is proposed for coordination with ID-JAG and
+WAG (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>).<a href="#section-9.1-2.1.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-9.1-2.1.2.1">
                 <p id="section-9.1-2.1.2.1.1">Include <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> in
@@ -5217,15 +5268,377 @@ ID-JAG advertisement.<a href="#section-9.3-6.3.1" class="pilcrow">¶</a></p>
 </div>
 <div id="wag-flow">
 <section id="section-10">
-      <h2 id="name-self-acting-wag-composition">
-<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-self-acting-wag-composition" class="section-name selfRef">Self-Acting WAG Composition</a>
+      <h2 id="name-self-acting-wag-realization">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-self-acting-wag-realization" class="section-name selfRef">Self-Acting WAG Realization</a>
       </h2>
-<p id="section-10-1">Self-acting access uses the same Agent Principal model, with the agent
-as subject and the same local principal correlation as delegated access.
-This document defines no WAG wire profile or conformance target. The
-open requirements, and this document's proposals for them, are recorded
-in <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>. Delegated and self-acting authority are not
-interchangeable.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-10-1">This section realizes the federation model for self-acting access: the
+Agent Principal is the subject of a Workload Authorization Grant (WAG)
+<span>[<a href="#WAG" class="cite xref">WAG</a>]</span> issued by the IdP and redeemed at the RAS. It parallels
+<a href="#delegated-flow" class="auto internal xref">Section 8</a>. The same resolution inputs, Identity Binding, client
+authorization, grant protection, access-token protection, and resource
+processing apply, with the differences stated here; where this section
+is silent, <a href="#delegated-flow" class="auto internal xref">Section 8</a> applies with the WAG in place of the
+ID-JAG.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-10-2">WAG-00 defines a platform-issued bearer grant and leaves IdP issuance,
+proof of possession, and identifier registrations open (<span><a href="https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00#section-5" class="relref">Section 5</a> of [<a href="#WAG" class="cite xref">WAG</a>]</span> and its list of open issues). This section is this document's
+proposal for that composition. The token type, JWT type, and profile
+URIs below are provisional until WAG registers or adopts them
+(<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>); the processing rules do not depend on their final
+spelling.<a href="#section-10-2" class="pilcrow">¶</a></p>
+<div id="wag-differences">
+<section id="section-10.1">
+        <h3 id="name-differences-from-delegated-">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-differences-from-delegated-" class="section-name selfRef">Differences from Delegated Access</a>
+        </h3>
+<span id="name-self-acting-differences-fro"></span><table class="center" id="table-27">
+          <caption>
+<a href="#table-27" class="selfRef">Table 27</a>:
+<a href="#name-self-acting-differences-fro" class="selfRef">Self-acting differences from delegated access</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Area</th>
+              <th class="text-left" rowspan="1" colspan="1">Delegated ID-JAG</th>
+              <th class="text-left" rowspan="1" colspan="1">Self-acting WAG</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Subject</td>
+              <td class="text-left" rowspan="1" colspan="1">User, resolved from the subject credential</td>
+              <td class="text-left" rowspan="1" colspan="1">Agent Principal, resolved from the agent-resolution input</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Actor</td>
+              <td class="text-left" rowspan="1" colspan="1">Agent Principal in <code>act</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">None; <code>act</code> <span class="bcp14">MUST</span> be absent</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">IdP authorization</td>
+              <td class="text-left" rowspan="1" colspan="1">Delegation Authorization for the user and agent</td>
+              <td class="text-left" rowspan="1" colspan="1">Agent Authorization for the agent alone</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Client permission</td>
+              <td class="text-left" rowspan="1" colspan="1">Client Association for delegated issuance</td>
+              <td class="text-left" rowspan="1" colspan="1">Client Association for self-acting issuance, a separate permission</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">RAS subject</td>
+              <td class="text-left" rowspan="1" colspan="1">Local user, with the agent preserved in <code>act</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Local agent principal correlated under <a href="#agent-correlation" class="auto internal xref">Section 6.3</a>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">API check</td>
+              <td class="text-left" rowspan="1" colspan="1">User authority and the actor gate</td>
+              <td class="text-left" rowspan="1" colspan="1">The agent's own authority; no actor gate</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Refresh</td>
+              <td class="text-left" rowspan="1" colspan="1">RAS refresh under explicit policy</td>
+              <td class="text-left" rowspan="1" colspan="1">None; WAG prohibits refresh tokens</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+<div id="wag-request">
+<section id="section-10.2">
+        <h3 id="name-issuance-request">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-issuance-request" class="section-name selfRef">Issuance Request</a>
+        </h3>
+<p id="section-10.2-1">The client sends the token exchange request of <a href="#root-request" class="auto internal xref">Section 8.4.1</a> with
+these differences:<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<span id="name-self-acting-issuance-reques"></span><table class="center" id="table-28">
+          <caption>
+<a href="#table-28" class="selfRef">Table 28</a>:
+<a href="#name-self-acting-issuance-reques" class="selfRef">Self-acting issuance request</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Parameter</th>
+              <th class="text-left" rowspan="1" colspan="1">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>requested_token_type</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>urn:ietf:params:oauth:token-type:wag</code> (provisional)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>subject_token</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">The agent-resolution credential: the platform JWT, JWT-SVID, WIT-SVID, Client Attestation, or RFC 7523 client assertion that also serves as the resolution input</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>subject_token_type</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>urn:ietf:params:oauth:token-type:jwt</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>actor_token</code>, <code>actor_token_type</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <span class="bcp14">MUST</span> be absent</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>audience</code>, <code>resource</code>, <code>scope</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">As in <a href="#root-request" class="auto internal xref">Section 8.4.1</a>
+</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-10.2-3">RFC 8693 requires a subject token, and in self-acting access the subject
+is the authenticated client's own agent. For authentication-context
+inputs the client therefore presents as <code>subject_token</code> the same compact
+JWT it presented for authentication, and the IdP <span class="bcp14">MUST</span> verify that the
+two are byte-identical. For the platform JWT input the credential is the
+subject token and no actor token is used. X.509-SVID authentication
+presents no JWT and has no self-acting issuance in this document
+(<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>). Mode selection and rejection follow <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>
+with the subject token in the role of the resolution credential.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="wag-issuance">
+<section id="section-10.3">
+        <h3 id="name-issuance-processing">
+<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-issuance-processing" class="section-name selfRef">Issuance Processing</a>
+        </h3>
+<p id="section-10.3-1">The IdP <span class="bcp14">MUST</span>:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-10.3-2">
+<li id="section-10.3-2.1">
+            <p id="section-10.3-2.1.1">Authenticate the client and validate the resolution input under
+<a href="#evidence" class="auto internal xref">Section 5</a> and <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>.<a href="#section-10.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-10.3-2.2">
+            <p id="section-10.3-2.2.1">Resolve the Agent Principal through an active Identity Binding under
+<a href="#identity-binding" class="auto internal xref">Section 6.1</a> and verify a Client Association that permits the
+authenticated client to use that binding for self-acting issuance.
+Permission for delegated issuance does not imply this permission.<a href="#section-10.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-10.3-2.3">
+            <p id="section-10.3-2.3.1">Authorize the agent under <a href="#authorization" class="auto internal xref">Section 7</a> for the requested RAS,
+resource, and authority on its own behalf. No user is involved.
+Denied self-acting access <span class="bcp14">MUST NOT</span> fall back to delegated access or
+to a broader authority.<a href="#section-10.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-10.3-2.4">
+            <p id="section-10.3-2.4.1">Apply <a href="#grant-protection" class="auto internal xref">Section 8.3</a>: in the bound profile the request carries
+a DPoP proof and the grant carries <code>cnf.jkt</code>.<a href="#section-10.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-10.3-3">The grant is a JWT with the following claims, aligned with the claim set
+of <span><a href="https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00#section-5.1" class="relref">Section 5.1</a> of [<a href="#WAG" class="cite xref">WAG</a>]</span>:<a href="#section-10.3-3" class="pilcrow">¶</a></p>
+<span id="name-idp-issued-wag-claims"></span><table class="center" id="table-29">
+          <caption>
+<a href="#table-29" class="selfRef">Table 29</a>:
+<a href="#name-idp-issued-wag-claims" class="selfRef">IdP-issued WAG claims</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Claim</th>
+              <th class="text-left" rowspan="1" colspan="1">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>iss</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">The IdP issuer identifier</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>sub</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">The Agent Principal identifier from the Identity Binding</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>aud</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">The target RAS issuer identifier</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>client_id</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">The client's registration identifier at the RAS (<a href="#flow-configuration" class="auto internal xref">Section 8.2</a>)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>resource</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">The authorized resource URI as a JSON string</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>scope</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Non-empty authorized scope, no broader than the request</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>cnf.jkt</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Grant proof key thumbprint when DPoP is used; <span class="bcp14">REQUIRED</span> in the bound profile</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>exp</code>, <code>iat</code>, <code>jti</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">As for the ID-JAG, under the limits in <a href="#grant-issuance" class="auto internal xref">Section 8.4.5</a>
+</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-10.3-5">The JWT <code>typ</code> is <code>wag+jwt</code> (provisional). The grant <span class="bcp14">MUST NOT</span> contain
+<code>act</code>. Its lifetime follows <a href="#grant-issuance" class="auto internal xref">Section 8.4.5</a>: the configured limit
+applies, and the grant <span class="bcp14">MUST NOT</span> outlive the validated resolution
+credential, except that a dedicated-client assertion authenticates one
+transaction and does not cap the grant. The response follows
+<a href="#exchange-response" class="auto internal xref">Section 8.4.6</a> with <code>issued_token_type</code> set to the WAG token
+type.<a href="#section-10.3-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="wag-redemption">
+<section id="section-10.4">
+        <h3 id="name-redemption-and-access-token">
+<a href="#section-10.4" class="section-number selfRef">10.4. </a><a href="#name-redemption-and-access-token" class="section-name selfRef">Redemption and Access Tokens</a>
+        </h3>
+<p id="section-10.4-1">The client redeems the WAG at the RAS token endpoint with
+<code>urn:ietf:params:oauth:grant-type:jwt-bearer</code>, as WAG already uses, and
+the request of <a href="#redemption-request" class="auto internal xref">Section 8.5.1</a>. The RAS <span class="bcp14">MUST</span>:<a href="#section-10.4-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-10.4-2">
+<li id="section-10.4-2.1">
+            <p id="section-10.4-2.1.1">Validate the grant under <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>, consistent with <span><a href="https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00#section-5" class="relref">Section 5</a> of [<a href="#WAG" class="cite xref">WAG</a>]</span>; require <code>iss</code> to be a configured governing IdP for the
+asserted agent namespace; and apply <a href="#grant-protection" class="auto internal xref">Section 8.3</a> and client
+authentication as in <a href="#redemption-validation" class="auto internal xref">Section 8.5.2</a>.<a href="#section-10.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-10.4-2.2">
+            <p id="section-10.4-2.2.1">Resolve the pair (<code>iss</code>, <code>sub</code>) under <a href="#agent-correlation" class="auto internal xref">Section 6.3</a> to one
+local agent principal in the authorized Target Tenant. The RAS <span class="bcp14">MUST</span>
+have that authorized correlation before issuance; for governed agents
+this replaces the acceptance of previously unseen identifiers in
+<span><a href="https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00#section-7" class="relref">Section 7</a> of [<a href="#WAG" class="cite xref">WAG</a>]</span>. Just-in-time correlation, where configured, is
+defined by <span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span>.<a href="#section-10.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-10.4-2.3">
+            <p id="section-10.4-2.3.1">Validate resource, scope, and authorization details as in
+<a href="#redemption-validation" class="auto internal xref">Section 8.5.2</a>, and apply current RAS policy for the
+agent, client, tenant, and resource. A valid grant sets an authority
+ceiling; it does not require issuance.<a href="#section-10.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-10.4-2.4">
+            <p id="section-10.4-2.4.1">Issue an access token under <a href="#access-token-response" class="auto internal xref">Section 8.5.3</a> and
+<a href="#access-token-protection" class="auto internal xref">Section 8.5.4</a>, with the local agent principal as <code>sub</code>,
+no <code>act</code>, and the tenant, authority, and protection rules unchanged.
+The RAS <span class="bcp14">MUST NOT</span> issue a refresh token for a WAG redemption;
+continued access obtains a new WAG under current IdP and RAS policy.<a href="#section-10.4-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="wag-api">
+<section id="section-10.5">
+        <h3 id="name-resource-processing">
+<a href="#section-10.5" class="section-number selfRef">10.5. </a><a href="#name-resource-processing" class="section-name selfRef">Resource Processing</a>
+        </h3>
+<p id="section-10.5-1">The API applies <a href="#api-processing" class="auto internal xref">Section 8.9</a> without the actor gate: it enforces
+the agent's own permissions, the token's authority constraints, the
+Target Tenant, and the selected protection. A governed self-acting
+token has no <code>act</code>. A deployment serving both realizations for one
+resource <span class="bcp14">MUST</span> distinguish their token populations through trusted
+configuration, such as separate client registrations, so that a
+delegated token lacking <code>act</code> is never accepted as self-acting.<a href="#section-10.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="wag-errors">
+<section id="section-10.6">
+        <h3 id="name-errors">
+<a href="#section-10.6" class="section-number selfRef">10.6. </a><a href="#name-errors" class="section-name selfRef">Errors</a>
+        </h3>
+<p id="section-10.6-1">Token endpoint errors follow <a href="#errors" class="auto internal xref">Section 8.6</a> with these additions:<a href="#section-10.6-1" class="pilcrow">¶</a></p>
+<span id="name-self-acting-error-additions"></span><table class="center" id="table-30">
+          <caption>
+<a href="#table-30" class="selfRef">Table 30</a>:
+<a href="#name-self-acting-error-additions" class="selfRef">Self-acting error additions</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Failure</th>
+              <th class="text-left" rowspan="1" colspan="1">Error</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Actor-token parameters present in a self-acting exchange</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_request</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Subject token differs from the authenticated credential in an authentication-context mode</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_grant</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Resolved Agent Principal, but no Client Association permits self-acting issuance for the binding</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>unauthorized_client</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Agent not authorized for the requested RAS or resource</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_target</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Agent not authorized for the requested authority</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_scope</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">WAG whose <code>sub</code> has no authorized correlation at the RAS</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>invalid_grant</code>
+</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+<div id="wag-profiles">
+<section id="section-10.7">
+        <h3 id="name-profile-identifiers">
+<a href="#section-10.7" class="section-number selfRef">10.7. </a><a href="#name-profile-identifiers" class="section-name selfRef">Profile Identifiers</a>
+        </h3>
+<p id="section-10.7-1">The self-acting realization uses the adoption profiles of <a href="#scope" class="auto internal xref">Section 4.2</a>
+under its own provisional identifiers,
+<code>urn:ietf:params:oauth:grant-profile:wag-governed-agent</code> and
+<code>urn:ietf:params:oauth:grant-profile:wag-agent-federation</code>. Grant
+protection, downgrade prevention, and discovery follow
+<a href="#grant-protection" class="auto internal xref">Section 8.3</a>, <a href="#discovery" class="auto internal xref">Section 9.3</a>, and <a href="#metadata" class="auto internal xref">Section 9</a>. Provisioning,
+disablement, and revocation apply to the same Agent Principal and local
+principal as delegated access (<a href="#status-changes" class="auto internal xref">Section 11.6</a>).<a href="#section-10.7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="security">
@@ -5241,9 +5654,9 @@ specifications, <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span>,
 <a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-adoption-tradeoffs" class="section-name selfRef">Adoption Tradeoffs</a>
         </h3>
 <p id="section-11.1-1">The profile's security controls carry these deployment costs:<a href="#section-11.1-1" class="pilcrow">¶</a></p>
-<span id="name-adoption-tradeoffs-2"></span><table class="center" id="table-27">
+<span id="name-adoption-tradeoffs-2"></span><table class="center" id="table-31">
           <caption>
-<a href="#table-27" class="selfRef">Table 27</a>:
+<a href="#table-31" class="selfRef">Table 31</a>:
 <a href="#name-adoption-tradeoffs-2" class="selfRef">Adoption tradeoffs</a>
           </caption>
 <thead>
@@ -5407,9 +5820,9 @@ others have occurred. In particular, stopping an execution does not
 revoke credentials or authority held elsewhere.<a href="#section-11.6-4" class="pilcrow">¶</a></p>
 <p id="section-11.6-5">The following table summarizes the effect after a change is applied at
 the enforcing server; it defines no new propagation mechanism:<a href="#section-11.6-5" class="pilcrow">¶</a></p>
-<span id="name-effects-of-administrative-c"></span><table class="center" id="table-28">
+<span id="name-effects-of-administrative-c"></span><table class="center" id="table-32">
           <caption>
-<a href="#table-28" class="selfRef">Table 28</a>:
+<a href="#table-32" class="selfRef">Table 32</a>:
 <a href="#name-effects-of-administrative-c" class="selfRef">Effects of administrative changes</a>
           </caption>
 <thead>
@@ -5572,6 +5985,44 @@ established by <span>[<a href="#RFC6755" class="cite xref">RFC6755</a>]</span>:<
         </ul>
 <p id="section-13.1-5">The URIs are used with ID-JAG's existing authorization server and client
 metadata parameters.<a href="#section-13.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="wag-grant-profile-uris">
+<section id="section-13.2">
+        <h3 id="name-wag-grant-profile-uris">
+<a href="#section-13.2" class="section-number selfRef">13.2. </a><a href="#name-wag-grant-profile-uris" class="section-name selfRef">WAG Grant Profile URIs</a>
+        </h3>
+<p id="section-13.2-1">This document also requests the following provisional registrations,
+subject to coordination with WAG (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>):<a href="#section-13.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-13.2-2.1">
+            <p id="section-13.2-2.1.1">URN: <code>urn:ietf:params:oauth:grant-profile:wag-agent-federation</code><a href="#section-13.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.2">
+            <p id="section-13.2-2.2.1">Common Name: WAG Bound Governed Agent Access grant profile<a href="#section-13.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.3">
+            <p id="section-13.2-2.3.1">Change Controller: IETF<a href="#section-13.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.4">
+            <p id="section-13.2-2.4.1">Specification Document: <a href="#wag-profiles" class="auto internal xref">Section 10.7</a> of this document.<a href="#section-13.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.5">
+            <p id="section-13.2-2.5.1">URN: <code>urn:ietf:params:oauth:grant-profile:wag-governed-agent</code><a href="#section-13.2-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.6">
+            <p id="section-13.2-2.6.1">Common Name: WAG Governed Agent Access grant profile<a href="#section-13.2-2.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.7">
+            <p id="section-13.2-2.7.1">Change Controller: IETF<a href="#section-13.2-2.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.8">
+            <p id="section-13.2-2.8.1">Specification Document: <a href="#wag-profiles" class="auto internal xref">Section 10.7</a> of this document.<a href="#section-13.2-2.8.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-13.2-3">The WAG token type <code>urn:ietf:params:oauth:token-type:wag</code> and JWT type
+<code>wag+jwt</code> are not requested here; they are proposed for registration by
+WAG.<a href="#section-13.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -5790,9 +6241,9 @@ Endorsement.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
         <h3 id="name-upstream-dependencies">
 <a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-upstream-dependencies" class="section-name selfRef">Upstream Dependencies</a>
         </h3>
-<span id="name-upstream-dependencies-2"></span><table class="center" id="table-29">
+<span id="name-upstream-dependencies-2"></span><table class="center" id="table-33">
           <caption>
-<a href="#table-29" class="selfRef">Table 29</a>:
+<a href="#table-33" class="selfRef">Table 33</a>:
 <a href="#name-upstream-dependencies-2" class="selfRef">Upstream dependencies</a>
           </caption>
 <thead>
@@ -5805,8 +6256,8 @@ Endorsement.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">WAG</td>
-              <td class="text-left" rowspan="1" colspan="1">IdP issuance through Token Exchange, WAG-owned identifiers and discovery, sender-constraint and replay rules, authority ceilings, and a decision on refresh (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>)</td>
-              <td class="text-left" rowspan="1" colspan="1">No WAG conformance is claimed</td>
+              <td class="text-left" rowspan="1" colspan="1">Adoption or registration of the identifier, protection, linking, and subject-presentation proposals in <a href="#wag-flow" class="auto internal xref">Section 10</a> (<a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>)</td>
+              <td class="text-left" rowspan="1" colspan="1">The self-acting realization is a proposal with provisional identifiers</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">ID-JAG</td>
@@ -5827,29 +6278,39 @@ Endorsement.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <a href="#appendix-A.1.1" class="section-number selfRef">A.1.1. </a><a href="#name-wag" class="section-name selfRef">WAG</a>
           </h4>
 <p id="appendix-A.1.1-1"><span><a href="https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00#section-5" class="relref">Section 5</a> of [<a href="#WAG" class="cite xref">WAG</a>]</span> anticipates IdP issuance through Token Exchange
-without specifying it. Coordination is needed on:<a href="#appendix-A.1.1-1" class="pilcrow">¶</a></p>
+without specifying it and lists issuer placement among its open
+questions. <a href="#wag-flow" class="auto internal xref">Section 10</a> is this document's proposal for that
+composition. Coordination is needed on:<a href="#appendix-A.1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.1.1-2.1">
-              <p id="appendix-A.1.1-2.1.1"><strong>Issuance:</strong> Dedicated-client or workload-identity resolution at
-the IdP; the Agent Principal in its namespace as the issued WAG's subject.<a href="#appendix-A.1.1-2.1.1" class="pilcrow">¶</a></p>
+              <p id="appendix-A.1.1-2.1.1"><strong>Identifiers:</strong> The token type <code>urn:ietf:params:oauth:token-type:wag</code>,
+the JWT type <code>wag+jwt</code>, and the two self-acting profile URIs are
+provisional; WAG-owned registrations and discovery are preferred.<a href="#appendix-A.1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="appendix-A.1.1-2.2">
-              <p id="appendix-A.1.1-2.2.1"><strong>Identifiers:</strong> WAG-owned token-type and JWT-type registrations
-and discovery.<a href="#appendix-A.1.1-2.2.1" class="pilcrow">¶</a></p>
+              <p id="appendix-A.1.1-2.2.1"><strong>Protection:</strong> WAG-00 is a bearer grant with proof of possession
+open. This document proposes DPoP binding at issuance and redemption
+under <a href="#grant-protection" class="auto internal xref">Section 8.3</a>.<a href="#appendix-A.1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="appendix-A.1.1-2.3">
-              <p id="appendix-A.1.1-2.3.1"><strong>Protection:</strong> Proof-key, audience, nonce, and replay rules at
-issuance and redemption. This document proposes DPoP and a RAS-issuer
-audience.<a href="#appendix-A.1.1-2.3.1" class="pilcrow">¶</a></p>
+              <p id="appendix-A.1.1-2.3.1"><strong>Linking:</strong> <span><a href="https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00#section-7" class="relref">Section 7</a> of [<a href="#WAG" class="cite xref">WAG</a>]</span> requires acceptance of previously
+unseen agent identifiers under trusted issuers. Governed agents
+instead require an authorized local correlation (<a href="#wag-redemption" class="auto internal xref">Section 10.4</a>).<a href="#appendix-A.1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="appendix-A.1.1-2.4">
-              <p id="appendix-A.1.1-2.4.1"><strong>Authority and renewal:</strong> Resource and scope ceilings, WAG's refresh
-prohibition, and IdP refresh tokens for continuing self-acting access.<a href="#appendix-A.1.1-2.4.1" class="pilcrow">¶</a></p>
+              <p id="appendix-A.1.1-2.4.1"><strong>Renewal:</strong> This document adopts WAG's prohibition on refresh tokens;
+continuing self-acting access re-issues the grant.<a href="#appendix-A.1.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="appendix-A.1.1-2.5">
-              <p id="appendix-A.1.1-2.5.1"><strong>Linking:</strong> <span><a href="https://datatracker.ietf.org/doc/html/draft-carleton-workload-authz-grant-00#section-7" class="relref">Section 7</a> of [<a href="#WAG" class="cite xref">WAG</a>]</span> requires acceptance of previously unseen
-agent identifiers under trusted issuers. Acceptance needs to remain
-distinct from local principal linking and authorization (<a href="#wag-flow" class="auto internal xref">Section 10</a>).<a href="#appendix-A.1.1-2.5.1" class="pilcrow">¶</a></p>
+              <p id="appendix-A.1.1-2.5.1"><strong>Subject presentation:</strong> Self-acting exchange presents the
+authenticated credential as <code>subject_token</code>; X.509-SVID authentication
+has no self-acting issuance until a non-JWT subject presentation is
+defined.<a href="#appendix-A.1.1-2.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-A.1.1-2.6">
+              <p id="appendix-A.1.1-2.6.1"><strong>Management:</strong> <span>[<a href="#AGENT-MANAGEMENT" class="cite xref">AGENT-MANAGEMENT</a>]</span> administers Client Associations
+for delegated issuance only; self-acting permission needs a flow
+dimension there.<a href="#appendix-A.1.1-2.6.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </section>
@@ -5943,9 +6404,9 @@ changing only <code>subject_token_type</code> does not establish them.<a href="#
           </h4>
 <p id="appendix-A.2.4-1">The following compositions are not defined in this document. Their
 exclusion does not prevent the independently supported uses listed here.<a href="#appendix-A.2.4-1" class="pilcrow">¶</a></p>
-<span id="name-excluded-compositions-2"></span><table class="center" id="table-30">
+<span id="name-excluded-compositions-2"></span><table class="center" id="table-34">
             <caption>
-<a href="#table-30" class="selfRef">Table 30</a>:
+<a href="#table-34" class="selfRef">Table 34</a>:
 <a href="#name-excluded-compositions-2" class="selfRef">Excluded compositions</a>
             </caption>
 <thead>
@@ -6321,9 +6782,9 @@ profile, including when the API accepts bearer tokens.<a href="#appendix-B.4-9" 
 <code>urn:ietf:params:oauth:grant-profile:id-jag-governed-agent</code> and explicitly
 permit grants without sender constraint. With bearer access also
 permitted for this resource, the preceding messages change only as follows:<a href="#appendix-B.5-1" class="pilcrow">¶</a></p>
-<span id="name-message-changes-for-governe"></span><table class="center" id="table-31">
+<span id="name-message-changes-for-governe"></span><table class="center" id="table-35">
           <caption>
-<a href="#table-31" class="selfRef">Table 31</a>:
+<a href="#table-35" class="selfRef">Table 35</a>:
 <a href="#name-message-changes-for-governe" class="selfRef">Message changes for governed agent access</a>
           </caption>
 <thead>
@@ -6386,9 +6847,9 @@ authorization decisions. These establish a new period under
 <p id="appendix-B.6-4">Each rejection below changes one condition in the walkthrough; all
 other credentials, proofs, and policy checks succeed. Token endpoint
 errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API errors follow <a href="#resource-errors" class="auto internal xref">Section 8.9.1</a>.<a href="#appendix-B.6-4" class="pilcrow">¶</a></p>
-<span id="name-rejection-examples"></span><table class="center" id="table-32">
+<span id="name-rejection-examples"></span><table class="center" id="table-36">
           <caption>
-<a href="#table-32" class="selfRef">Table 32</a>:
+<a href="#table-36" class="selfRef">Table 36</a>:
 <a href="#name-rejection-examples" class="selfRef">Rejection examples</a>
           </caption>
 <thead>
@@ -6538,9 +6999,9 @@ actor identities, resource, scope, tenant, proof key K, redemption, and
 API processing are unchanged; the resulting actor is always the IdP
 issuer and <code>agent-42</code>, and the RAS never receives or validates the
 original credential.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
-<span id="name-input-variants-relative-to-"></span><table class="center" id="table-33">
+<span id="name-input-variants-relative-to-"></span><table class="center" id="table-37">
         <caption>
-<a href="#table-33" class="selfRef">Table 33</a>:
+<a href="#table-37" class="selfRef">Table 37</a>:
 <a href="#name-input-variants-relative-to-" class="selfRef">Input variants relative to the dedicated-client walkthrough</a>
         </caption>
 <thead>
