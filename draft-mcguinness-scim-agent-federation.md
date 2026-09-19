@@ -43,7 +43,6 @@ normative:
   SCIM-AGENT: I-D.wzdk-scim-agent-resource
   RFC7643:
   RFC7644:
-  RFC9110:
   RFC6901:
 informative:
   LIFECYCLE:
@@ -161,7 +160,10 @@ Provisioning Client:
 
 Service Provider:
 : The IdP's SCIM service, including the administration of configuration
-  used by its grant issuer.
+  used by its grant issuer. {{FEDERATION}} calls this role the IdP
+  Service Provider; the resource-domain SCIM service that accepts IdP
+  provisioning is the Receiver of {{LIFECYCLE}}, not a Service Provider
+  in this document's sense.
 
 Provisioning Domain:
 : The scope of one Provisioning Client's management authority within
@@ -251,18 +253,15 @@ Agent, AgentIdentityBinding, and AgentClientAssociation use SCIM
 those three types; OAuthClient attribute and operation rules remain
 those of {{OAUTH-CLIENT}}.
 
-* **Connector correlation:** A Provisioning Client SHOULD supply
-  `externalId` for retry recovery. When present, it MUST be non-empty
-  and unique within the Provisioning Domain and resource type, including
-  concurrent writes. It remains readWrite under SCIM, subject to that
-  uniqueness check. It identifies the connector's record, not a principal.
+* **Common conventions:** `externalId` correlation, identifiers,
+  versions, conditional writes, explicit `active` state, incremental
+  reads, and durable restriction follow the common provisioning
+  conventions of {{OAUTH-CLIENT}}. Here `externalId` identifies the
+  connector's record, not a principal, and remains readWrite.
 * **Stable identity:** SCIM `id` and the federation subject remain
   server-assigned and non-reassignable. Changing `externalId` cannot
-  redirect a reference or change the Agent Principal.
-* **Versions:** Full resource responses MUST carry `meta.created`,
-  `meta.lastModified`, and `meta.version`; individual
-  resource responses MUST also carry the corresponding HTTP ETag.
-  Version changes cover all modifications visible through this interface.
+  redirect a reference or change the Agent Principal. Version changes
+  cover all modifications visible through this interface.
 * **References:** A relationship reference is a single-valued complex
   attribute. Its REQUIRED string `value` is the target resource's SCIM
   `id`; its OPTIONAL read-only `$ref` is a reference to that resource,
@@ -278,8 +277,8 @@ immutable, single-valued, returned by default, and have uniqueness
 `credentialClass` is a case-exact enumeration: `/Schemas` MUST publish
 accepted values from {{classes}} as `canonicalValues`. Values outside
 the advertised set are rejected with `invalidValue`. The common
-attributes retain SCIM's characteristics except for the explicit
-`externalId` uniqueness rule above. Attribute-name processing remains that of SCIM,
+attributes retain SCIM's characteristics except for the `externalId`
+uniqueness rule in those conventions. Attribute-name processing remains that of SCIM,
 independently of case-exact identity values.
 
 Reference sub-attributes have `value` mutability `immutable`; `$ref` and
@@ -548,18 +547,10 @@ It applies to live resources. Deletion and stale-writer handling follow
 
 ## Updates and Concurrency {#concurrency}
 
-Service Providers MUST support SCIM ETags and conditional updates under
-{{Section 3.14 of RFC7644}}. Provisioning Clients SHOULD send the current resource version in
-`If-Match` for PUT, PATCH, and DELETE. A failed precondition receives
-HTTP 412 under {{Section 3.12 of RFC7644}}.
-
-Changing an existing inactive resource to active MUST use `If-Match`
-with a resource-version ETag matching the current representation. An
-absent header or `If-Match: *` receives HTTP 409 with a `detail`
-directing the client to retrieve current state and use its ETag; no
-`scimType` is assigned. The wildcard tests existence, not version, under
-{{Section 13.1.1 of RFC9110}}. Unconditional descriptive edits,
-disablement, and deletion remain permitted when authorized.
+ETags, `If-Match`, the conditional requirement for activating an
+inactive resource, and PUT handling of immutable values follow the
+common provisioning conventions of {{OAUTH-CLIENT}}. They apply to
+Agent, AgentIdentityBinding, and AgentClientAssociation alike.
 
 SCIM PATCH is atomic for one resource. An authorization or validation
 failure MUST leave that resource unchanged. Clients MUST NOT retry a
@@ -568,14 +559,10 @@ resource; they first reconcile the current state with the intended
 change. This prevents an old enablement from undoing a newer
 disablement.
 
-PUT MUST contain required attributes. Optional immutable attributes
-omitted from PUT retain their stored values; supplied values MUST match
-the stored values or receive `400` with `mutability`. Removing an
-optional value does not make an existing immutable identity replaceable.
-Changing a relationship's identity requires a new resource. PUT and
-creation of an Agent MUST include an explicit `active` value; removing
-it with PATCH is invalid. Ordinary descriptive Agent edits do not change
-bindings, associations, or delegation.
+Removing an optional value does not make an existing immutable
+identity replaceable. Changing a relationship's identity requires a new
+resource. Ordinary descriptive Agent edits do not change bindings,
+associations, or delegation.
 
 ## Deletion {#deletion}
 
@@ -647,16 +634,10 @@ the extension schema URI followed by `:subject`, with the expression `eq
 "agent-42"`. The connector URI-encodes the complete filter under SCIM's
 query rules.
 
-The Service Provider MUST support `gt` and `ge` filters on
-`meta.lastModified`, including combination with the required equality
-filters. For example, `meta.lastModified ge "2026-09-18T12:00:00Z"`
-selects records changed since a checkpoint. A connector SHOULD overlap
-successive windows and deduplicate by resource `id` and `meta.version`;
-timestamps are not unique sequence numbers. Incremental queries cannot
-discover deletions and do not form a transactional snapshot. Periodic
-complete reconciliation remains necessary. A connector MUST NOT delete
-records solely because they were absent from an incomplete or failed
-listing. This profile defines no change feed or event type.
+Incremental reads on `meta.lastModified` follow the common provisioning
+conventions of {{OAUTH-CLIENT}}. A connector MUST NOT delete records
+solely because they were absent from an incomplete or failed listing.
+This profile defines no change feed or event type.
 
 ## Discovery {#discovery}
 
@@ -721,14 +702,11 @@ bindings. Client registration alone establishes neither an Identity
 Binding nor a Client Association. Re-enabling a parent does not change a
 child's explicit disabled state.
 
-Before returning success for a restrictive change, the Service Provider
-MUST persist the restriction in durable state consulted by the IdP grant
-decision point, such as the inactive resource or a deny marker.
-Decisions beginning after the response MUST observe that restriction. If
-the decision point cannot observe it, the write MUST NOT be reported
-successful; queuing an update alone is insufficient. An in-flight
-decision made before the restriction can still complete. After a failed
-write the connector reconciles current state before retrying.
+The durable restriction rule of {{OAUTH-CLIENT}} applies with the IdP
+grant decision point as the decision point: an inactive resource or a
+deny marker MUST be observable there before a restrictive write is
+reported successful. After a failed write the connector reconciles
+current state before retrying.
 
 This is a new-issuance guarantee, not a downstream revocation bound. The
 IdP's refresh-token subject processing still makes a new issuance
@@ -1518,4 +1496,11 @@ values. Service-specific `meta` values are omitted from these definitions.
 
 # Document History
 
-Initial version.
+RFC Editor: Remove this section before publication.
+
+* Initial version.
+
+# Acknowledgments
+{:numbered="false"}
+
+TBD.
