@@ -115,9 +115,10 @@ Table of Contents
      6.2.  Subject Resolution and Linking
      6.3.  Agent Principal Correlation
    7.  Authorization Relationship
-     7.1.  Delegation Authorization
-     7.2.  Authorization Lifetime
-     7.3.  Delegated Actor Authorization
+     7.1.  Agent Authorization
+     7.2.  Delegation Authorization
+     7.3.  Authorization Lifetime
+     7.4.  Delegated Actor Authorization
    8.  Delegated ID-JAG Realization
      8.1.  Relationship to Base Specifications
      8.2.  Prerequisites and Common Capabilities
@@ -148,12 +149,14 @@ Table of Contents
      9.3.  Discovery and Profile Applicability
    10. Self-Acting WAG Realization
      10.1.  Differences from Delegated Access
-     10.2.  Issuance Request
-     10.3.  Issuance Processing
-     10.4.  Redemption and Access Tokens
-     10.5.  Resource Processing
-     10.6.  Errors
-     10.7.  Profile Identifiers
+     10.2.  Self-Acting Issuance
+     10.3.  Issuance Request
+     10.4.  Issuance Processing
+     10.5.  Grant Claims
+     10.6.  Redemption and Access Tokens
+     10.7.  Resource Processing
+     10.8.  Errors
+     10.9.  Profile Identifiers
    11. Security Considerations
      11.1.  Adoption Tradeoffs
      11.2.  Credential and Token Confusion
@@ -475,46 +478,53 @@ Table of Contents
    identity resolution to resource enforcement.  The referenced sections
    define their processing rules.
 
-      +=============+=====================================+=========+
-      | Invariant   | Required result                     | Defined |
-      |             |                                     | in      |
-      +=============+=====================================+=========+
-      | Governance  | Actors needing independent          | Section |
-      | boundary    | governance have distinct            | 3.4     |
-      |             | identities; execution topology does |         |
-      |             | not determine identity or authority |         |
-      +-------------+-------------------------------------+---------+
-      | Identity    | Authenticated dedicated-client      | Section |
-      |             | identity or independently validated | 6.1     |
-      |             | workload identity resolves through  |         |
-      |             | an enabled exact Identity Binding   |         |
-      |             | to one active Agent Principal       |         |
-      +-------------+-------------------------------------+---------+
-      | Client      | The authenticated client is         | Section |
-      | authority   | permitted to use that binding,      | 6.1     |
-      |             | credential class, and flow          |         |
-      +-------------+-------------------------------------+---------+
-      | Delegation  | The agent may act for the resolved  | Section |
-      |             | user in the authorized client,      | 7.1     |
-      |             | tenant, target, and authority       |         |
-      |             | context                             |         |
-      +-------------+-------------------------------------+---------+
-      | Federation  | ID-JAG identifies the user in the   | Section |
-      |             | target subject namespace and the    | 6.2,    |
-      |             | agent as act.iss = governing IdP,   | Section |
-      |             | act.sub = Agent Principal           | 8.4.4   |
-      +-------------+-------------------------------------+---------+
-      | Resource    | Local user authority, the actor     | Section |
-      | enforcement | gate, tenant, token authority, and  | 6.3,    |
-      |             | applicable proof requirements all   | Section |
-      |             | permit the operation                | 8.9     |
-      +-------------+-------------------------------------+---------+
+     +=============+=======================================+=========+
+     | Invariant   | Required result                       | Defined |
+     |             |                                       | in      |
+     +=============+=======================================+=========+
+     | Governance  | Actors needing independent governance | Section |
+     | boundary    | have distinct identities; execution   | 3.4     |
+     |             | topology does not determine identity  |         |
+     |             | or authority                          |         |
+     +-------------+---------------------------------------+---------+
+     | Identity    | Authenticated dedicated-client        | Section |
+     |             | identity or independently validated   | 6.1     |
+     |             | workload identity resolves through an |         |
+     |             | enabled exact Identity Binding to one |         |
+     |             | active Agent Principal                |         |
+     +-------------+---------------------------------------+---------+
+     | Client      | The authenticated client is permitted | Section |
+     | authority   | to use that binding, credential       | 6.1     |
+     |             | class, and acting relationship;       |         |
+     |             | permission for delegated issuance     |         |
+     |             | does not imply self-acting issuance   |         |
+     +-------------+---------------------------------------+---------+
+     | Agent       | For self-acting access, the agent is  | Section |
+     | authority   | authorized on its own behalf in the   | 7.1     |
+     |             | authorized client, tenant, target,    |         |
+     |             | and authority context                 |         |
+     +-------------+---------------------------------------+---------+
+     | Delegation  | The agent may act for the resolved    | Section |
+     |             | user in the authorized client,        | 7.2     |
+     |             | tenant, target, and authority context |         |
+     +-------------+---------------------------------------+---------+
+     | Federation  | ID-JAG identifies the user in the     | Section |
+     |             | target subject namespace and the      | 6.2,    |
+     |             | agent as act.iss = governing IdP,     | Section |
+     |             | act.sub = Agent Principal             | 8.4.4   |
+     +-------------+---------------------------------------+---------+
+     | Resource    | Local user authority, the actor gate, | Section |
+     | enforcement | tenant, token authority, and          | 6.3,    |
+     |             | applicable proof requirements all     | Section |
+     |             | permit the operation                  | 8.9     |
+     +-------------+---------------------------------------+---------+
 
                           Table 2: Core invariants
 
-   The last three rows describe delegated access.  The self-acting WAG
-   realization uses the same governed identity and client authorization,
-   with the agent as subject exercising its own authority (Section 10).
+   The delegation, federation, and resource enforcement rows describe
+   delegated access.  The agent authority row describes self-acting
+   access, which uses the same governed identity and client
+   authorization with the agent as subject (Section 10).
 
 3.2.  Authentication, Resolution, and Proof
 
@@ -689,7 +699,7 @@ Table of Contents
    requests are ID-JAG issuance at the IdP and redemption at the RAS.
    Proof processing follows the applicable grant and access-token
    protection; each decision is constrained by its own policy domain
-   (Section 7.3).
+   (Section 7.4).
 
 4.2.  Scope and Conformance
 
@@ -1789,11 +1799,11 @@ Table of Contents
    *  The authority the IdP is authorized to assert for the user.
 
    *  The authority permitted by the agent's delegation authorization
-      (Section 7.1).
+      (Section 7.2).
 
    The IdP authorizes cross-domain delegation within its configured
    authority; the RAS and API determine effective resource and operation
-   authorization, including the actor gate (Section 7.3).  The IdP need
+   authorization, including the actor gate (Section 7.4).  The IdP need
    not interpret every tool argument or business object.  An issuance
    decision that depends on those semantics requires authoritative
    resource-domain evaluation, locally or through a trusted policy
@@ -1811,7 +1821,25 @@ Table of Contents
 
    *  Denied delegation MUST NOT fall back to self-acting access.
 
-7.1.  Delegation Authorization
+7.1.  Agent Authorization
+
+   For self-acting access, the IdP MUST authorize the resolved Agent
+   Principal to access the requested RAS, resource, and authority on its
+   own behalf in the requested client and tenant context before issuing
+   a grant that names the agent as subject.  The IdP MUST reject
+   missing, revoked, expired, or insufficient Agent Authorization.
+   Valid credentials, an active Identity Binding, or a Client
+   Association MUST NOT imply it, and it MUST NOT be inferred from a
+   Delegation Authorization involving the same agent.  Denied self-
+   acting access MUST NOT fall back to delegated access or to a broader
+   authority.
+
+   The basis for the decision is a deployment choice: administrator
+   assignment, organizational policy, or task authorization are all
+   acceptable.  Assignment records and their storage are outside this
+   profile.
+
+7.2.  Delegation Authorization
 
    Before constructing act, the IdP MUST authorize the resolved Agent
    Principal to act for the user in the requested client, tenant, RAS,
@@ -1826,7 +1854,7 @@ Table of Contents
    are outside this profile.  Pre-existing actor chains are rejected
    under Section 8.4.3.
 
-7.2.  Authorization Lifetime
+7.3.  Authorization Lifetime
 
    Credential validity, the ID-JAG redemption window, and the duration
    of downstream authorization are separate limits.  Credential or ID-
@@ -1845,7 +1873,7 @@ Table of Contents
    a shorter ID-JAG lifetime as enforcing it.  Revocation follows
    Section 11.6.
 
-7.3.  Delegated Actor Authorization
+7.4.  Delegated Actor Authorization
 
    The authorization decisions belong to separate policy domains:
 
@@ -2249,7 +2277,7 @@ Table of Contents
          conflicts rejected as invalid_grant.
 
    All subject inputs require a current validated agent-resolution input
-   and delegation authorization under Section 7.1; the output remains an
+   and delegation authorization under Section 7.2; the output remains an
    ID-JAG.  User access tokens are not subject inputs in this document
    (Appendix A.2.3); JWT encoding alone does not make an access token an
    ID Token.
@@ -2501,7 +2529,7 @@ Table of Contents
 
    4.  *Local authorization:* Resolve the user under Section 6.2 and the
        Agent Principal actor under Section 6.3.  Apply current RAS
-       policy to the user/actor relationship under Section 7.3, client,
+       policy to the user/actor relationship under Section 7.4, client,
        tenant, and resource.  A valid grant sets an authority ceiling;
        it does not require issuance.
 
@@ -2535,7 +2563,7 @@ Table of Contents
       discard restrictions in those details or expand the approved
       authority.
 
-   *  *Expiration:* Within RAS-local lifetime policy under Section 7.2
+   *  *Expiration:* Within RAS-local lifetime policy under Section 7.3
       and any applicable refresh-authorization limit.
 
    The response follows Section 4.4.2 of [ID-JAG]; the client MUST
@@ -2967,7 +2995,7 @@ Table of Contents
       binding under [RFC8705], or permitted bearer use under [RFC6750].
 
    *  *Authority:* Require non-empty scope with its defined type.
-      Enforce user permissions and the actor gate under Section 7.3 and
+      Enforce user permissions and the actor gate under Section 7.4 and
       Section 8 of [ACTOR-PROFILE].  Enforce any effective
       authorization_details under [RFC9396], using the API's defined
       semantics for their combination with scope.  Independent agent
@@ -3173,77 +3201,134 @@ Table of Contents
 
 10.1.  Differences from Delegated Access
 
-    +===============+========================+========================+
-    | Area          | Delegated ID-JAG       | Self-acting WAG        |
-    +===============+========================+========================+
-    | Subject       | User, resolved from    | Agent Principal,       |
-    |               | the subject credential | resolved from the      |
-    |               |                        | agent-resolution input |
-    +---------------+------------------------+------------------------+
-    | Actor         | Agent Principal in act | None; act MUST be      |
-    |               |                        | absent                 |
-    +---------------+------------------------+------------------------+
-    | IdP           | Delegation             | Agent Authorization    |
-    | authorization | Authorization for the  | for the agent alone    |
-    |               | user and agent         |                        |
-    +---------------+------------------------+------------------------+
-    | Client        | Client Association for | Client Association for |
-    | permission    | delegated issuance     | self-acting issuance,  |
-    |               |                        | a separate permission  |
-    +---------------+------------------------+------------------------+
-    | RAS subject   | Local user, with the   | Local agent principal  |
-    |               | agent preserved in act | correlated under       |
-    |               |                        | Section 6.3            |
-    +---------------+------------------------+------------------------+
-    | API check     | User authority and the | The agent's own        |
-    |               | actor gate             | authority; no actor    |
-    |               |                        | gate                   |
-    +---------------+------------------------+------------------------+
-    | Refresh       | RAS refresh under      | None; WAG prohibits    |
-    |               | explicit policy        | refresh tokens         |
-    +---------------+------------------------+------------------------+
+   +===============+==================+===============================+
+   | Area          | Delegated ID-JAG | Self-acting WAG               |
+   +===============+==================+===============================+
+   | Subject       | User, resolved   | Agent Principal, resolved     |
+   |               | from the subject | from the agent-resolution     |
+   |               | credential       | input                         |
+   +---------------+------------------+-------------------------------+
+   | Actor         | Agent Principal  | None; act MUST be absent      |
+   |               | in act           |                               |
+   +---------------+------------------+-------------------------------+
+   | IdP           | Delegation       | Agent Authorization for the   |
+   | authorization | Authorization    | agent alone (Section 7.1)     |
+   |               | for the user and |                               |
+   |               | agent            |                               |
+   +---------------+------------------+-------------------------------+
+   | Client        | Client           | Client Association for self-  |
+   | permission    | Association for  | acting issuance, a separate   |
+   |               | delegated        | permission                    |
+   |               | issuance         |                               |
+   +---------------+------------------+-------------------------------+
+   | RAS subject   | Local user, with | Local agent principal         |
+   |               | the agent        | correlated under Section 6.3; |
+   |               | preserved in act | the issuer-qualified identity |
+   |               |                  | is retained for audit         |
+   +---------------+------------------+-------------------------------+
+   | API check     | User authority   | The agent's own authority; no |
+   |               | and the actor    | actor gate                    |
+   |               | gate             |                               |
+   +---------------+------------------+-------------------------------+
+   | Refresh       | RAS refresh      | None; WAG prohibits refresh   |
+   |               | under explicit   | tokens                        |
+   |               | policy           |                               |
+   +---------------+------------------+-------------------------------+
 
-          Table 27: Self-acting differences from delegated access
+         Table 27: Self-acting differences from delegated access
 
-10.2.  Issuance Request
+10.2.  Self-Acting Issuance
 
-   The client sends the token exchange request of Section 8.4.1 with
-   these differences:
+   Self-acting issuance is one operation with two resolution modes:
 
-   +======================+===========================================+
-   | Parameter            | Value                                     |
-   +======================+===========================================+
-   | requested_token_type | urn:ietf:params:oauth:token-type:wag      |
-   |                      | (provisional)                             |
-   +----------------------+-------------------------------------------+
-   | subject_token        | The agent-resolution credential: the      |
-   |                      | platform JWT, JWT-SVID, WIT-SVID, Client  |
-   |                      | Attestation, or RFC 7523 client assertion |
-   |                      | that also serves as the resolution input  |
-   +----------------------+-------------------------------------------+
-   | subject_token_type   | urn:ietf:params:oauth:token-type:jwt      |
-   +----------------------+-------------------------------------------+
-   | actor_token,         | MUST be absent                            |
-   | actor_token_type     |                                           |
-   +----------------------+-------------------------------------------+
-   | audience, resource,  | As in Section 8.4.1                       |
-   | scope                |                                           |
-   +----------------------+-------------------------------------------+
+   1.  The client authenticates at the IdP token endpoint.
 
-                  Table 28: Self-acting issuance request
+   2.  The IdP resolves the Agent Principal through an active Identity
+       Binding (Section 6.1) from the configured resolution input:
 
-   RFC 8693 requires a subject token, and in self-acting access the
-   subject is the authenticated client's own agent.  For authentication-
-   context inputs the client therefore presents as subject_token the
-   same compact JWT it presented for authentication, and the IdP MUST
-   verify that the two are byte-identical.  For the platform JWT input
-   the credential is the subject token and no actor token is used.
-   X.509-SVID authentication presents no JWT and has no self-acting
-   issuance in this document (Appendix A.1.1).  Mode selection and
-   rejection follow Section 8.4.3 with the subject token in the role of
-   the resolution credential.
+       *  *Presented workload resolution:* an independently validated
+          workload credential presented in the request.
 
-10.3.  Issuance Processing
+       *  *Authentication-context resolution:* the authenticated client
+          identity, with no separate credential.
+
+   3.  The IdP verifies a Client Association that permits the
+       authenticated client to use that binding for self-acting
+       issuance.  Permission for delegated issuance does not imply this
+       permission.
+
+   4.  The IdP applies Agent Authorization (Section 7.1).  No user is
+       involved.
+
+   5.  The IdP issues the WAG under Section 8.3 with the claims in
+       Section 10.5.
+
+   6.  The client redeems the WAG at the RAS (Section 10.6), which
+       correlates the pair to a local principal, applies current
+       resource authorization, and issues an access token.
+
+   Credentials are inputs used to resolve a governed principal; none of
+   them is the subject of the grant.  The WAG names the resolved Agent
+   Principal.
+
+10.3.  Issuance Request
+
+   The request uses token exchange because its output is an assertion
+   for redemption at another token endpoint, which only [RFC8693] can
+   label as such through issued_token_type.  Parameters follow
+   Section 8.4.1 with these differences:
+
+      +======================+======================================+
+      | Parameter            | Value                                |
+      +======================+======================================+
+      | requested_token_type | urn:ietf:params:oauth:token-type:wag |
+      |                      | (provisional)                        |
+      +----------------------+--------------------------------------+
+      | subject_token,       | Per resolution mode, below           |
+      | subject_token_type   |                                      |
+      +----------------------+--------------------------------------+
+      | actor_token,         | MUST be absent                       |
+      | actor_token_type     |                                      |
+      +----------------------+--------------------------------------+
+      | audience, resource,  | As in Section 8.4.1                  |
+      | scope                |                                      |
+      +----------------------+--------------------------------------+
+
+                   Table 28: Self-acting issuance request
+
+   *Presented workload resolution.* The workload credential is the
+   subject token, with subject_token_type urn:ietf:params:oauth:token-
+   type:jwt, and the client authenticates separately; the existing
+   platform JWT input (Section 5.2.2) is presented this way.  This is
+   the natural token exchange shape: the token represents the party on
+   whose behalf the request is made, and the IdP resolves the governed
+   principal from it, as it resolves the user from an ID Token in
+   delegated access.
+
+   *Authentication-context resolution.* The subject is the authenticated
+   client itself and no separate token exists.  [RFC8693] requires a
+   subject token and offers no way to state that the authenticated
+   client is the subject.  As an interim binding, a client authenticated
+   with a JWT, whether an RFC 7523 assertion, a JWT-SVID, a WIT-SVID, or
+   a Client Attestation, presents that same compact JWT as subject_token
+   with type urn:ietf:params:oauth:token-type:jwt.  The IdP MUST verify
+   that the subject token identifies the authenticated client; comparing
+   it byte for byte with the presented credential is the simplest check.
+   This prevents a client from substituting another party's assertion as
+   the subject.  It does not make the credential the agent: the Identity
+   Binding resolves the authenticated client to the Agent Principal
+   exactly as in delegated dedicated-client resolution.  A client
+   authenticated by X.509-SVID over mutual TLS presents no JWT and has
+   no self-acting issuance under this interim binding.  The convention
+   this document asks WAG to define is a token exchange in which the
+   authenticated client is the subject, either by permitting omission of
+   the subject token in that case or by registering a subject token type
+   for it (Appendix A.1.1).
+
+   Mode selection is configured under Section 8.4.3.  Presence of actor-
+   token parameters is invalid_request.
+
+10.4.  Issuance Processing
 
    The IdP MUST:
 
@@ -3253,19 +3338,22 @@ Table of Contents
    2.  Resolve the Agent Principal through an active Identity Binding
        under Section 6.1 and verify a Client Association that permits
        the authenticated client to use that binding for self-acting
-       issuance.  Permission for delegated issuance does not imply this
-       permission.
+       issuance.
 
-   3.  Authorize the agent under Section 7 for the requested RAS,
-       resource, and authority on its own behalf.  No user is involved.
-       Denied self-acting access MUST NOT fall back to delegated access
-       or to a broader authority.
+   3.  Apply Agent Authorization under Section 7.1 for the requested
+       RAS, resource, and authority.
 
    4.  Apply Section 8.3: in the bound profile the request carries a
        DPoP proof and the grant carries cnf.jkt.
 
-   The grant is a JWT with the following claims, aligned with the claim
-   set of Section 5.1 of [WAG]:
+10.5.  Grant Claims
+
+   The WAG subject identifies the governed Agent Principal, not the
+   credential subject from which it was resolved.  Changing the
+   platform, credential, replica, or execution environment behind an
+   Identity Binding does not change the subject.  The grant is a JWT
+   with the following claims, aligned with the claim set of Section 5.1
+   of [WAG]:
 
           +===========+========================================+
           | Claim     | Value                                  |
@@ -3302,7 +3390,7 @@ Table of Contents
    one transaction and does not cap the grant.  The response follows
    Section 8.4.6 with issued_token_type set to the WAG token type.
 
-10.4.  Redemption and Access Tokens
+10.6.  Redemption and Access Tokens
 
    The client redeems the WAG at the RAS token endpoint with
    urn:ietf:params:oauth:grant-type:jwt-bearer, as WAG already uses, and
@@ -3331,47 +3419,59 @@ Table of Contents
        issue a refresh token for a WAG redemption; continued access
        obtains a new WAG under current IdP and RAS policy.
 
-10.5.  Resource Processing
+   The access token's sub is the local principal.  This differs from
+   delegated access, where the IdP-qualified actor survives in act.  The
+   RAS MUST retain the correlation between the WAG's (iss, sub) and the
+   local principal for the life of the derived authorization, and MUST
+   make that issuer-qualified identity available for audit and in the
+   introspection context of the token.  The token itself need not carry
+   it; this document defines no new claim for that purpose.
+
+10.7.  Resource Processing
 
    The API applies Section 8.9 without the actor gate: it enforces the
    agent's own permissions, the token's authority constraints, the
    Target Tenant, and the selected protection.  A governed self-acting
-   token has no act.  A deployment serving both realizations for one
-   resource MUST distinguish their token populations through trusted
-   configuration, such as separate client registrations, so that a
-   delegated token lacking act is never accepted as self-acting.
+   token has no act.
 
-10.6.  Errors
+   The RAS MUST issue access tokens such that the API can determine,
+   from trusted token context, which acting relationship authorized
+   them.  Separate client registrations, audiences, or issuers for the
+   two populations satisfy this requirement.  The absence of act alone
+   does not: a delegated token lacking act would otherwise be accepted
+   as self-acting.
+
+10.8.  Errors
 
    Token endpoint errors follow Section 8.6 with these additions:
 
-        +==================================+=====================+
-        | Failure                          | Error               |
-        +==================================+=====================+
-        | Actor-token parameters present   | invalid_request     |
-        | in a self-acting exchange        |                     |
-        +----------------------------------+---------------------+
-        | Subject token differs from the   | invalid_grant       |
-        | authenticated credential in an   |                     |
-        | authentication-context mode      |                     |
-        +----------------------------------+---------------------+
-        | Resolved Agent Principal, but no | unauthorized_client |
-        | Client Association permits self- |                     |
-        | acting issuance for the binding  |                     |
-        +----------------------------------+---------------------+
-        | Agent not authorized for the     | invalid_target      |
-        | requested RAS or resource        |                     |
-        +----------------------------------+---------------------+
-        | Agent not authorized for the     | invalid_scope       |
-        | requested authority              |                     |
-        +----------------------------------+---------------------+
-        | WAG whose sub has no authorized  | invalid_grant       |
-        | correlation at the RAS           |                     |
-        +----------------------------------+---------------------+
+        +===================================+=====================+
+        | Failure                           | Error               |
+        +===================================+=====================+
+        | Actor-token parameters present in | invalid_request     |
+        | a self-acting exchange            |                     |
+        +-----------------------------------+---------------------+
+        | Subject token does not identify   | invalid_grant       |
+        | the authenticated client in       |                     |
+        | authentication-context resolution |                     |
+        +-----------------------------------+---------------------+
+        | Resolved Agent Principal, but no  | unauthorized_client |
+        | Client Association permits self-  |                     |
+        | acting issuance for the binding   |                     |
+        +-----------------------------------+---------------------+
+        | Agent not authorized for the      | invalid_target      |
+        | requested RAS or resource         |                     |
+        +-----------------------------------+---------------------+
+        | Agent not authorized for the      | invalid_scope       |
+        | requested authority               |                     |
+        +-----------------------------------+---------------------+
+        | WAG whose sub has no authorized   | invalid_grant       |
+        | correlation at the RAS            |                     |
+        +-----------------------------------+---------------------+
 
-                  Table 30: Self-acting error additions
+                   Table 30: Self-acting error additions
 
-10.7.  Profile Identifiers
+10.9.  Profile Identifiers
 
    The self-acting realization uses the adoption profiles of Section 4.2
    under its own provisional identifiers, urn:ietf:params:oauth:grant-
@@ -3381,6 +3481,11 @@ Table of Contents
    Section 9.  Provisioning, disablement, and revocation apply to the
    same Agent Principal and local principal as delegated access
    (Section 11.6).
+
+   The profile URIs identify acting relationship and grant protection
+   only.  Further dimensions such as credential class, access-token
+   protection, or continuation are capabilities and configured minimums;
+   they do not create additional profile URIs.
 
 11.  Security Considerations
 
@@ -3697,7 +3802,7 @@ Table of Contents
 
    *  Change Controller: IETF
 
-   *  Specification Document: Section 10.7 of this document.
+   *  Specification Document: Section 10.9 of this document.
 
    *  URN: urn:ietf:params:oauth:grant-profile:wag-governed-agent
 
@@ -3705,7 +3810,7 @@ Table of Contents
 
    *  Change Controller: IETF
 
-   *  Specification Document: Section 10.7 of this document.
+   *  Specification Document: Section 10.9 of this document.
 
    The WAG token type urn:ietf:params:oauth:token-type:wag and JWT type
    wag+jwt are not requested here; they are proposed for registration by
@@ -4016,15 +4121,18 @@ A.1.1.  WAG
 
    *  *Linking:* Section 7 of [WAG] requires acceptance of previously
       unseen agent identifiers under trusted issuers.  Governed agents
-      instead require an authorized local correlation (Section 10.4).
+      instead require an authorized local correlation (Section 10.6).
 
    *  *Renewal:* This document adopts WAG's prohibition on refresh
       tokens; continuing self-acting access re-issues the grant.
 
-   *  *Subject presentation:* Self-acting exchange presents the
-      authenticated credential as subject_token; X.509-SVID
-      authentication has no self-acting issuance until a non-JWT subject
-      presentation is defined.
+   *  *Subject presentation:* A token exchange in which the
+      authenticated client is the subject, by permitting omission of
+      subject_token in that case or by registering a subject token type
+      for authenticated client context.  Until then, JWT-authenticated
+      clients present their authentication JWT as an interim binding
+      (Section 10.3) and X.509-SVID authentication has no self-acting
+      issuance.
 
    *  *Management:* [AGENT-MANAGEMENT] administers Client Associations
       for delegated issuance only; self-acting permission needs a flow
@@ -4077,7 +4185,7 @@ A.2.2.  Portable Authorization Deadlines
    delegation, and enforcement rules for access tokens and refresh
    authorization.  That composition is outside the scope of this
    document.  ID-JAG exp remains the redemption limit; it cannot
-   communicate a deadline for subsequent access (Section 7.2).
+   communicate a deadline for subsequent access (Section 7.3).
 
 A.2.3.  User Access Tokens as Subjects
 
@@ -4102,7 +4210,7 @@ A.2.4.  Excluded Compositions
    | Asynchronous approval    | No approval transport or completion    |
    | with [AROP]              | flow; external approval remains        |
    |                          | subject to Section 11.7 and the        |
-   |                          | lifetime limits in Section 7.2         |
+   |                          | lifetime limits in Section 7.3         |
    +--------------------------+----------------------------------------+
    | Continuation with        | No ICA issuance or continuation chain; |
    | [ICA]                    | supported renewal follows Section 8.7  |
