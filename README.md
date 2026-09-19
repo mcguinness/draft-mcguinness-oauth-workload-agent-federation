@@ -31,9 +31,10 @@ or policy-permitted RAS refresh within retained authorization and lifetime
 limits. Existing SSO refresh tokens do not automatically authorize downstream
 resources.
 
-WAG remains the intended self-acting composition with the same governed
-identity and local principal correlation. Its wire requirements await
-upstream coordination; this revision claims no WAG wire conformance.
+The self-acting WAG realization issues an IdP-signed WAG naming the Agent
+Principal as subject, redeemed with the JWT bearer grant and correlated to
+the same local principal. Its token-type, JWT-type, and profile
+identifiers are provisional pending coordination with WAG.
 Instance identification, attester endorsement, key transition, and Identity
 Continuation Assertion compositions remain deferred.
 

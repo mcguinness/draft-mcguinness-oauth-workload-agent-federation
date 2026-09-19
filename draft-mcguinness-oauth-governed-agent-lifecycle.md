@@ -533,11 +533,11 @@ valid bindings.
 
 ## Self-Acting Access
 
-The intended {{WAG}} composition correlates the same Agent Principal
-with the same local principal. Delegated access preserves the qualified
+The self-acting WAG realization in {{FEDERATION}} correlates the same
+Agent Principal with the same local principal. Delegated access preserves the qualified
 actor in `act`; self-acting access represents the correlated agent as a
 local subject. Their authority remains distinct. This document defines
-no WAG wire composition or additional WAG claim.
+no {{WAG}} wire composition or additional WAG claim.
 
 # Security Considerations
 
