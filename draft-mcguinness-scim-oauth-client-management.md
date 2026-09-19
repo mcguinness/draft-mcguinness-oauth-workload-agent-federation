@@ -123,7 +123,7 @@ under {{cimd}}. It does not define:
 * Generation, export, or rotation of shared secrets or private keys.
 * Embedded `jwks`, localized metadata names, or software-statement
   submission through SCIM. These require explicit SCIM mappings beyond
-  this revision. Their use within a CIMD document or through RFC 7591
+  this document. Their use within a CIMD document or through RFC 7591
   is unaffected.
 * Agent identity, workload trust, consent, user delegation, or a policy
   language. {{AGENT-MANAGEMENT}} separately consumes client references.
@@ -160,6 +160,65 @@ defines no management scope names and issues no registration access
 token. An RFC 7592 registration access token is not automatically
 accepted by the SCIM interface; such use requires separately configured
 authorization.
+
+# Common Provisioning Conventions {#conventions}
+
+The conventions below apply to the OAuthClient resource. The companion
+profiles for agent management and lifecycle reference them and state
+their own narrowings.
+
+* **Correlation:** Provisioning clients SHOULD supply `externalId` for
+  reconciliation and retry recovery. When present, it MUST be non-empty
+  and unique within the authenticated Provisioning Domain and resource
+  type, including concurrent writes. It retains SCIM readWrite
+  mutability unless a profile states otherwise, and it is an
+  administrative correlation value, not a protocol identifier. A
+  duplicate uses `409` with `uniqueness`. POST is never an upsert: after
+  a lost response, the client queries by exact `externalId` before
+  retrying. Without a correlation value, repeating POST is not
+  idempotent.
+* **Identifiers:** SCIM `id` is server-assigned and MUST NOT be
+  reassigned after deletion. Supplied read-only values are processed
+  under SCIM's read-only rules and MUST NOT select an existing resource.
+* **Versions:** Complete representations MUST carry `meta.created`,
+  `meta.lastModified`, and `meta.version`; individual responses MUST
+  carry the corresponding ETag. The Service Provider MUST support ETags
+  under {{Section 3.14 of RFC7644}} and advertise ETag, PATCH, and
+  filtering support in `/ServiceProviderConfig`. `meta.version` is an
+  opaque validator, not a lifecycle counter, and `meta.lastModified` is
+  a modification time, not a decision time.
+* **Conditional writes:** Clients SHOULD use `If-Match` on PUT, PATCH,
+  and DELETE. A failed precondition receives HTTP 412 under
+  {{Section 3.12 of RFC7644}}; the client retrieves and reconciles its
+  intended change before retrying. Changing an existing inactive
+  resource to active MUST use `If-Match` with a resource-version ETag
+  matching the current representation. An absent header or
+  `If-Match: *` receives HTTP 409 with a `detail` directing the client
+  to retrieve current state and use its ETag; no `scimType` is
+  assigned. The wildcard tests existence, not version, under
+  {{Section 13.1.1 of RFC9110}}. Other authorized unconditional writes
+  remain permitted.
+* **Explicit state:** Creation and PUT MUST supply an explicit boolean
+  `active`; removing it is invalid. PUT MUST include required
+  attributes. Optional immutable values omitted from PUT retain their
+  stored values; supplied different values receive `400` with
+  `mutability`.
+* **Incremental reads:** The Service Provider MUST support `gt` and `ge`
+  filters on `meta.lastModified`, combinable with the required equality
+  filters. For example, `meta.lastModified ge "2026-09-18T12:00:00Z"`
+  selects records changed since a checkpoint. A client SHOULD overlap
+  successive windows and deduplicate by `id` and `meta.version`;
+  timestamps are not unique sequence numbers. Incremental queries cannot
+  discover deletions and do not form a transactional snapshot. Periodic
+  complete reconciliation remains necessary, and an incomplete listing
+  cannot establish absence.
+* **Durable restriction:** Before returning success for a restrictive
+  change, the Service Provider MUST persist the restriction in durable
+  state consulted by its decision points. Decisions beginning after the
+  response MUST observe it. If a decision point cannot observe it, the
+  write MUST NOT be reported successful; queuing an update alone is
+  insufficient. An in-flight decision made before the restriction can
+  still complete.
 
 # OAuthClient Resource {#schema}
 
@@ -203,18 +262,10 @@ readmission of the same CIMD client uses a new SCIM `id`; old references
 MUST NOT become effective again. This prevents stale administrative
 references from authorizing a replacement resource.
 
-Provisioning clients SHOULD supply `externalId` for reconciliation. When
-present, it MUST be non-empty and unique within the authenticated
-Provisioning Domain and resource type, including concurrent writes. It
-retains SCIM readWrite mutability and remains an administrative
-correlation value, not an OAuth identifier. A duplicate uses `409` with
-`uniqueness`; lost responses can be recovered by an authorized exact
-lookup. Without a correlation value, repeating POST is not idempotent.
-
-Creation and PUT MUST supply an explicit boolean `active`. Removal is
-invalid because it is required. `active: true` is necessary for use but
-does not override local suspension, metadata validation, or OAuth
-policy.
+`externalId` and `active` handling follow {{conventions}}; `externalId`
+remains an administrative correlation value, not an OAuth identifier.
+`active: true` is necessary for use but does not override local
+suspension, metadata validation, or OAuth policy.
 
 ## Registration Metadata {#metadata}
 
@@ -398,48 +449,23 @@ combinations. Results MUST remain within the caller's management scope.
 An authorized reader spanning provisioning domains cannot assume
 `externalId` alone is unique.
 
-Complete representations MUST carry `meta.created`, `meta.lastModified`,
-and `meta.version`; individual responses MUST carry the corresponding
-ETag. Clients SHOULD use `If-Match` on PUT, PATCH, and DELETE. A failed
-precondition receives HTTP 412 under {{Section 3.12 of RFC7644}}.
-Changing an existing inactive OAuthClient to active MUST use `If-Match`
-with a resource-version ETag matching the current representation. An
-absent header or `If-Match: *` receives HTTP 409 with a `detail`
-directing the client to retrieve current state and use its ETag; no
-`scimType` is assigned. The wildcard tests existence, not version, under
-{{Section 13.1.1 of RFC9110}}. Other authorized unconditional writes
-remain permitted. After a conflict, the client retrieves and reconciles
-before retrying.
+Versions, conditional writes, explicit `active` state, PUT handling of
+immutable values, and incremental reads follow {{conventions}}.
 
 PATCH and PUT retain their SCIM semantics. The Service Provider MUST
 validate and authorize the resulting registration before committing the
 atomic resource change. Removal of a required attribute, including one
 conditionally required under {{metadata}}, is invalid; read-only
-attributes follow SCIM's read-only processing. PUT MUST include required
-attributes. Optional immutable values omitted from PUT retain their
-stored values; supplied different values receive `400` with
-`mutability`. A mutation MUST NOT change unrelated agent bindings,
-consent, or resource permissions.
-
-The Service Provider MUST support `gt` and `ge` filters on
-`meta.lastModified`, including combination with the required equality
-filters. For example, `meta.lastModified ge "2026-09-18T12:00:00Z"`
-selects records changed since a checkpoint. A connector SHOULD overlap
-successive windows and deduplicate by resource `id` and `meta.version`;
-timestamps are not unique sequence numbers. Incremental queries cannot
-discover deletions and do not form a transactional snapshot. Periodic
-complete reconciliation remains necessary, and an incomplete listing
-cannot establish absence.
+attributes follow SCIM's read-only processing. A mutation MUST NOT
+change unrelated agent bindings, consent, or resource permissions.
 
 ## Disablement and Deletion {#disablement}
 
-Setting `active: false` disables the registration. Before returning
-success, the server MUST persist the restriction in durable state
-consulted by its authorization and token decision points. These points
-MUST deny new authorization and issuance, including refresh decisions
-beginning after the response. If they cannot observe the restriction,
-the write MUST NOT be reported successful. Reactivation requires
-separate administrative authorization.
+Setting `active: false` disables the registration. The durable
+restriction rule in {{conventions}} applies with the authorization and
+token endpoints as the decision points: they MUST deny new authorization
+and issuance, including refresh decisions beginning after the response.
+Reactivation requires separate administrative authorization.
 
 DELETE de-registers the underlying client; it is not merely removal of
 its SCIM representation. The server MUST invalidate any RFC 7592
@@ -559,8 +585,7 @@ justify exposing the complete registration to unauthenticated readers.
 
 This document requests registrations in the SCIM Schema URIs registry
 using {{Section 10.3.2 of RFC7643}}. Registration under `core:2.0`
-requires Expert Review and RFC publication under {{Section 10.3.1 of
-RFC7643}}.
+requires Expert Review and RFC publication under {{Section 10.3.1 of RFC7643}}.
 
 ## OAuthClient Resource
 
@@ -766,11 +791,6 @@ client IDs. Coordination with the original authors and the OAuth and
 SCIM communities is intended. This document does not claim to update an
 adopted standard or to be an agreed continuation under the earlier draft
 name.
-
-# Acknowledgments
-
-The original SCIM client-registration design by Phil Hunt, Morteza
-Ansari, and Anthony Nadalin provides the foundation for this proposal.
 
 # Schema and ResourceType Representations {#schema-json}
 
@@ -1034,4 +1054,12 @@ applicable even though ResourceType marks the extension optional.
 
 # Document History
 
-Initial version.
+RFC Editor: Remove this section before publication.
+
+* Initial version.
+
+# Acknowledgments
+{:numbered="false"}
+
+The original SCIM client-registration design by Phil Hunt, Morteza
+Ansari, and Anthony Nadalin provides the foundation for this proposal.
