@@ -1062,7 +1062,7 @@ svg {
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 22 March 2027</td>
+<td class="center">Expires 23 March 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1075,12 +1075,12 @@ svg {
 <dd class="internet-draft">draft-mcguinness-oauth-workload-agent-federation-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-09-18" class="published">18 September 2026</time>
+<time datetime="2026-09-19" class="published">19 September 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-03-22">22 March 2027</time></dd>
+<dd class="expires"><time datetime="2027-03-23">23 March 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1143,7 +1143,7 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 22 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 23 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1509,19 +1509,27 @@ conformance is claimed.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
-            <p id="section-toc.1-1.17.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-variant-shared-platform-cli" class="internal xref">Variant: Shared Platform Client with SPIFFE</a></p>
+            <p id="section-toc.1-1.17.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-input-variants" class="internal xref">Input Variants</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.1">
+                <p id="section-toc.1-1.17.2.1.1"><a href="#appendix-C.1" class="auto internal xref">C.1</a>.  <a href="#name-shared-platform-client-with" class="internal xref">Shared Platform Client with SPIFFE</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.2">
+                <p id="section-toc.1-1.17.2.2.1"><a href="#appendix-C.2" class="auto internal xref">C.2</a>.  <a href="#name-wit-svid-and-x509-svid" class="internal xref">WIT-SVID and X.509-SVID</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17.2.3">
+                <p id="section-toc.1-1.17.2.3.1"><a href="#appendix-C.3" class="auto internal xref">C.3</a>.  <a href="#name-aws-workload-identity-bindi" class="internal xref">AWS Workload Identity Binding</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
-            <p id="section-toc.1-1.18.1"><a href="#appendix-D" class="auto internal xref">Appendix D</a>.  <a href="#name-variant-wit-svid-or-x509-sv" class="internal xref">Variant: WIT-SVID or X.509-SVID</a></p>
+            <p id="section-toc.1-1.18.1"><a href="#appendix-D" class="auto internal xref">Appendix D</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19">
-            <p id="section-toc.1-1.19.1"><a href="#appendix-E" class="auto internal xref">Appendix E</a>.  <a href="#name-example-aws-workload-identi" class="internal xref">Example: AWS Workload Identity Binding</a></p>
+            <p id="section-toc.1-1.19.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20">
-            <p id="section-toc.1-1.20.1"><a href="#appendix-F" class="auto internal xref">Appendix F</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.21">
-            <p id="section-toc.1-1.21.1"><a href="#appendix-G" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.20.1"><a href="#appendix-F" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1690,6 +1698,13 @@ the acting relationship and proof binding it carries.<a href="#section-2.1-1.10.
         <dd class="break"></dd>
 </dl>
 <p id="section-2.1-2">One service can implement several roles.<a href="#section-2.1-2" class="pilcrow">¶</a></p>
+<p id="section-2.1-3">The companion profiles add two administrative roles. The Provisioning
+Client is a platform connector that manages Agent Principals and their
+relationships at the IdP, whose SCIM service is the IdP Service Provider
+(<span>[<a href="#AGENT-MANAGEMENT" class="cite xref">AGENT-MANAGEMENT</a>]</span>). The Receiver is the resource-domain SCIM service
+together with the RAS components that accept IdP provisioning
+(<span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span>). "Service Provider" alone always denotes the
+IdP-side SCIM service.<a href="#section-2.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="terms">
@@ -2203,13 +2218,14 @@ tokens whose introspection response carries the same context under
 </li>
           <li class="normal" id="section-4.2-7.5">
             <p id="section-4.2-7.5.1"><strong>Optional inputs:</strong> SPIFFE JWT-SVIDs, WIT-SVIDs, X.509-SVIDs,
-existing platform JWTs, Client
-Attestation, SAML subjects, and IdP refresh-token subjects are <span class="bcp14">OPTIONAL</span>
-capabilities. A deployment selects mutually supported inputs through
-trusted configuration; neither role needs SPIFFE for the
-client-assertion path. Shared-client interoperability is bilateral: the
-client and IdP need to agree on an input that distinguishes the agents.
-Conformance alone does not guarantee a common shared-client input.<a href="#section-4.2-7.5.1" class="pilcrow">¶</a></p>
+existing platform JWTs, Client Attestation, SAML subjects, and IdP
+refresh-token subjects are <span class="bcp14">OPTIONAL</span> capabilities, with one exception:
+an IdP that supports shared clients <span class="bcp14">MUST</span> support the existing platform
+JWT input (<a href="#imported-jwt-input" class="auto internal xref">Section 5.2.2</a>), and a shared-client platform <span class="bcp14">MUST</span>
+be able to present it. A deployment selects mutually supported inputs
+through trusted configuration; neither role needs SPIFFE for the
+client-assertion path. The platform JWT input is the common
+shared-client input; other shared-client inputs remain bilateral.<a href="#section-4.2-7.5.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.2-7.6">
             <p id="section-4.2-7.6.1"><strong>WAG:</strong> <a href="#wag-flow" class="auto internal xref">Section 10</a> describes the self-acting identity and
@@ -2300,18 +2316,34 @@ ID Metadata Documents (CIMD) <span>[<a href="#CIMD" class="cite xref">CIMD</a>]<
 the corresponding metadata.<a href="#section-4.3-5.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.3-5.2">
-            <p id="section-4.3-5.2.1"><strong>Local principals:</strong> The RAS provisions or synchronizes local agent
-principals and user links for RAS and API processing.<a href="#section-4.3-5.2.1" class="pilcrow">¶</a></p>
+            <p id="section-4.3-5.2.1"><strong>Client registration association:</strong> For each target RAS, the IdP
+holds the authoritative mapping from its authenticated client to that
+client's registration at the RAS, from which it derives the ID-JAG
+<code>client_id</code> (<a href="#flow-configuration" class="auto internal xref">Section 8.2</a>). Using one identifier at both
+servers, which a CIMD Client Identifier URL provides by construction,
+makes that mapping the identity mapping. No companion profile
+provisions this association; it is configured.<a href="#section-4.3-5.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.3-5.3">
-            <p id="section-4.3-5.3.1"><strong>Applicable profile:</strong> Client, IdP, RAS, and resource policy establish
-the profile and minimum requirements per client, trust relationship,
-and resource; all roles enforce their applicable requirements.<a href="#section-4.3-5.3.1" class="pilcrow">¶</a></p>
+            <p id="section-4.3-5.3.1"><strong>Target Tenant binding:</strong> The Target Tenant is configured once and
+carried consistently by the tenant-specific resource URI
+(<a href="#root-request" class="auto internal xref">Section 8.4.1</a>), by the resource domain's provisioning context, and
+by any Shared Signals stream (<span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span>). Deployments <span class="bcp14">MUST</span>
+configure these carriers to agree.<a href="#section-4.3-5.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.3-5.4">
-            <p id="section-4.3-5.4.1"><strong>Access-token protection:</strong> The RAS and client configure protection
+            <p id="section-4.3-5.4.1"><strong>Local principals:</strong> The RAS provisions or synchronizes local agent
+principals and user links for RAS and API processing.<a href="#section-4.3-5.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-5.5">
+            <p id="section-4.3-5.5.1"><strong>Applicable profile:</strong> Client, IdP, RAS, and resource policy establish
+the profile and minimum requirements per client, trust relationship,
+and resource; all roles enforce their applicable requirements.<a href="#section-4.3-5.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-5.6">
+            <p id="section-4.3-5.6.1"><strong>Access-token protection:</strong> The RAS and client configure protection
 per resource for client, RAS, and API use (<a href="#access-token-protection" class="auto internal xref">Section 8.5.4</a>).
-<code>token_type</code> distinguishes DPoP, but not mutual TLS from bearer.<a href="#section-4.3-5.4.1" class="pilcrow">¶</a></p>
+<code>token_type</code> distinguishes DPoP, but not mutual TLS from bearer.<a href="#section-4.3-5.6.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-4.3-6">Discovery exposes capabilities, not these authorization decisions:<a href="#section-4.3-6" class="pilcrow">¶</a></p>
@@ -2334,7 +2366,7 @@ mechanism here. Profile metadata does not establish acceptance policy
 and exact identity selectors. The Agent Principal mapping and separate
 Client Association are still required, but no new configuration object
 types are prescribed. <a href="#identity-example" class="auto internal xref">Section 4.4</a> illustrates the shared-client
-case; <a href="#aws-example" class="auto internal xref">Appendix E</a> applies the model to an AWS Security Token Service
+case; <a href="#aws-example" class="auto internal xref">Appendix C.3</a> applies the model to an AWS Security Token Service
 (STS) workload credential.<a href="#section-4.3-8" class="pilcrow">¶</a></p>
 <p id="section-4.3-9">Request hints, discovered client metadata, and unverified JWT claims
 <span class="bcp14">MUST NOT</span> by themselves establish credential-authority trust or change
@@ -2461,7 +2493,7 @@ replace <code>act.sub</code>.<a href="#section-4.4-6" class="pilcrow">¶</a></p>
 second Identity Binding can resolve it to the same <code>agent-42</code>. A Client
 Association also needs to permit that binding. The downstream agent identity
 then stays unchanged, and either binding can be disabled independently.<a href="#section-4.4-7" class="pilcrow">¶</a></p>
-<p id="section-4.4-8"><a href="#shared-client-example" class="auto internal xref">Appendix C</a> supplies the credential and request details
+<p id="section-4.4-8"><a href="#shared-client-example" class="auto internal xref">Appendix C.1</a> supplies the credential and request details
 for this scenario, using the complete message sequence in <a href="#walkthrough" class="auto internal xref">Appendix B</a>.<a href="#section-4.4-8" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2541,6 +2573,18 @@ from the underlying protocols are summarized in <a href="#profile-additions" cla
                 <a href="#metadata" class="auto internal xref">Section 9</a>, <a href="#errors" class="auto internal xref">Section 8.6</a>
 </td>
             </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">IdP Service Provider and Provisioning Client</td>
+              <td class="text-left" rowspan="1" colspan="1">Manage Agents, Identity Bindings, Client Associations, and OAuth client registrations</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <span>[<a href="#AGENT-MANAGEMENT" class="cite xref">AGENT-MANAGEMENT</a>]</span> (companion)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Receiver</td>
+              <td class="text-left" rowspan="1" colspan="1">Accept IdP provisioning; apply disablement and revocation at the RAS</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> (companion)</td>
+            </tr>
           </tbody>
         </table>
 </section>
@@ -2606,7 +2650,7 @@ Credential acquisition is outside this profile.<a href="#section-5-3" class="pil
             <td class="text-left" rowspan="1" colspan="1">Trusted attester and validated client <code>sub</code> (<a href="#agent-evidence" class="auto internal xref">Section 5.2.3</a>)</td>
           </tr>
           <tr>
-            <td class="text-left" rowspan="1" colspan="1">Existing platform JWT (optional)</td>
+            <td class="text-left" rowspan="1" colspan="1">Existing platform JWT (optional; <span class="bcp14">REQUIRED</span> for shared-client support)</td>
             <td class="text-left" rowspan="1" colspan="1">Separate <code>actor_token</code>; independent client authentication</td>
             <td class="text-left" rowspan="1" colspan="1">Configured issuer, subject, and exact selectors (<a href="#imported-jwt-input" class="auto internal xref">Section 5.2.2</a>)</td>
           </tr>
@@ -2873,9 +2917,10 @@ input rather than treat DPoP as that proof (<a href="#credential-requirements" c
 <a href="#section-5.2.2" class="section-number selfRef">5.2.2. </a><a href="#name-existing-platform-jwt" class="section-name selfRef">Existing Platform JWT</a>
           </h4>
 <p id="section-5.2.2-1">This input accepts existing signed platform JWTs without requiring a
-new media type or reissuance in a federation-specific format. The
-client presents the JWT as <code>actor_token</code> and authenticates separately
-with a configured method. The IdP <span class="bcp14">MUST</span> explicitly configure the
+new media type or reissuance in a federation-specific format. It is the
+mandatory-to-implement shared-client input: an IdP that supports shared
+clients <span class="bcp14">MUST</span> support it (<a href="#scope" class="auto internal xref">Section 4.2</a>). The client presents the JWT as
+<code>actor_token</code> and authenticates separately with a configured method. The IdP <span class="bcp14">MUST</span> explicitly configure the
 accepted issuer, credential class, and authenticated client. Credential
 classification and rejection follow <a href="#actor-inputs" class="auto internal xref">Section 8.4.3</a>.<a href="#section-5.2.2-1" class="pilcrow">¶</a></p>
 <p id="section-5.2.2-2">The Identity Binding <span class="bcp14">MUST</span> specify an exact issuer and <code>sub</code> and <span class="bcp14">MAY</span>
@@ -2957,7 +3002,7 @@ deployment accepting key-bound JWTs <span class="bcp14">MUST</span> configure th
 validation and any required relationship to the grant proof key. If
 the JWT is bearer evidence, <a href="#credential-requirements" class="auto internal xref">Section 5.4</a> applies;
 exchange DPoP does not add an issuer-bound presenter key.<a href="#section-5.2.2-9" class="pilcrow">¶</a></p>
-<p id="section-5.2.2-10">An AWS STS example appears in <a href="#aws-example" class="auto internal xref">Appendix E</a>.<a href="#section-5.2.2-10" class="pilcrow">¶</a></p>
+<p id="section-5.2.2-10">An AWS STS example appears in <a href="#aws-example" class="auto internal xref">Appendix C.3</a>.<a href="#section-5.2.2-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="agent-evidence">
@@ -3129,7 +3174,7 @@ OAuth SPIFFE presentation mechanisms. It does not define a general
 non-SPIFFE WIT or WIC input, WIT presentation with Workload Proof Tokens
 or HTTP Message Signatures, or conversion of a certificate to a JWT
 actor token (<a href="#excluded-compositions" class="auto internal xref">Appendix A.2.4</a>).<a href="#section-5.2.4.3-1" class="pilcrow">¶</a></p>
-<p id="section-5.2.4.3-2"><a href="#svid-context-example" class="auto internal xref">Appendix D</a> illustrates both inputs.<a href="#section-5.2.4.3-2" class="pilcrow">¶</a></p>
+<p id="section-5.2.4.3-2"><a href="#svid-context-example" class="auto internal xref">Appendix C.2</a> illustrates both inputs.<a href="#section-5.2.4.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3245,8 +3290,7 @@ RAS correlates both to its local principals.<a href="#section-6-1" class="pilcro
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Existing platform JWT</td>
               <td class="text-left" rowspan="1" colspan="1">Approved issuer and exact subject, with configured additional selectors</td>
-              <td class="text-left" rowspan="1" colspan="1">Optional input under <a href="#imported-jwt-input" class="auto internal xref">Section 5.2.2</a>
-</td>
+              <td class="text-left" rowspan="1" colspan="1">Input under <a href="#imported-jwt-input" class="auto internal xref">Section 5.2.2</a>; <span class="bcp14">REQUIRED</span> when shared clients are supported</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Client Attestation whose attested client maps explicitly to one Agent Principal</td>
@@ -3699,7 +3743,10 @@ association between the authenticated IdP client and that client's
 registration at the target RAS. A client-supplied downstream client
 identifier <span class="bcp14">MUST NOT</span> select or override that association. This
 association is distinct from the Client Association that permits use
-of an Identity Binding.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
+of an Identity Binding; <a href="#configuration" class="auto internal xref">Section 4.3</a> calls it the client
+registration association. When the client uses the same identifier at
+both servers, as with a CIMD Client Identifier URL, the association is
+the identity mapping.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
 <p id="section-8.2-3">Each authorization server establishes authoritative client metadata
 through registration or, when supported, <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>. RFC 7523 client
 authentication at either server follows <a href="#client-assertion-input" class="auto internal xref">Section 5.1</a>;
@@ -4508,11 +4555,16 @@ only the token to a worker with an independent key is insufficient.<a href="#sec
               </tr>
             </tbody>
           </table>
-<p id="section-8.5.5-3">Remote signing or shared key custody does not establish an independent
+<p id="section-8.5.5-3">Control-plane and worker splits that cannot share the grant proof key
+use governed agent access instead: the control plane obtains an unbound
+ID-JAG, the worker redeems it with its own DPoP proof, and the access
+token is bound to the worker's key (<a href="#grant-protection" class="auto internal xref">Section 8.3</a>). This keeps
+the key at the component that calls the API without a key transition.<a href="#section-8.5.5-3" class="pilcrow">¶</a></p>
+<p id="section-8.5.5-4">Remote signing or shared key custody does not establish an independent
 worker binding and expands the trusted computing base. This document
 defines no handoff to a worker's independent DPoP key
 (<a href="#key-transition-gap" class="auto internal xref">Appendix A.2.1</a>). Access-token and refresh-token bindings remain
-subject to <a href="#access-token-protection" class="auto internal xref">Section 8.5.4</a> and <a href="#ras-refresh" class="auto internal xref">Section 8.5.7</a>.<a href="#section-8.5.5-3" class="pilcrow">¶</a></p>
+subject to <a href="#access-token-protection" class="auto internal xref">Section 8.5.4</a> and <a href="#ras-refresh" class="auto internal xref">Section 8.5.7</a>.<a href="#section-8.5.5-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="introspection">
@@ -5168,61 +5220,12 @@ ID-JAG advertisement.<a href="#section-9.3-6.3.1" class="pilcrow">¶</a></p>
       <h2 id="name-self-acting-wag-composition">
 <a href="#section-10" class="section-number selfRef">10. </a><a href="#name-self-acting-wag-composition" class="section-name selfRef">Self-Acting WAG Composition</a>
       </h2>
-<p id="section-10-1">Self-acting access uses the same Agent Principal model as delegated
-access, with the agent as subject. This informative section describes
-the identity and authorization composition. IdP issuance and other WAG
-wire requirements remain pending <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>; this document defines no
-WAG wire profile or implementation conformance target.<a href="#section-10-1" class="pilcrow">¶</a></p>
-<p id="section-10-2">A WAG composition will need to preserve the identity invariants in
-<a href="#identity" class="auto internal xref">Section 6</a>, particularly <a href="#agent-correlation" class="auto internal xref">Section 6.3</a>, at these stages:<a href="#section-10-2" class="pilcrow">¶</a></p>
-<span id="name-intended-wag-identity-relat"></span><table class="center" id="table-27">
-        <caption>
-<a href="#table-27" class="selfRef">Table 27</a>:
-<a href="#name-intended-wag-identity-relat" class="selfRef">Intended WAG identity relationships</a>
-        </caption>
-<thead>
-          <tr>
-            <th class="text-left" rowspan="1" colspan="1">Stage</th>
-            <th class="text-left" rowspan="1" colspan="1">Intended identity relationship</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Agent resolution at IdP</td>
-            <td class="text-left" rowspan="1" colspan="1">Validated dedicated-client or workload identity resolves through an approved Identity Binding to one active Agent Principal</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Client authorization</td>
-            <td class="text-left" rowspan="1" colspan="1">A separate Client Association permits the authenticated client to use that binding for self-acting access</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">IdP-issued WAG</td>
-            <td class="text-left" rowspan="1" colspan="1">Issuer-qualified <code>sub</code> identifies that Agent Principal; no <code>act</code> is needed solely to identify its executing instance</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">WAG to local authorization</td>
-            <td class="text-left" rowspan="1" colspan="1">The RAS resolves the Agent Principal identity to one local agent principal in the authorized Target Tenant</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Access token to API</td>
-            <td class="text-left" rowspan="1" colspan="1">The token identifies the same agent in the RAS's subject namespace; authorization uses that agent's authority</td>
-          </tr>
-        </tbody>
-      </table>
-<p id="section-10-4">The intended composition correlates the same Agent Principal to the same
-local agent principal in both paths:<a href="#section-10-4" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-10-5.1">
-          <p id="section-10-5.1.1">In delegated access, the access token preserves the IdP-qualified
-agent as <code>act</code>.<a href="#section-10-5.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-10-5.2">
-          <p id="section-10-5.2.1">In self-acting access, the RAS represents the correlated agent as
-its local subject.<a href="#section-10-5.2.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
-<p id="section-10-6">These representations do not make delegated and self-acting authority
-interchangeable.<a href="#section-10-6" class="pilcrow">¶</a></p>
+<p id="section-10-1">Self-acting access uses the same Agent Principal model, with the agent
+as subject and the same local principal correlation as delegated access.
+This document defines no WAG wire profile or conformance target. The
+open requirements, and this document's proposals for them, are recorded
+in <a href="#wag-gaps" class="auto internal xref">Appendix A.1.1</a>. Delegated and self-acting authority are not
+interchangeable.<a href="#section-10-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security">
@@ -5238,9 +5241,9 @@ specifications, <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span>,
 <a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-adoption-tradeoffs" class="section-name selfRef">Adoption Tradeoffs</a>
         </h3>
 <p id="section-11.1-1">The profile's security controls carry these deployment costs:<a href="#section-11.1-1" class="pilcrow">¶</a></p>
-<span id="name-adoption-tradeoffs-2"></span><table class="center" id="table-28">
+<span id="name-adoption-tradeoffs-2"></span><table class="center" id="table-27">
           <caption>
-<a href="#table-28" class="selfRef">Table 28</a>:
+<a href="#table-27" class="selfRef">Table 27</a>:
 <a href="#name-adoption-tradeoffs-2" class="selfRef">Adoption tradeoffs</a>
           </caption>
 <thead>
@@ -5404,9 +5407,9 @@ others have occurred. In particular, stopping an execution does not
 revoke credentials or authority held elsewhere.<a href="#section-11.6-4" class="pilcrow">¶</a></p>
 <p id="section-11.6-5">The following table summarizes the effect after a change is applied at
 the enforcing server; it defines no new propagation mechanism:<a href="#section-11.6-5" class="pilcrow">¶</a></p>
-<span id="name-effects-of-administrative-c"></span><table class="center" id="table-29">
+<span id="name-effects-of-administrative-c"></span><table class="center" id="table-28">
           <caption>
-<a href="#table-29" class="selfRef">Table 29</a>:
+<a href="#table-28" class="selfRef">Table 28</a>:
 <a href="#name-effects-of-administrative-c" class="selfRef">Effects of administrative changes</a>
           </caption>
 <thead>
@@ -5449,16 +5452,45 @@ the enforcing server; it defines no new propagation mechanism:<a href="#section-
             </tr>
           </tbody>
         </table>
-<p id="section-11.6-7">Deployments <span class="bcp14">SHOULD</span> document their maximum disablement delay, including
+<p id="section-11.6-7">When a principal disablement, correlation removal, or local restriction
+is applied at the RAS, the RAS <span class="bcp14">MUST</span>:<a href="#section-11.6-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-11.6-8.1">
+            <p id="section-11.6-8.1.1">Check current locally applied eligibility at grant redemption and
+refresh, in addition to grant validation and the actor gate.<a href="#section-11.6-8.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-11.6-8.2">
+            <p id="section-11.6-8.2.1">Retain enough association to invalidate authorization derived from
+grants by qualified agent and Target Tenant, including refresh tokens,
+and invalidate it when the principal is disabled or its correlation
+is removed.<a href="#section-11.6-8.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-11.6-8.3">
+            <p id="section-11.6-8.3.1">Not let refresh bypass a principal restriction or restore revoked
+authorization; reactivation permits new decisions only.<a href="#section-11.6-8.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-11.6-8.4">
+            <p id="section-11.6-8.4.1">Report revoked or disabled authorization as inactive under
+<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>.<a href="#section-11.6-8.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-11.6-9">The provisioning that feeds those decisions is a deployment choice;
+<span>[<a href="#AGENT-LIFECYCLE" class="cite xref">AGENT-LIFECYCLE</a>]</span> profiles one. An IdP <span class="bcp14">SHOULD</span> retain the identifiers
+of the ID-JAGs it issued under each delegation, Identity Binding, and
+Client Association, so that withdrawing any of them can be propagated to
+derived authorization through grant-derived revocation in that companion
+or an equivalent signal. The agent identity alone cannot identify that
+set.<a href="#section-11.6-9" class="pilcrow">¶</a></p>
+<p id="section-11.6-10">Deployments <span class="bcp14">SHOULD</span> document their maximum disablement delay, including
 propagation and cache freshness. Without a bound on propagation, the
 remaining lifetime of existing grants, refresh authorizations, and
 access tokens determines the possible continuation window; the
-five-minute ID-JAG recommendation is not a global stopping guarantee.<a href="#section-11.6-7" class="pilcrow">¶</a></p>
-<p id="section-11.6-8">Account-linking errors can grant access to another user's account.
+five-minute ID-JAG recommendation is not a global stopping guarantee.<a href="#section-11.6-10" class="pilcrow">¶</a></p>
+<p id="section-11.6-11">Account-linking errors can grant access to another user's account.
 <a href="#subject-resolution" class="auto internal xref">Section 6.2</a> requires issuer, namespace, tenant, and
 link-change checks before authorization; proof of key possession does
 not establish account ownership, and link removal does not revoke
-outstanding tokens.<a href="#section-11.6-8" class="pilcrow">¶</a></p>
+outstanding tokens.<a href="#section-11.6-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="external-approval">
@@ -5751,16 +5783,16 @@ metadata parameters.<a href="#section-13.1-5" class="pilcrow">¶</a></p>
 <p id="appendix-A-1">This informative appendix records dependencies and deferred work.
 Assessed revisions: WAG-00, ID-JAG-04, ICA-02, Actor
 Profile-00, SPIFFE OAuth-02, ATTEST-11, WIT-02, CIMD-02, and the
-editor's copies of Identification and Client Attester Endorsement dated
-15 September 2026.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+current drafts of Client Instance Identification and Client Attester
+Endorsement.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <div id="upstream-dependencies">
 <section id="appendix-A.1">
         <h3 id="name-upstream-dependencies">
 <a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-upstream-dependencies" class="section-name selfRef">Upstream Dependencies</a>
         </h3>
-<span id="name-upstream-dependencies-2"></span><table class="center" id="table-30">
+<span id="name-upstream-dependencies-2"></span><table class="center" id="table-29">
           <caption>
-<a href="#table-30" class="selfRef">Table 30</a>:
+<a href="#table-29" class="selfRef">Table 29</a>:
 <a href="#name-upstream-dependencies-2" class="selfRef">Upstream dependencies</a>
           </caption>
 <thead>
@@ -5911,9 +5943,9 @@ changing only <code>subject_token_type</code> does not establish them.<a href="#
           </h4>
 <p id="appendix-A.2.4-1">The following compositions are not defined in this document. Their
 exclusion does not prevent the independently supported uses listed here.<a href="#appendix-A.2.4-1" class="pilcrow">¶</a></p>
-<span id="name-excluded-compositions-2"></span><table class="center" id="table-31">
+<span id="name-excluded-compositions-2"></span><table class="center" id="table-30">
             <caption>
-<a href="#table-31" class="selfRef">Table 31</a>:
+<a href="#table-30" class="selfRef">Table 30</a>:
 <a href="#name-excluded-compositions-2" class="selfRef">Excluded compositions</a>
             </caption>
 <thead>
@@ -6023,7 +6055,7 @@ The companion is not required for conformance to this federation profile;
 input, bound governed agent access, and DPoP-protected API access.
 Key coordinates, thumbprints, token hashes, and compact JWTs are labeled
 placeholders, not cryptographic test vectors. The optional shared-client
-SPIFFE variant follows in <a href="#shared-client-example" class="auto internal xref">Appendix C</a>.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+SPIFFE variant follows in <a href="#shared-client-example" class="auto internal xref">Appendix C.1</a>.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
 <p id="appendix-B-2">The dedicated client is <code>analysis-client</code> at the IdP and <code>analysis-api</code>
 at the RAS. In the IdP's client-registration context, an Identity
 Binding maps (<code>analysis-client</code>, <code>analysis-client</code>) to <code>agent-42</code>.
@@ -6289,9 +6321,9 @@ profile, including when the API accepts bearer tokens.<a href="#appendix-B.4-9" 
 <code>urn:ietf:params:oauth:grant-profile:id-jag-governed-agent</code> and explicitly
 permit grants without sender constraint. With bearer access also
 permitted for this resource, the preceding messages change only as follows:<a href="#appendix-B.5-1" class="pilcrow">¶</a></p>
-<span id="name-message-changes-for-governe"></span><table class="center" id="table-32">
+<span id="name-message-changes-for-governe"></span><table class="center" id="table-31">
           <caption>
-<a href="#table-32" class="selfRef">Table 32</a>:
+<a href="#table-31" class="selfRef">Table 31</a>:
 <a href="#name-message-changes-for-governe" class="selfRef">Message changes for governed agent access</a>
           </caption>
 <thead>
@@ -6354,9 +6386,9 @@ authorization decisions. These establish a new period under
 <p id="appendix-B.6-4">Each rejection below changes one condition in the walkthrough; all
 other credentials, proofs, and policy checks succeed. Token endpoint
 errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API errors follow <a href="#resource-errors" class="auto internal xref">Section 8.9.1</a>.<a href="#appendix-B.6-4" class="pilcrow">¶</a></p>
-<span id="name-rejection-examples"></span><table class="center" id="table-33">
+<span id="name-rejection-examples"></span><table class="center" id="table-32">
           <caption>
-<a href="#table-33" class="selfRef">Table 33</a>:
+<a href="#table-32" class="selfRef">Table 32</a>:
 <a href="#name-rejection-examples" class="selfRef">Rejection examples</a>
           </caption>
 <thead>
@@ -6495,288 +6527,166 @@ errors follow <a href="#errors" class="auto internal xref">Section 8.6</a>; API 
 </div>
 </section>
 </div>
-<div id="shared-client-example">
+<div id="input-variants">
 <section id="appendix-C">
-      <h2 id="name-variant-shared-platform-cli">
-<a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-variant-shared-platform-cli" class="section-name selfRef">Variant: Shared Platform Client with SPIFFE</a>
+      <h2 id="name-input-variants">
+<a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-input-variants" class="section-name selfRef">Input Variants</a>
       </h2>
-<p id="appendix-C-1">This non-normative variant completes <a href="#identity-example" class="auto internal xref">Section 4.4</a> with the
-<span class="bcp14">OPTIONAL</span> JWT-SVID input. It substitutes a shared <code>platform-sso</code> client
-at the IdP and <code>platform-api</code> at the RAS for the dedicated registrations
-in <a href="#walkthrough" class="auto internal xref">Appendix B</a>. The independent workload identity selects <code>agent-42</code>;
-client authentication alone cannot distinguish agents behind this client.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
-<p id="appendix-C-2">The workload obtains a JWT-SVID with the IdP issuer as its audience.
-The decoded header and payload below use the existing SPIFFE format;
-<code>iss</code> and <code>iat</code> are omitted. The IdP selects trusted signing keys from
-its configured bundle for the <code>platform.example</code> trust domain and
-validates the credential under <a href="#jwt-svid-input" class="auto internal xref">Section 5.2.1</a>. The expiration is
-an illustrative NumericDate value.<a href="#appendix-C-2" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-C-3">
+<p id="appendix-C-1">These non-normative variants change only the agent-resolution input of
+the dedicated-client walkthrough in <a href="#walkthrough" class="auto internal xref">Appendix B</a>. User and governed
+actor identities, resource, scope, tenant, proof key K, redemption, and
+API processing are unchanged; the resulting actor is always the IdP
+issuer and <code>agent-42</code>, and the RAS never receives or validates the
+original credential.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
+<span id="name-input-variants-relative-to-"></span><table class="center" id="table-33">
+        <caption>
+<a href="#table-33" class="selfRef">Table 33</a>:
+<a href="#name-input-variants-relative-to-" class="selfRef">Input variants relative to the dedicated-client walkthrough</a>
+        </caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Variant</th>
+            <th class="text-left" rowspan="1" colspan="1">Authentication and presentation</th>
+            <th class="text-left" rowspan="1" colspan="1">Identity resolved</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Shared client with JWT-SVID</td>
+            <td class="text-left" rowspan="1" colspan="1">IdP <code>client_id</code> <code>platform-sso</code>; <code>client_assertion_type</code> <code>jwt-spiffe</code>; the JWT-SVID is the <code>client_assertion</code>; no actor-token parameters</td>
+            <td class="text-left" rowspan="1" colspan="1">Approved trust domain and exact SPIFFE ID in <code>sub</code>, under <a href="#jwt-svid-input" class="auto internal xref">Section 5.2.1</a>
+</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">WIT-SVID</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>spiffe_wit</code>: WIT-SVID in <code>OAuth-Client-Attestation</code> with a fresh PoP header signed by its key; <code>client_id</code> is the SPIFFE ID; no actor-token parameters</td>
+            <td class="text-left" rowspan="1" colspan="1">Exact SPIFFE ID in the validated <code>sub</code>, under <a href="#spiffe-input" class="auto internal xref">Section 5.2.4</a>
+</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">X.509-SVID</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>spiffe_x509</code>: mutual-TLS authentication with the X.509-SVID; <code>client_id</code> is the SPIFFE ID; no actor-token parameters</td>
+            <td class="text-left" rowspan="1" colspan="1">Exact URI Subject Alternative Name, under <a href="#spiffe-input" class="auto internal xref">Section 5.2.4</a>
+</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Platform JWT (AWS STS)</td>
+            <td class="text-left" rowspan="1" colspan="1">IdP <code>client_id</code> <code>platform-sso</code> with a separately configured authentication method; the STS JWT is the <code>actor_token</code> with type <code>jwt</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">Exact issuer, <code>sub</code>, and selector, under <a href="#imported-jwt-input" class="auto internal xref">Section 5.2.2</a>
+</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="appendix-C-3">In the bound profile the issuance DPoP proof is signed by K, except that
+the WIT-SVID variant signs it with the WIT-SVID key; the X.509 variant's
+DPoP key may differ from the TLS key. The grant expires no later than
+the credential's validity or effective evidence deadline. The
+JWT-SVID and platform JWT variants keep a separate Client Association
+for <code>platform-sso</code>; the WIT-SVID and X.509-SVID bindings carry their
+own permission. The dedicated-client rejection cases apply to each
+binding; credential-specific replay rules follow the input
+specification.<a href="#appendix-C-3" class="pilcrow">¶</a></p>
+<div id="shared-client-example">
+<section id="appendix-C.1">
+        <h3 id="name-shared-platform-client-with">
+<a href="#appendix-C.1" class="section-number selfRef">C.1. </a><a href="#name-shared-platform-client-with" class="section-name selfRef">Shared Platform Client with SPIFFE</a>
+        </h3>
+<p id="appendix-C.1-1">This variant completes <a href="#identity-example" class="auto internal xref">Section 4.4</a>. The workload obtains a
+JWT-SVID with the IdP issuer as its audience; <code>iss</code> and <code>iat</code> are
+omitted in the existing SPIFFE format, and the expiration is an
+illustrative NumericDate value. The IdP selects trusted signing keys
+from its configured bundle for the <code>platform.example</code> trust domain.<a href="#appendix-C.1-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-C.1-2">
 <pre>
 {
   "alg": "RS256",
   "typ": "JWT",
   "kid": "spiffe-key-1"
 }
-</pre><a href="#appendix-C-3" class="pilcrow">¶</a>
+</pre><a href="#appendix-C.1-2" class="pilcrow">¶</a>
 </div>
-<div class="lang-json sourcecode" id="appendix-C-4">
+<div class="lang-json sourcecode" id="appendix-C.1-3">
 <pre>
 {
   "sub": "spiffe://platform.example/accounts/acme/agents/workload-7",
   "aud": ["https://idp.example/"],
   "exp": 1789647063
 }
-</pre><a href="#appendix-C-4" class="pilcrow">¶</a>
+</pre><a href="#appendix-C.1-3" class="pilcrow">¶</a>
 </div>
-<p id="appendix-C-5">Relative to the dedicated-client exchange, change only these inputs:<a href="#appendix-C-5" class="pilcrow">¶</a></p>
-<span id="name-shared-client-variant-input"></span><table class="center" id="table-34">
-        <caption>
-<a href="#table-34" class="selfRef">Table 34</a>:
-<a href="#name-shared-client-variant-input" class="selfRef">Shared-client variant inputs</a>
-        </caption>
-<thead>
-          <tr>
-            <th class="text-left" rowspan="1" colspan="1">Item</th>
-            <th class="text-left" rowspan="1" colspan="1">Shared-client value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">IdP <code>client_id</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>platform-sso</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>client_assertion_type</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>urn:ietf:params:oauth:client-assertion-type:jwt-spiffe</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Resolution mode</td>
-            <td class="text-left" rowspan="1" colspan="1">Authentication context, configured for JWT-SVID</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>client_assertion</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>JWT_SVID</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>actor_token</code> and <code>actor_token_type</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">Absent</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>subject_token</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">Alice's ID Token with audience <code>platform-sso</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Identity Binding</td>
-            <td class="text-left" rowspan="1" colspan="1">Approved trust domain and exact SPIFFE ID resolve to <code>agent-42</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Client Association</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>platform-sso</code> may use that binding for delegated ID-JAG</td>
-          </tr>
-        </tbody>
-      </table>
-<p id="appendix-C-7">The JWT-SVID authenticates the client through the configured SPIFFE
-association and resolves the agent separately. It is bearer evidence;
-it does not attest that grant proof key K belongs to the workload.<a href="#appendix-C-7" class="pilcrow">¶</a></p>
-<p id="appendix-C-8">The response, redemption, and API sequence are those in <a href="#walkthrough" class="auto internal xref">Appendix B</a>,
-with <code>platform-api</code> replacing <code>analysis-api</code> in grants, access tokens,
-and RAS client authentication. User and governed actor identities,
-resource, scope, tenant, and proof key K are unchanged. The grant also
-expires no later than the JWT-SVID. The same rejection cases apply to
-this binding and Client Association; client-assertion-specific replay
-rules instead follow the JWT-SVID input specification.<a href="#appendix-C-8" class="pilcrow">¶</a></p>
+<p id="appendix-C.1-4">The JWT-SVID authenticates the client through the configured SPIFFE
+association and resolves the agent separately. It is bearer evidence; it
+does not attest that grant proof key K belongs to the workload.
+<code>platform-api</code> replaces <code>analysis-api</code> in grants, access tokens, and RAS
+client authentication.<a href="#appendix-C.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="svid-context-example">
-<section id="appendix-D">
-      <h2 id="name-variant-wit-svid-or-x509-sv">
-<a href="#appendix-D" class="section-number selfRef">Appendix D. </a><a href="#name-variant-wit-svid-or-x509-sv" class="section-name selfRef">Variant: WIT-SVID or X.509-SVID</a>
-      </h2>
-<p id="appendix-D-1">This non-normative variant resolves the workload authenticated on the
-exchange request. Trusted configuration selects authentication-context
-resolution and an exact Identity Binding from
-<code>spiffe://platform.example/agents/analysis</code> to <code>agent-42</code>.
-Client Association separately permits that binding. The following
-changes to <a href="#walkthrough" class="auto internal xref">Appendix B</a> illustrate WIT-SVID:<a href="#appendix-D-1" class="pilcrow">¶</a></p>
-<span id="name-wit-svid-exchange-variant"></span><table class="center" id="table-35">
-        <caption>
-<a href="#table-35" class="selfRef">Table 35</a>:
-<a href="#name-wit-svid-exchange-variant" class="selfRef">WIT-SVID exchange variant</a>
-        </caption>
-<thead>
-          <tr>
-            <th class="text-left" rowspan="1" colspan="1">Item</th>
-            <th class="text-left" rowspan="1" colspan="1">Value or processing</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Authentication method</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>spiffe_wit</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>client_id</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>spiffe://platform.example/agents/analysis</code>, explicitly registered at the IdP</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">User ID Token</td>
-            <td class="text-left" rowspan="1" colspan="1">Issued to this authenticated client; not reused from <code>analysis-client</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>OAuth-Client-Attestation</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">A valid WIT-SVID with that SPIFFE ID in <code>sub</code> and its workload public key in <code>cnf.jwk</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>OAuth-Client-Attestation-PoP</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">Fresh proof signed by the WIT-SVID key and targeting this IdP</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>client_assertion</code>, <code>client_assertion_type</code>, <code>actor_token</code>, <code>actor_token_type</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">Absent</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Issuance DPoP</td>
-            <td class="text-left" rowspan="1" colspan="1">Present for the bound profile; signed by the WIT-SVID key</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Resolution</td>
-            <td class="text-left" rowspan="1" colspan="1">Exact trust-domain-qualified SPIFFE ID maps to <code>agent-42</code>
-</td>
-          </tr>
-        </tbody>
-      </table>
-<p id="appendix-D-3">For X.509-SVID, configure <code>spiffe_x509</code>, replace the two attestation
-headers with mutual-TLS authentication using the X.509-SVID, and retain
-that SPIFFE ID as <code>client_id</code> under SPIFFE OAuth. The IdP resolves the
-certificate's exact URI Subject Alternative Name. The bound profile
-still requires issuance DPoP, whose key may differ from the TLS key.<a href="#appendix-D-3" class="pilcrow">¶</a></p>
-<p id="appendix-D-4">In either case, an authoritative association supplies the downstream
-client identifier. The resulting <code>act</code> is unchanged from the walkthrough:
-the IdP issuer and <code>agent-42</code>. Redemption follows <a href="#redemption" class="auto internal xref">Section 8.5</a>; the RAS
-does not receive or validate the original SVID.<a href="#appendix-D-4" class="pilcrow">¶</a></p>
+<section id="appendix-C.2">
+        <h3 id="name-wit-svid-and-x509-svid">
+<a href="#appendix-C.2" class="section-number selfRef">C.2. </a><a href="#name-wit-svid-and-x509-svid" class="section-name selfRef">WIT-SVID and X.509-SVID</a>
+        </h3>
+<p id="appendix-C.2-1">Both variants resolve the workload authenticated on the exchange request
+through an exact Identity Binding from
+<code>spiffe://platform.example/agents/analysis</code> to <code>agent-42</code>. The user ID
+Token is issued to that authenticated client, not reused from
+<code>analysis-client</code>. The WIT-SVID carries the SPIFFE ID in <code>sub</code> and the
+workload public key in <code>cnf.jwk</code>. For X.509-SVID, the two attestation
+headers are replaced by mutual-TLS authentication. An authoritative
+association supplies the downstream client identifier in both cases.<a href="#appendix-C.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="aws-example">
-<section id="appendix-E">
-      <h2 id="name-example-aws-workload-identi">
-<a href="#appendix-E" class="section-number selfRef">Appendix E. </a><a href="#name-example-aws-workload-identi" class="section-name selfRef">Example: AWS Workload Identity Binding</a>
-      </h2>
-<p id="appendix-E-1">This non-normative example uses the AWS STS <code>GetWebIdentityToken</code>
-credential documented in <span>[<a href="#AWS-TOKEN-CLAIMS" class="cite xref">AWS-TOKEN-CLAIMS</a>]</span>. It fits the existing
-platform-JWT input (<a href="#imported-jwt-input" class="auto internal xref">Section 5.2.2</a>) without a new credential format:<a href="#appendix-E-1" class="pilcrow">¶</a></p>
-<span id="name-aws-workload-identity-bindi"></span><table class="center" id="table-36">
-        <caption>
-<a href="#table-36" class="selfRef">Table 36</a>:
-<a href="#name-aws-workload-identity-bindi" class="selfRef">AWS workload identity binding</a>
-        </caption>
-<thead>
-          <tr>
-            <th class="text-left" rowspan="1" colspan="1">Item</th>
-            <th class="text-left" rowspan="1" colspan="1">Example configuration</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Credential authority</td>
-            <td class="text-left" rowspan="1" colspan="1">The AWS account's configured STS issuer and approved verification keys</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Exact <code>sub</code>
-</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>arn:aws:iam::123456789012:role/AgentRuntime</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Accepted audience</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>https://idp.example/token</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Additional selector</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>/https:~1~1sts.amazonaws.com~1/aws_account</code> equals <code>123456789012</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Identity Binding result</td>
-            <td class="text-left" rowspan="1" colspan="1">Agent Principal <code>agent-42</code> in Governance Tenant <code>acme</code>
-</td>
-          </tr>
-          <tr>
-            <td class="text-left" rowspan="1" colspan="1">Client Association</td>
-            <td class="text-left" rowspan="1" colspan="1">
-              <code>platform-sso</code> may use this binding for delegated ID-JAG with the platform-JWT agent-resolution input</td>
-          </tr>
-        </tbody>
-      </table>
-<p id="appendix-E-3">The selector addresses the string <code>aws_account</code> within the
+<section id="appendix-C.3">
+        <h3 id="name-aws-workload-identity-bindi">
+<a href="#appendix-C.3" class="section-number selfRef">C.3. </a><a href="#name-aws-workload-identity-bindi" class="section-name selfRef">AWS Workload Identity Binding</a>
+        </h3>
+<p id="appendix-C.3-1">This variant uses the AWS STS <code>GetWebIdentityToken</code> credential
+documented in <span>[<a href="#AWS-TOKEN-CLAIMS" class="cite xref">AWS-TOKEN-CLAIMS</a>]</span>. The Identity Binding names the
+configured STS issuer as credential authority, the exact <code>sub</code>
+          <code>arn:aws:iam::123456789012:role/AgentRuntime</code>, the accepted audience
+<code>https://idp.example/token</code>, and the selector
+<code>/https:~1~1sts.amazonaws.com~1/aws_account</code> equal to <code>123456789012</code>.
+The selector addresses the string <code>aws_account</code> within the
 <code>https://sts.amazonaws.com/</code> object; <code>~1</code> escapes each slash in that
-member name. The client presents the STS JWT as <code>actor_token</code>,
-authenticates separately, and supplies a supported user credential and
-any proof required by the applicable profile under <a href="#root-request" class="auto internal xref">Section 8.4.1</a>.
-The resulting actor is
-<code>{"iss":"https://idp.example/","sub":"agent-42"}</code>.<a href="#appendix-E-3" class="pilcrow">¶</a></p>
-<p id="appendix-E-4">If several agents share this role, issuer and <code>sub</code> identify the
-shared IAM principal, not an individual agent. Mapping those agents to
-distinct Agent Principals requires distinct credential identities or
-additional trusted selectors. A caller-supplied agent name does not
-provide that distinction.<a href="#appendix-E-4" class="pilcrow">¶</a></p>
-<p id="appendix-E-5">This example covers evidence resolution, not a product's end-to-end
-conformance. An integration also needs the client, subject, grant, and
-resource processing defined by this profile. User-access-token OBO
-composition remains outside the scope of this document
-(<a href="#access-token-subject-gap" class="auto internal xref">Appendix A.2.3</a>).<a href="#appendix-E-5" class="pilcrow">¶</a></p>
+member name.<a href="#appendix-C.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-C.3-2">If several agents share this role, issuer and <code>sub</code> identify the shared
+IAM principal, not an individual agent. Mapping those agents to distinct
+Agent Principals requires distinct credential identities or additional
+trusted selectors; a caller-supplied agent name does not provide that
+distinction. This variant covers evidence resolution, not a product's
+end-to-end conformance. User-access-token OBO composition remains
+outside the scope of this document (<a href="#access-token-subject-gap" class="auto internal xref">Appendix A.2.3</a>).<a href="#appendix-C.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="document-history">
-<section id="appendix-F">
+<section id="appendix-D">
       <h2 id="name-document-history">
-<a href="#appendix-F" class="section-number selfRef">Appendix F. </a><a href="#name-document-history" class="section-name selfRef">Document History</a>
+<a href="#appendix-D" class="section-number selfRef">Appendix D. </a><a href="#name-document-history" class="section-name selfRef">Document History</a>
       </h2>
-<p id="appendix-F-1">RFC Editor: Remove this section before publication.<a href="#appendix-F-1" class="pilcrow">¶</a></p>
+<p id="appendix-D-1">RFC Editor: Remove this section before publication.<a href="#appendix-D-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="appendix-F-2.1">
-          <p id="appendix-F-2.1.1">Initial version.<a href="#appendix-F-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="appendix-D-2.1">
+          <p id="appendix-D-2.1.1">Initial version.<a href="#appendix-D-2.1.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
 </div>
+<div id="acknowledgments">
+<section id="appendix-E">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-E-1">TBD.<a href="#appendix-E-1" class="pilcrow">¶</a></p>
+</section>
+</div>
 <div id="authors-addresses">
-<section id="appendix-G">
+<section id="appendix-F">
       <h2 id="name-authors-address">
 <a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
       </h2>

@@ -4,8 +4,8 @@
 
 System for Cross-domain Identity Management                K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                       18 September 2026
-Expires: 22 March 2027
+Intended status: Standards Track                       19 September 2026
+Expires: 23 March 2027
 
 
               SCIM Profile for Agent Federation Management
@@ -17,9 +17,10 @@ Abstract
    Management (SCIM) for platform-to-identity-provider management of
    Agent Principals, Identity Bindings, and Client Associations.  It
    extends the SCIM Agent resource with the principal's issuer-qualified
-   identity and defines resources for the two independently authorized
-   relationships.  Client Associations and dedicated-client bindings
-   reference OAuthClient resources from the generic SCIM client-
+   identity and defines resources for identity and client-use
+   relationships.  A dedicated-client binding administers both decisions
+   together; shared-client permissions use separate Client Associations.
+   Both reference OAuthClient resources from the generic SCIM client-
    management profile.  Shared clients use independent workload bindings
    to distinguish the agents they exercise.
 
@@ -65,7 +66,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 22 March 2027.
+   This Internet-Draft will expire on 23 March 2027.
 
 Copyright Notice
 
@@ -123,7 +124,13 @@ Table of Contents
      A.7.  Disable One Binding
      A.8.  Rejection and Boundary Examples
    Appendix B.  Example: Dedicated Client
-   Appendix C.  Document History
+   Appendix C.  Schema and ResourceType Representations
+     C.1.  AgentFederation Schema
+     C.2.  AgentIdentityBinding Schema
+     C.3.  AgentClientAssociation Schema
+     C.4.  Resource Types
+   Appendix D.  Document History
+   Acknowledgments
    Author's Address
 
 1.  Introduction
@@ -145,8 +152,8 @@ Table of Contents
          v                                         v
        Agent                                     Agent
 
-    Both paths require:
-    OAuthClient -- Client Association --> Identity Binding
+    Dedicated binding: identity + client-use permission
+    Shared client: OAuthClient -- Client Association -> Identity Binding
 
    A platform can administer only the identities and permissions
    delegated to its connector.  The IdP remains the authority for the
@@ -156,21 +163,21 @@ Table of Contents
 
    The management resources correspond to existing federation concepts:
 
-     +========================+======================================+
-     | Resource               | Question it answers                  |
-     +========================+======================================+
-     | OAuthClient            | Which OAuth client is admitted at    |
-     | ([OAUTH-CLIENT])       | this IdP?                            |
-     +------------------------+--------------------------------------+
-     | Agent                  | Which stable principal does the      |
-     |                        | enterprise govern?                   |
-     +------------------------+--------------------------------------+
-     | AgentIdentityBinding   | Which validated client or workload   |
-     |                        | identity resolves to that principal? |
-     +------------------------+--------------------------------------+
-     | AgentClientAssociation | May this OAuth client use this       |
-     |                        | binding in this flow?                |
-     +------------------------+--------------------------------------+
+    +========================+========================================+
+    | Resource               | Question it answers                    |
+    +========================+========================================+
+    | OAuthClient            | Which OAuth client is admitted at this |
+    | ([OAUTH-CLIENT])       | IdP?                                   |
+    +------------------------+----------------------------------------+
+    | Agent                  | Which stable principal does the        |
+    |                        | enterprise govern?                     |
+    +------------------------+----------------------------------------+
+    | AgentIdentityBinding   | Which validated client or workload     |
+    |                        | identity resolves to that principal?   |
+    +------------------------+----------------------------------------+
+    | AgentClientAssociation | May this OAuth client use this binding |
+    |                        | for delegated ID-JAG issuance?         |
+    +------------------------+----------------------------------------+
 
                                   Table 1
 
@@ -226,12 +233,17 @@ Table of Contents
    [RFC7644].  Agent Principal, Identity Binding, Client Association,
    credential class, and Governance Tenant follow [FEDERATION].
 
-   Provisioning Client:  The platform's authenticated SCIM connector.
-      It is not necessarily an OAuth client permitted to exercise an
-      Agent Principal.
+   Provisioning Client:  A purpose-built platform SCIM connector for the
+      resource types in this profile.  Generic User/Group connectors do
+      not imply support for these endpoints.  It is not necessarily an
+      OAuth client permitted to exercise an Agent Principal.
 
    Service Provider:  The IdP's SCIM service, including the
       administration of configuration used by its grant issuer.
+      [FEDERATION] calls this role the IdP Service Provider; the
+      resource-domain SCIM service that accepts IdP provisioning is the
+      Receiver of [LIFECYCLE], not a Service Provider in this document's
+      sense.
 
    Provisioning Domain:  The scope of one Provisioning Client's
       management authority within one Governance Tenant.  The Service
@@ -274,16 +286,18 @@ Table of Contents
    particular:
 
    *  Authority to create or describe an Agent MUST NOT imply authority
-      to establish its bindings or client permissions.
+      to establish its bindings or client permissions.  A dedicated-
+      client binding write requires both binding and client-use
+      authority.
 
    *  Binding administration MUST be restricted to approved credential
       classes, authorities, source identities, and destination agents.
 
    *  Association administration MUST be restricted to approved OAuth
-      clients, bindings, and flows.
+      clients and bindings for delegated ID-JAG issuance.
 
    *  Permission to disable a resource MUST NOT imply permission to
-      enable it.  An enabled resource is an approved relationship, not a
+      enable it.  An active resource is an approved relationship, not a
       pending request.
 
    *  Resource references MUST resolve within the authorized Governance
@@ -322,8 +336,8 @@ Table of Contents
    [OAUTH-CLIENT] in the same authorized SCIM service.  Existing
    registrations can be represented without changing their OAuth client
    identifiers or keys.  Connectors can discover an authorized resource
-   by its issuer and client_id and then reference its SCIM id.  They
-   need not create a client for each Agent.  Client creation and CIMD
+   by its issuer and clientId and then reference its SCIM id.  They need
+   not create a client for each Agent.  Client creation and CIMD
    admission remain separately authorized.
 
    These are management representations, not requirements on an IdP's
@@ -340,43 +354,43 @@ Table of Contents
    three types; OAuthClient attribute and operation rules remain those
    of [OAUTH-CLIENT].
 
-   *  *Connector correlation:* POST requests MUST contain a non-empty
-      externalId.  Its value is chosen by the Provisioning Client and
-      identifies its source record, not a workload credential subject.
-      The Service Provider MUST enforce uniqueness of that value within
-      the Provisioning Domain and resource type, including concurrent
-      POSTs.
+   *  *Common conventions:* externalId correlation, identifiers,
+      versions, conditional writes, explicit active state, incremental
+      reads, and durable restriction follow the common provisioning
+      conventions of [OAUTH-CLIENT].  Here externalId identifies the
+      connector's record, not a principal, and remains readWrite.
 
-   *  *Stable management identity:* Once assigned, externalId MUST NOT
-      change through this interface.  This narrows SCIM's common
-      attribute mutability. id and the federation identity remain
-      server-assigned.
-
-   *  *Versions:* Full resource responses MUST carry meta.version;
-      individual resource responses MUST also carry the corresponding
-      HTTP ETag.  Version changes cover all modifications visible
-      through this interface.
+   *  *Stable identity:* SCIM id and the federation subject remain
+      server-assigned and non-reassignable.  Changing externalId cannot
+      redirect a reference or change the Agent Principal.  Version
+      changes cover all modifications visible through this interface.
 
    *  *References:* A relationship reference is a single-valued complex
       attribute.  Its REQUIRED string value is the target resource's
       SCIM id; its OPTIONAL read-only $ref is a reference to that
       resource, with referenceTypes set to the named target type.  The
       Service Provider resolves value locally and MUST NOT fetch a
-      caller-supplied $ref to establish the relationship.
+      caller-supplied $ref to establish the relationship.  An OPTIONAL
+      read-only string display can supply a human-readable label; it is
+      never a lookup key.
 
-   The new schema tables below are normative.  Unless specified
-   otherwise, attributes are required, immutable, single-valued,
-   returned by default, and have uniqueness none.  String values are
-   case-exact.  Exceptions appear with each table; no attribute has
-   additional canonical values unless listed.  The common attributes
-   retain SCIM's characteristics except for the explicit externalId
-   narrowing above.  Attribute-name processing remains that of SCIM,
-   independently of case-exact identity values.
+   The schema tables below and JSON definitions in Appendix C are
+   normative.  Unless specified otherwise, attributes are required,
+   immutable, single-valued, returned by default, and have uniqueness
+   none.  String values are case-exact.  Exceptions appear with each
+   table. credentialClass is a case-exact enumeration: /Schemas MUST
+   publish accepted values from Section 4.3.1 as canonicalValues.
+   Values outside the advertised set are rejected with invalidValue.
+   The common attributes retain SCIM's characteristics except for the
+   externalId uniqueness rule in those conventions.  Attribute-name
+   processing remains that of SCIM, independently of case-exact identity
+   values.
 
-   Reference sub-attributes have value mutability immutable and $ref
-   mutability readOnly; both use uniqueness none and returned default.
-   A reference's requiredness is given in its resource table.  Identity
-   values MUST NOT be normalized, case-folded, or matched by prefix.
+   Reference sub-attributes have value mutability immutable; $ref and
+   display have mutability readOnly.  They use uniqueness none and
+   returned default. display has caseExact: false.  A reference's
+   requiredness is given in its resource table.  Identity values MUST
+   NOT be normalized, case-folded, or matched by prefix.
 
 4.2.  Agent Federation Extension
 
@@ -385,27 +399,32 @@ Table of Contents
 
    urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent
 
-   The extension name is AgentFederation.  Both attributes are required,
-   read-only strings.
+   The extension name is AgentFederation.  Both attributes are read-only
+   strings. subject is required; issuer is optional.
 
-         +===========+===========================================+
-         | Attribute | Meaning                                   |
-         +===========+===========================================+
-         | issuer    | IdP issuer governing this Agent Principal |
-         +-----------+-------------------------------------------+
-         | subject   | Agent Principal identifier within that    |
-         |           | issuer's namespace                        |
-         +-----------+-------------------------------------------+
+        +===========+============================================+
+        | Attribute | Meaning                                    |
+        +===========+============================================+
+        | issuer    | Optional explicit copy of the IdP issuer   |
+        |           | from the authenticated Provisioning Domain |
+        +-----------+--------------------------------------------+
+        | subject   | Agent Principal identifier within that     |
+        |           | issuer's namespace                         |
+        +-----------+--------------------------------------------+
 
-                                  Table 3
+                                 Table 3
 
-   The Service Provider assigns the pair when creating the Agent and
-   returns it in the extension object.  Creation requests MAY omit this
-   read-only extension object and its schema URI; the server MUST
-   populate both in the created resource.  Supplied read-only values are
-   handled under SCIM's read-only rules and MUST NOT select an existing
-   principal.  The subject MUST be unique and non-reassignable across
-   all Governance Tenants sharing that issuer, as required by
+   The Service Provider assigns subject when creating the Agent.  Its
+   issuer is fixed by the SCIM service's authenticated Provisioning
+   Domain; if returned explicitly, issuer MUST equal that configured
+   value.  The pair remains the federation identity even when issuer is
+   omitted.  The ResourceType declares this extension required: true.
+   Creation requests MUST include its URI in schemas and an extension
+   object; that object MAY be empty because its values are server-
+   assigned.  The server populates subject in the response.  Supplied
+   read-only values follow SCIM processing and MUST NOT select an
+   existing principal.  The subject MUST be unique and non-reassignable
+   across all Governance Tenants sharing that issuer, as required by
    [FEDERATION].  Changing the administrative authority represented by
    the principal is not an update of these attributes.
 
@@ -448,19 +467,17 @@ Table of Contents
       | selectors       | complex | Additional platform-JWT claim   |
       |                 |         | constraints                     |
       +-----------------+---------+---------------------------------+
-      | enabled         | boolean | Whether the binding may be used |
+      | active          | boolean | Whether the binding may be used |
       +-----------------+---------+---------------------------------+
 
                                   Table 4
 
-   selectors is optional and multi-valued. enabled is optional and
-   readWrite, defaults to false on creation, and MUST be returned
-   explicitly unless excluded by SCIM attribute projection.  An
-   unassigned or removed value is false; only boolean true enables the
-   binding.  The reference target type of agent is Agent; that of client
-   is OAuthClient. client, sourceAuthority, and sourceSubject have
-   schema characteristic required: false with these conditional
-   requirements:
+   selectors is optional and multi-valued. active is required and
+   readWrite.  Creation and PUT MUST supply an explicit boolean; removal
+   is invalid.  Only true permits use, subject to the remaining checks.
+   The reference target type of agent is Agent; that of client is
+   OAuthClient. client, sourceAuthority, and sourceSubject have schema
+   characteristic required: false with these conditional requirements:
 
    *  For dedicated-client, client MUST be present and sourceAuthority,
       sourceSubject, and selectors MUST be absent.  The IdP resolves the
@@ -473,24 +490,30 @@ Table of Contents
       reference cannot substitute for that evidence.
 
    Every referenced OAuthClient's authorizationServer MUST equal the
-   Agent's federation issuer, and the reference must be authorized in
-   the same Governance Tenant.  A CIMD URL is taken from the referenced
-   client's client_id; its document origin is not the IdP issuer.
-   Client metadata and key changes follow [OAUTH-CLIENT] and do not
-   change this binding.
+   governing IdP issuer from the Provisioning Domain, and be authorized
+   in the same Governance Tenant.  A CIMD URL is taken from the
+   referenced client's clientId; its document origin is not the IdP
+   issuer.  Client metadata and key changes follow [OAUTH-CLIENT] and do
+   not change this binding.
 
-   The dedicated-client reference selects the identity used for
-   resolution; it does not authorize use.  A Client Association remains
-   required, even when it references the same OAuthClient.
-   Administrators can manage the two relationships together while
-   retaining separate enablement and authorization decisions.
+   A dedicated-client binding explicitly administers identity resolution
+   and Client Association together: client identifies the resolution
+   source; the active binding permits that client to use it for
+   delegated ID-JAG issuance.  Creation and activation MUST be
+   authorized for both decisions. active controls both.  This is the
+   combined administration permitted by [FEDERATION], not permission
+   inferred from client authentication.  No separate
+   AgentClientAssociation is used for this class.  Withdrawing client
+   use deactivates the binding without changing the Agent Principal.
+   Other input classes keep identity resolution and client-use
+   permission in separate resources.
 
    Each selectors element has REQUIRED single-valued string attributes
    path and value, both immutable, case-exact, returned by default, and
    with uniqueness none. path is a JSON Pointer string under Section 5
    of [RFC6901]. value is the expected claim value.  Duplicate paths
    MUST be rejected.  Selector order has no significance; all selectors
-   must match.  Their evaluation follows [FEDERATION].  Selectors are
+   participate in the match defined by [FEDERATION].  Selectors are
    permitted only for platform-jwt; they cannot replace sourceAuthority
    or sourceSubject.  Adding, removing, or changing selectors after
    creation requires a new binding, including when the original binding
@@ -536,7 +559,7 @@ Table of Contents
    [FEDERATION]; creating a reference neither configures a new
    authentication method nor supplies workload provenance.  In that
    profile's private_key_jwt path, the validated assertion issuer and
-   subject both identify the referenced OAuthClient's client_id.  The
+   subject both identify the referenced OAuthClient's clientId.  The
    reference does not replace those authentication checks.
 
    A trust domain name is the authority component of the SPIFFE ID; for
@@ -555,7 +578,7 @@ Table of Contents
 4.3.2.  Binding Uniqueness and Changes
 
    The Service Provider MUST reject duplicate bindings in the same
-   Governance Tenant, regardless of enabled state.  The uniqueness key
+   Governance Tenant, regardless of active state.  The uniqueness key
    is:
 
          +===================+===================================+
@@ -575,7 +598,7 @@ Table of Contents
    authorize a second principal.
 
    Different selector sets can overlap.  The runtime requirement to
-   resolve exactly one enabled binding remains in force; an ambiguous
+   resolve exactly one active binding remains in force; an ambiguous
    match MUST NOT issue a grant.  Management acceptance does not waive
    that check.
 
@@ -589,10 +612,13 @@ Table of Contents
 4.4.  Client Association
 
    An AgentClientAssociation permits one authenticated IdP OAuth client
-   to use one Identity Binding in one flow.  Multiple resources can
-   express an explicitly enumerated binding set.  This profile defines
-   no predicates that automatically cover future bindings.  Its schema
-   URI is:
+   to use one external-identity binding for delegated ID-JAG issuance.
+   A dedicated-client binding carries its own permission and MUST NOT be
+   referenced here.  Multiple resources can express an explicitly
+   enumerated binding set.  This is an explicit narrowing of
+   Federation's policy-defined binding sets to one binding per resource.
+   This profile defines no predicates that automatically cover future
+   bindings.  Its schema URI is:
 
    urn:ietf:params:scim:schemas:core:2.0:AgentClientAssociation
 
@@ -605,29 +631,24 @@ Table of Contents
    | client    | complex | Reference to the OAuthClient                |
    |           |         | registration at this IdP, not the RAS       |
    +-----------+---------+---------------------------------------------+
-   | flow      | string  | id-jag in this revision                     |
-   +-----------+---------+---------------------------------------------+
-   | enabled   | boolean | Whether the permission may be used          |
+   | active    | boolean | Whether the permission may be used          |
    +-----------+---------+---------------------------------------------+
 
                                   Table 7
 
-   enabled has the same characteristics as in Section 4.3.  The
-   reference target type of binding is AgentIdentityBinding; that of
-   client is OAuthClient.  Each uses the value and $ref characteristics
-   in Section 4.1.  The client reference carries a SCIM id, not
-   client_id.
+   active has the same characteristics as in Section 4.3.  The reference
+   target type of binding is AgentIdentityBinding; that of client is
+   OAuthClient.  Each uses the value and $ref characteristics in
+   Section 4.1.  The client reference carries a SCIM id, not client_id.
 
    The binding determines the Agent and permitted credential class.  An
    association MUST NOT be interpreted as permission to use another
    binding to the same Agent, even with the same credential class.  For
-   dedicated-client resolution, the association's client.value MUST
-   equal the binding's client.value.  For external-identity resolution,
-   this reference independently selects the client permitted to present
-   that identity; it need not identify the workload credential's
-   subject.  The client's authorizationServer MUST equal the governing
-   IdP issuer.  A matching client_id at another authorization server
-   does not qualify.
+   external-identity resolution, the reference independently selects the
+   client permitted to present that identity; it need not identify the
+   workload credential's subject.  The client's authorizationServer MUST
+   equal the governing IdP issuer.  A matching client_id at another
+   authorization server does not qualify.
 
    For a CIMD client managed under [OAUTH-CLIENT], client.value still
    references its SCIM id; its OAuth client_id remains the Client
@@ -637,13 +658,14 @@ Table of Contents
 
    The Service Provider MUST validate the referenced binding and client
    registration and authorize their use together.  It MUST reject
-   duplicate associations for the same binding, client, and flow in the
-   Governance Tenant, regardless of enabled state.  Other flow values
-   are unsupported in this revision; accepting id-jag does not imply WAG
-   support.
+   duplicate associations for the same binding and client in the
+   Governance Tenant, regardless of active state.  All client-use
+   permissions in this profile apply only to delegated ID-JAG issuance.
+   No per-resource flow attribute is needed; these permissions MUST NOT
+   authorize WAG or another grant path.
 
-   The association is necessary permission for this binding and flow.
-   Target, scope, user delegation, and other policy constraints remain
+   The association is necessary permission to use this binding.  Target,
+   scope, user delegation, and other policy constraints remain
    independently configured and evaluated by the IdP.  This resource
    does not express or override them.
 
@@ -654,12 +676,12 @@ Table of Contents
    [OAUTH-CLIENT].
 
    The Service Provider MUST support SCIM POST creation, individual and
-   collection GET, PATCH, and DELETE for these resources.  PUT support
-   is OPTIONAL; when supported, the same authorization, reference, and
-   concurrency rules apply.  SCIM Bulk and cross-resource transactions
-   are not required.  All requests and responses use existing SCIM
-   message formats and status codes except the standard HTTP
-   precondition response specified in Section 5.2.
+   collection GET, PUT, PATCH, and DELETE for these resources.  Both
+   update methods apply the same authorization, reference, and
+   concurrency rules.  SCIM Bulk and cross-resource transactions are not
+   required.  All requests and responses use existing SCIM message
+   formats and status codes, including the conflict and precondition
+   responses in Section 5.2.
 
 5.1.  Creation and Retry Recovery
 
@@ -667,23 +689,25 @@ Table of Contents
    has already established its representation outside this creation
    operation.  POST MUST NOT attach to an existing principal by matching
    agentUserName, displayName, externalId, or source credentials.  To
-   manage an existing Agent, the connector must be granted access to
-   that existing resource.
+   manage an existing Agent, the connector needs explicit access to that
+   existing resource.
 
    For relationships, the referenced resource MUST exist in the
-   authorized Governance Tenant.  It need not yet be enabled: the
+   authorized Governance Tenant.  It need not yet be active: the
    connector can stage an inactive Agent, its bindings, and its
    associations before enabling issuance.  Each write is independently
-   authorized; creation with enabled: true additionally requires
-   enabling permission.
+   authorized; creation with active: true additionally requires enabling
+   permission.
 
-   If a response is lost, the connector queries the same resource type
-   by exact externalId before retrying.  A duplicate POST uses 409 with
-   scimType uniqueness; it is not an upsert.  The Service Provider MUST
-   serialize the uniqueness check with creation.  The client MUST
-   retrieve and compare the existing resource before treating a conflict
-   as success.  It MUST NOT silently overwrite a different existing
-   relationship.
+   If a creation response is lost and externalId was supplied, the
+   connector queries the same resource type by that value before
+   retrying.  Without it, the connector reconciles through authorized
+   resource discovery before retrying; a repeat POST is not an
+   idempotent operation.  A duplicate POST uses 409 with scimType
+   uniqueness; it is not an upsert.  The Service Provider MUST serialize
+   the uniqueness check with creation.  The client MUST retrieve and
+   compare the existing resource before treating a conflict as success.
+   It MUST NOT silently overwrite a different existing relationship.
 
    This profile's externalId uniqueness narrows generic SCIM behavior.
    It applies to live resources.  Deletion and stale-writer handling
@@ -691,12 +715,10 @@ Table of Contents
 
 5.2.  Updates and Concurrency
 
-   Service Providers MUST support SCIM ETags and conditional updates
-   under Section 3.14 of [RFC7644].  Provisioning Clients MUST send the
-   current resource version in If-Match for PATCH, PUT, and DELETE.  A
-   missing precondition receives HTTP 428 under [RFC6585]; a failed
-   precondition receives HTTP 412 under Section 3.12 of [RFC7644].  No
-   new scimType is defined for either response.
+   ETags, If-Match, the conditional requirement for activating an
+   inactive resource, and PUT handling of immutable values follow the
+   common provisioning conventions of [OAUTH-CLIENT].  They apply to
+   Agent, AgentIdentityBinding, and AgentClientAssociation alike.
 
    SCIM PATCH is atomic for one resource.  An authorization or
    validation failure MUST leave that resource unchanged.  Clients MUST
@@ -705,11 +727,10 @@ Table of Contents
    the intended change.  This prevents an old enablement from undoing a
    newer disablement.
 
-   Immutable values can be supplied unchanged on PUT but cannot be
-   reassigned.  Removing an optional value does not make an existing
-   immutable identity replaceable.  Changing a relationship's identity
-   requires a new resource.  Ordinary descriptive Agent edits do not
-   change bindings, associations, or delegation.
+   Removing an optional value does not make an existing immutable
+   identity replaceable.  Changing a relationship's identity requires a
+   new resource.  Ordinary descriptive Agent edits do not change
+   bindings, associations, or delegation.
 
 5.3.  Deletion
 
@@ -743,21 +764,27 @@ Table of Contents
 
    OAuthClient deletion follows [OAUTH-CLIENT], including CIMD
    readmission controls and the treatment of outstanding authorization.
-   The rules here do not weaken that behavior.  The Service Provider
-   MUST retain dependent resources as non-effective references until
-   explicitly deleted.  A new OAuthClient with the same OAuth identifier
-   has a new SCIM id and MUST NOT inherit the deleted resource's
-   bindings or associations.
+   The rules here do not weaken that behavior.  The Service Provider MAY
+   retain dependent resources as non-effective references or cascade
+   their deletion under documented administrative policy.  Cascading
+   deletion MUST be authorized for the affected dependents; otherwise
+   they remain unusable.  A new target receives a new SCIM id and MUST
+   NOT inherit or repair the deleted resource's bindings or
+   associations.
 
-   Direct and filtered reads allow authorized connectors to find and
-   remove these references.  A missing target MUST NOT prevent an
+   GET of a retained dependent returns its original immutable value,
+   omits $ref and display for a missing target, and retains its
+   administrative active value.  That value does not assert effective
+   eligibility.  GET of a deleted target or cascaded dependent returns
+   404.  Direct and filtered reads allow authorized connectors to find
+   and remove retained references.  A missing target MUST NOT prevent an
    authorized disablement or deletion of a dependent resource.  Creation
-   or enablement with a missing target MUST be rejected.
+   or activation with a missing target MUST be rejected.
 
    A later POST with a previously used externalId is a new creation,
    requiring current authorization and receiving a new id.  Clients that
-   need reversible disablement use active: false or enabled: false, not
-   DELETE.  To prevent an old connector from recreating deleted records,
+   need reversible disablement use active: false, not DELETE.  To
+   prevent an old connector from recreating deleted records,
    administrators withdraw that connector's create authority; DELETE
    alone does not revoke its management credentials.
 
@@ -766,22 +793,22 @@ Table of Contents
    The Service Provider MUST support paginated collection reads and the
    following eq filters, together with and combinations:
 
-    +==================================+=============================+
-    | Resource                         | Required filter attributes  |
-    +==================================+=============================+
-    | The three agent-management types | id, externalId              |
-    +----------------------------------+-----------------------------+
-    | Agent                            | active, extension issuer    |
-    |                                  | and subject                 |
-    +----------------------------------+-----------------------------+
-    | AgentIdentityBinding             | agent.value, client.value,  |
-    |                                  | credentialClass, enabled    |
-    +----------------------------------+-----------------------------+
-    | AgentClientAssociation           | binding.value,              |
-    |                                  | client.value, flow, enabled |
-    +----------------------------------+-----------------------------+
+     +==================================+============================+
+     | Resource                         | Required filter attributes |
+     +==================================+============================+
+     | The three agent-management types | id, externalId             |
+     +----------------------------------+----------------------------+
+     | Agent                            | active, extension subject; |
+     |                                  | issuer when exposed        |
+     +----------------------------------+----------------------------+
+     | AgentIdentityBinding             | agent.value, client.value, |
+     |                                  | credentialClass, active    |
+     +----------------------------------+----------------------------+
+     | AgentClientAssociation           | binding.value,             |
+     |                                  | client.value, active       |
+     +----------------------------------+----------------------------+
 
-                                 Table 9
+                                  Table 9
 
    OAuthClient queries follow [OAUTH-CLIENT].  Collection reads MUST
    return only resources within the caller's read permission.  For a
@@ -791,8 +818,8 @@ Table of Contents
    reader spanning several domains cannot assume that externalId alone
    is unique.
 
-   A binding lookup can use agent.value eq "a17" and enabled eq true.
-   To find dependencies of OAuthClient oc7, query both relationship
+   A binding lookup can use agent.value eq "a17" and active eq true.  To
+   find dependencies of OAuthClient oc7, query both relationship
    collections with client.value eq "oc7".  This finds dedicated-client
    bindings and all associations naming that client.  External-identity
    bindings have no client attribute; their client permissions are found
@@ -801,20 +828,19 @@ Table of Contents
    expression eq "agent-42".  The connector URI-encodes the complete
    filter under SCIM's query rules.
 
-   Enumeration is not a transactional snapshot.  Reconciliation reads
-   current resource versions and uses conditional changes; it MUST NOT
-   delete records solely because they were absent from an incomplete or
-   failed enumeration.  This profile defines no change feed or event
-   type.
+   Incremental reads on meta.lastModified follow the common provisioning
+   conventions of [OAUTH-CLIENT].  A connector MUST NOT delete records
+   solely because they were absent from an incomplete or failed listing.
+   This profile defines no change feed or event type.
 
 5.5.  Discovery
 
    The Service Provider MUST expose /ServiceProviderConfig,
    /ResourceTypes, and /Schemas under Section 4 of [RFC7644].  It
-   advertises PATCH, filtering, and ETag support as enabled.  Each
-   ResourceType gives the endpoint in Section 4 and the schema defined
-   for that resource; Agent includes the federation extension in
-   schemaExtensions with required: true.
+   advertises PATCH, filtering, and ETag support.  Each ResourceType
+   gives the endpoint in Section 4 and the schema defined for that
+   resource; Agent includes the federation extension in schemaExtensions
+   with required: true.
 
    The /Schemas representations MUST describe the characteristics in
    Section 4.1, Section 4.2, Section 4.3, and Section 4.4.  Discovery
@@ -825,33 +851,33 @@ Table of Contents
 
 5.6.  Errors
 
-   Errors follow Section 3.12 of [RFC7644] except the HTTP 428 response
-   in Section 5.2.  The following mappings make the profile's failures
-   predictable:
+   Errors follow Section 3.12 of [RFC7644].  The following mappings make
+   the profile's failures predictable:
 
-   +====================================================+==============+
-   | Failure                                            | Response     |
-   +====================================================+==============+
-   | Unauthorized operation, tenant, or                 | 403; no new  |
-   | protected attribute                                | scimType     |
-   +----------------------------------------------------+--------------+
-   | Duplicate externalId in its scope,                 | 409,         |
-   | binding key, or association key                    | uniqueness   |
-   +----------------------------------------------------+--------------+
-   | Unsupported class or flow, invalid                 | 400,         |
-   | combination of binding fields, ambiguous           | invalidValue |
-   | authority configuration, malformed                 |              |
-   | selector, or missing/invalid reference             |              |
-   +----------------------------------------------------+--------------+
-   | Attempt to change an immutable value,              | 400,         |
-   | including externalId                               | mutability   |
-   +----------------------------------------------------+--------------+
-   | Missing conditional-write precondition             | 428; no new  |
-   |                                                    | scimType     |
-   +----------------------------------------------------+--------------+
-   | Failed conditional-write precondition              | 412; no new  |
-   |                                                    | scimType     |
-   +----------------------------------------------------+--------------+
+   +===================================================+===============+
+   | Failure                                           | Response      |
+   +===================================================+===============+
+   | Unauthorized operation, tenant, or protected      | 403; no new   |
+   | attribute                                         | scimType      |
+   +---------------------------------------------------+---------------+
+   | Duplicate externalId in its scope, binding key,   | 409,          |
+   | or association key                                | uniqueness    |
+   +---------------------------------------------------+---------------+
+   | Unsupported class, invalid combination of binding | 400,          |
+   | fields, ambiguous authority configuration,        | invalidValue  |
+   | malformed selector, or missing/invalid reference  |               |
+   +---------------------------------------------------+---------------+
+   | Attempt to change an immutable identity or        | 400,          |
+   | reference                                         | mutability    |
+   +---------------------------------------------------+---------------+
+   | Reactivation without a version ETag, including    | 409;          |
+   | If-Match: *                                       | retrieve and  |
+   |                                                   | use the       |
+   |                                                   | current ETag  |
+   +---------------------------------------------------+---------------+
+   | Failed conditional-write precondition             | 412; no new   |
+   |                                                   | scimType      |
+   +---------------------------------------------------+---------------+
 
                                   Table 10
 
@@ -865,18 +891,20 @@ Table of Contents
 
    For new issuance, the IdP evaluates the conjunction of:
 
-   *  An active OAuthClient whose issuer-qualified client_id matches the
+   *  An active OAuthClient whose issuer-qualified clientId matches the
       authenticated client.
 
    *  An eligible Agent Principal represented by an active Agent.
 
-   *  Exactly one matching, enabled Identity Binding whose Agent exists.
+   *  Exactly one matching, active Identity Binding whose Agent exists.
       Dedicated-client matching uses the authenticated OAuthClient
       reference; other classes use the independently validated external
       identity.
 
-   *  An enabled Client Association referencing that binding and the
-      authenticated OAuthClient for the requested flow.
+   *  Client-use permission for delegated ID-JAG issuance: either the
+      active dedicated-client binding's client, or an active
+      AgentClientAssociation referencing the matched external-identity
+      binding and authenticated OAuthClient.
 
    *  All remaining credential, delegation, target, and policy checks in
       [FEDERATION].
@@ -891,15 +919,11 @@ Table of Contents
    Binding nor a Client Association.  Re-enabling a parent does not
    change a child's explicit disabled state.
 
-   Before returning success for a restrictive change, the Service
-   Provider MUST make that restriction effective for grant-authorization
-   decisions that begin after the response.  A provider with
-   asynchronous internal replication must enforce the restriction at
-   issuance or delay success; a successful SCIM response MUST NOT mean
-   only that an update was queued.  An in-flight decision made before
-   the restriction can still complete.  If this guarantee cannot be met,
-   the write MUST fail without reporting successful application; the
-   connector reconciles current state before retrying.
+   The durable restriction rule of [OAUTH-CLIENT] applies with the IdP
+   grant decision point as the decision point: an inactive resource or a
+   deny marker MUST be observable there before a restrictive write is
+   reported successful.  After a failed write the connector reconciles
+   current state before retrying.
 
    This is a new-issuance guarantee, not a downstream revocation bound.
    The IdP's refresh-token subject processing still makes a new issuance
@@ -946,12 +970,13 @@ Table of Contents
    ETags prevent stale conditional writes; they are not lifecycle
    versions and do not revoke previously issued tokens.  A connector
    that retains create or enable permission can request new access after
-   earlier disablement, subject to current policy.  Administrators must
-   withdraw that authority when the connector itself is compromised.
+   earlier disablement, subject to current policy.  Administrators
+   SHOULD withdraw that authority when the connector itself is
+   compromised.
 
    Management changes SHOULD be audited with the administrative actor,
    Provisioning Domain, affected resource, and changed relationships.
-   Audit records should identify principals and configuration changes
+   Audit records SHOULD identify principals and configuration changes
    without retaining reusable workload credentials.
 
 8.  Privacy Considerations
@@ -967,8 +992,9 @@ Table of Contents
 9.  IANA Considerations
 
    This document requests the following entries in the SCIM Schema URIs
-   registry using Section 10.3.2 of [RFC7643].  These URIs are proposed
-   registrations; no assignment is implied by this editor's copy.
+   registry using Section 10.3.2 of [RFC7643].  The proposed core:2.0
+   namespace registrations require Expert Review and RFC publication
+   under Section 10.3.1 of [RFC7643].
 
 9.1.  Agent Federation Extension
 
@@ -999,7 +1025,7 @@ Table of Contents
       Agent Principal.
 
    *  Single-value Attributes: agent, credentialClass, client,
-      sourceAuthority, sourceSubject, enabled, defined in Section 4.3.
+      sourceAuthority, sourceSubject, active, defined in Section 4.3.
 
    *  Multi-valued Attributes: selectors, defined in Section 4.3.
 
@@ -1013,10 +1039,10 @@ Table of Contents
    *  Intended or Associated Resource Type: AgentClientAssociation
 
    *  Purpose: Manage an OAuth client's permission to use an Identity
-      Binding in a flow.
+      Binding for delegated ID-JAG issuance.
 
-   *  Single-value Attributes: binding, client, flow, enabled, defined
-      in Section 4.4.
+   *  Single-value Attributes: binding, client, active, defined in
+      Section 4.4.
 
    *  Multi-valued Attributes: None.
 
@@ -1067,10 +1093,6 @@ Table of Contents
               DOI 10.17487/RFC6901, April 2013,
               <https://www.rfc-editor.org/rfc/rfc6901>.
 
-   [RFC6585]  Nottingham, M. and R. Fielding, "Additional HTTP Status
-              Codes", RFC 6585, DOI 10.17487/RFC6585, April 2012,
-              <https://www.rfc-editor.org/rfc/rfc6585>.
-
    [BCP14]    Best Current Practice 14,
               <https://www.rfc-editor.org/info/bcp14>.
               At the time of writing, this BCP comprises the following:
@@ -1118,20 +1140,20 @@ A.1.  Obtain the OAuthClient Reference
 
    For this example, the client is already active and has:
 
-              +=====================+======================+
-              | Attribute           | Value used here      |
-              +=====================+======================+
-              | SCIM id             | oc7                  |
-              +---------------------+----------------------+
-              | authorizationServer | https://idp.example/ |
-              +---------------------+----------------------+
-              | OAuth client_id     | platform-sso         |
-              +---------------------+----------------------+
+        +=================================+======================+
+        | Attribute                       | Value used here      |
+        +=================================+======================+
+        | SCIM id                         | oc7                  |
+        +---------------------------------+----------------------+
+        | authorizationServer             | https://idp.example/ |
+        +---------------------------------+----------------------+
+        | SCIM clientId (OAuth client_id) | platform-sso         |
+        +---------------------------------+----------------------+
 
                                  Table 11
 
    The connector can find an existing resource with the filter
-   authorizationServer eq "https://idp.example/" and client_id eq
+   authorizationServer eq "https://idp.example/" and clientId eq
    "platform-sso", URI-encoded in a collection request.  It uses oc7 in
    relationships and platform-sso at the token endpoint.  For a CIMD
    client, the filter and OAuth requests use the Client Identifier URL
@@ -1146,7 +1168,12 @@ A.2.  Create an Inactive Agent
    Accept: application/scim+json
 
    {
-     "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Agent"],
+     "schemas": [
+       "urn:ietf:params:scim:schemas:core:2.0:Agent",
+     "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent"
+     ],
+    "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent":
+       {},
      "externalId": "agent-7",
      "agentUserName": "analysis-agent-7",
      "displayName": "Analysis agent",
@@ -1163,19 +1190,22 @@ A.2.  Create an Inactive Agent
    {
      "schemas": [
        "urn:ietf:params:scim:schemas:core:2.0:Agent",
-       "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent"
+     "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent"
      ],
      "id": "a17",
      "externalId": "agent-7",
      "agentUserName": "analysis-agent-7",
      "displayName": "Analysis agent",
      "active": false,
-     "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent": {
+    "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent":
+       {
        "issuer": "https://idp.example/",
        "subject": "agent-42"
      },
      "meta": {
        "resourceType": "Agent",
+       "created": "2026-09-18T12:00:00Z",
+       "lastModified": "2026-09-18T12:00:00Z",
        "version": "W/\"a1\"",
        "location": "https://idp.example/scim/acme/Agents/a17"
      }
@@ -1200,12 +1230,12 @@ A.3.  Bind the Workload Identity
      "credentialClass": "platform-jwt",
      "sourceAuthority": "https://platform.example/",
      "sourceSubject": "workload-7",
-     "enabled": true
+     "active": true
    }
 
    The IdP authorizes the relationship and returns 201 Created with the
    resource representation, id: b9, ETag W/"b1", and its Location.  The
-   binding is enabled, but the inactive Agent prevents issuance.
+   binding is active, but the inactive Agent prevents issuance.
 
 A.4.  Authorize Client Use
 
@@ -1220,8 +1250,7 @@ A.4.  Authorize Client Use
      "externalId": "platform-association-7",
      "binding": {"value": "b9"},
      "client": {"value": "oc7"},
-     "flow": "id-jag",
-     "enabled": true
+     "active": true
    }
 
    The IdP returns 201 Created with the resource representation, id: c3,
@@ -1274,7 +1303,7 @@ A.7.  Disable One Binding
    {
      "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
      "Operations": [
-       {"op": "replace", "path": "enabled", "value": false}
+       {"op": "replace", "path": "active", "value": false}
      ]
    }
 
@@ -1305,9 +1334,9 @@ A.8.  Rejection and Boundary Examples
          | sourceSubject on a        | client reference supplies |
          | dedicated-client binding  | the resolution identity   |
          +---------------------------+---------------------------+
-         | Associate a dedicated-    | 400, invalidValue; the    |
-         | client binding with a     | two references must match |
-         | different OAuthClient     |                           |
+         | Create an association for | 400, invalidValue; its    |
+         | a dedicated-client        | permission is carried by  |
+         | binding                   | the binding               |
          +---------------------------+---------------------------+
          | Change a binding's Agent  | 400, mutability; create a |
          | or source subject         | separately authorized     |
@@ -1321,8 +1350,9 @@ A.8.  Rejection and Boundary Examples
          | connector lacking enable  | succeed; eligibility is   |
          | permission                | unchanged                 |
          +---------------------------+---------------------------+
-         | PATCH without If-Match    | 428; retrieve current     |
-         |                           | version                   |
+         | PUT would reactivate      | 409; retrieve and use the |
+         | without a version ETag,   | current ETag              |
+         | including If-Match: *     |                           |
          +---------------------------+---------------------------+
          | PATCH with a stale        | 412; reconcile before     |
          | version                   | retrying                  |
@@ -1345,9 +1375,8 @@ A.8.  Rejection and Boundary Examples
 Appendix B.  Example: Dedicated Client
 
    This variant uses the same Agent a17 but a dedicated OAuthClient oc9.
-   Its authorizationServer is https://idp.example/, and its client_id is
-   analysis-client.  The connector creates this binding instead of the
-   platform-JWT binding in Appendix A:
+   Its authorizationServer is https://idp.example/ and runtime client_id
+   is analysis-client.  One binding administers identity and client use:
 
    {
      "schemas": [
@@ -1357,36 +1386,441 @@ Appendix B.  Example: Dedicated Client
      "agent": {"value": "a17"},
      "credentialClass": "dedicated-client",
      "client": {"value": "oc9"},
-     "enabled": true
+     "active": true
    }
 
-   After receiving binding b10, it separately creates the permission:
+   The connector needs authorization for both binding and client use.
+   No AgentClientAssociation is created.  At issuance, the IdP
+   authenticates analysis-client, matches oc9, resolves the binding to
+   a17, and applies the delegated ID-JAG permission and remaining
+   policy.  The actor remains (https://idp.example/, agent-42).
+   Deactivating this binding withdraws both its resolution path and its
+   client-use permission; it does not change the Agent Principal.
+
+   For a CIMD client the runtime client_id is its URL; the relationship
+   body is unchanged.  Key rotation also leaves the relationship
+   unchanged.  Replacing oc9 requires a separately authorized binding.
+
+Appendix C.  Schema and ResourceType Representations
+
+   These JSON definitions specify the new schema characteristics.
+   Common attributes retain RFC 7643 definitions; profile-level
+   conditional requirements and uniqueness constraints still apply.  A
+   Service Provider advertises only the supported subset of
+   credentialClass canonical values.  Service-specific meta values are
+   omitted from these definitions.
+
+C.1.  AgentFederation Schema
 
    {
      "schemas": [
-       "urn:ietf:params:scim:schemas:core:2.0:AgentClientAssociation"
+       "urn:ietf:params:scim:schemas:core:2.0:Schema"
      ],
-     "externalId": "dedicated-association-7",
-     "binding": {"value": "b10"},
-     "client": {"value": "oc9"},
-     "flow": "id-jag",
-     "enabled": true
+     "id":
+    "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent",
+     "name": "AgentFederation",
+     "attributes": [
+       {
+         "name": "issuer",
+         "description":
+           "Governing IdP issuer from the provisioning context.",
+         "type": "string",
+         "multiValued": false,
+         "required": false,
+         "mutability": "readOnly",
+         "returned": "default",
+         "caseExact": true,
+         "uniqueness": "none"
+       },
+       {
+         "name": "subject",
+         "description":
+           "Stable Agent Principal identifier in the IdP namespace.",
+         "type": "string",
+         "multiValued": false,
+         "required": true,
+         "mutability": "readOnly",
+         "returned": "default",
+         "caseExact": true,
+         "uniqueness": "none"
+       }
+     ]
    }
 
-   At issuance, the IdP authenticates analysis-client, matches
-   OAuthClient oc9, resolves binding b10 to Agent a17, and checks the
-   separate association.  The resulting actor is still
-   (https://idp.example/, agent-42).  No client assertion, key, or
-   copied client identifier is stored in the binding.
+C.2.  AgentIdentityBinding Schema
 
-   If oc9 instead represents a CIMD client, its URL is the runtime
-   client_id; both relationship bodies are unchanged.  An authorized key
-   rotation also leaves them unchanged.  Replacing oc9 with another SCIM
-   resource requires a new binding and association.
+   {
+     "schemas": [
+       "urn:ietf:params:scim:schemas:core:2.0:Schema"
+     ],
+     "id": "urn:ietf:params:scim:schemas:core:2.0:AgentIdentityBinding",
+     "name": "AgentIdentityBinding",
+     "attributes": [
+       {
+         "name": "agent",
+         "description": "Agent resolved through this identity binding.",
+         "type": "complex",
+         "multiValued": false,
+         "required": true,
+         "mutability": "immutable",
+         "returned": "default",
+         "subAttributes": [
+           {
+             "name": "value",
+             "description": "SCIM id of the referenced resource.",
+             "type": "string",
+             "multiValued": false,
+             "required": true,
+             "mutability": "immutable",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none"
+           },
+           {
+             "name": "$ref",
+             "description":
+              "Service-provider reference to the target SCIM resource.",
+             "type": "reference",
+             "multiValued": false,
+             "required": false,
+             "mutability": "readOnly",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none",
+             "referenceTypes": [
+               "Agent"
+             ]
+           },
+           {
+             "name": "display",
+             "description":
+               "Human-readable label; never an identity lookup key.",
+             "type": "string",
+             "multiValued": false,
+             "required": false,
+             "mutability": "readOnly",
+             "returned": "default",
+             "caseExact": false,
+             "uniqueness": "none"
+           }
+         ]
+       },
+       {
+         "name": "credentialClass",
+         "description":
+           "Credential class used to resolve the Agent Principal.",
+         "type": "string",
+         "multiValued": false,
+         "required": true,
+         "mutability": "immutable",
+         "returned": "default",
+         "caseExact": true,
+         "uniqueness": "none",
+         "canonicalValues": [
+           "dedicated-client",
+           "spiffe-jwt",
+           "spiffe-wit",
+           "spiffe-x509",
+           "client-attestation",
+           "platform-jwt"
+         ]
+       },
+       {
+         "name": "client",
+         "description":
+           "OAuthClient authorized to use this identity binding.",
+         "type": "complex",
+         "multiValued": false,
+         "required": false,
+         "mutability": "immutable",
+         "returned": "default",
+         "subAttributes": [
+           {
+             "name": "value",
+             "description": "SCIM id of the referenced resource.",
+             "type": "string",
+             "multiValued": false,
+             "required": true,
+             "mutability": "immutable",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none"
+           },
+           {
+             "name": "$ref",
+             "description":
+              "Service-provider reference to the target SCIM resource.",
+             "type": "reference",
+             "multiValued": false,
+             "required": false,
+             "mutability": "readOnly",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none",
+             "referenceTypes": [
+               "OAuthClient"
+             ]
+           },
+           {
+             "name": "display",
+             "description":
+               "Human-readable label; never an identity lookup key.",
+             "type": "string",
+             "multiValued": false,
+             "required": false,
+             "mutability": "readOnly",
+             "returned": "default",
+             "caseExact": false,
+             "uniqueness": "none"
+           }
+         ]
+       },
+       {
+         "name": "sourceAuthority",
+         "description":
+           "Preconfigured authority for the external identity.",
+         "type": "string",
+         "multiValued": false,
+         "required": false,
+         "mutability": "immutable",
+         "returned": "default",
+         "caseExact": true,
+         "uniqueness": "none"
+       },
+       {
+         "name": "sourceSubject",
+         "description":
+           "Exact external identity under the source authority.",
+         "type": "string",
+         "multiValued": false,
+         "required": false,
+         "mutability": "immutable",
+         "returned": "default",
+         "caseExact": true,
+         "uniqueness": "none"
+       },
+       {
+         "name": "selectors",
+         "description":
+           "Additional exact platform-JWT claim constraints.",
+         "type": "complex",
+         "multiValued": true,
+         "required": false,
+         "mutability": "immutable",
+         "returned": "default",
+         "subAttributes": [
+           {
+             "name": "path",
+             "description":
+               "JSON Pointer to a claim in the JWT Claims Set.",
+             "type": "string",
+             "multiValued": false,
+             "required": true,
+             "mutability": "immutable",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none"
+           },
+           {
+             "name": "value",
+             "description":
+               "Expected exact string value of the selected JWT claim.",
+             "type": "string",
+             "multiValued": false,
+             "required": true,
+             "mutability": "immutable",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none"
+           }
+         ]
+       },
+       {
+         "name": "active",
+         "description":
+          "Administrative enablement; other policy checks still apply.",
+         "type": "boolean",
+         "multiValued": false,
+         "required": true,
+         "mutability": "readWrite",
+         "returned": "default"
+       }
+     ]
+   }
 
-Appendix C.  Document History
+C.3.  AgentClientAssociation Schema
 
-   Initial version.
+   {
+     "schemas": [
+       "urn:ietf:params:scim:schemas:core:2.0:Schema"
+     ],
+     "id":
+       "urn:ietf:params:scim:schemas:core:2.0:AgentClientAssociation",
+     "name": "AgentClientAssociation",
+     "attributes": [
+       {
+         "name": "binding",
+         "description":
+           "External-identity binding the client may use for ID-JAG.",
+         "type": "complex",
+         "multiValued": false,
+         "required": true,
+         "mutability": "immutable",
+         "returned": "default",
+         "subAttributes": [
+           {
+             "name": "value",
+             "description": "SCIM id of the referenced resource.",
+             "type": "string",
+             "multiValued": false,
+             "required": true,
+             "mutability": "immutable",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none"
+           },
+           {
+             "name": "$ref",
+             "description":
+              "Service-provider reference to the target SCIM resource.",
+             "type": "reference",
+             "multiValued": false,
+             "required": false,
+             "mutability": "readOnly",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none",
+             "referenceTypes": [
+               "AgentIdentityBinding"
+             ]
+           },
+           {
+             "name": "display",
+             "description":
+               "Human-readable label; never an identity lookup key.",
+             "type": "string",
+             "multiValued": false,
+             "required": false,
+             "mutability": "readOnly",
+             "returned": "default",
+             "caseExact": false,
+             "uniqueness": "none"
+           }
+         ]
+       },
+       {
+         "name": "client",
+         "description":
+           "OAuthClient authorized to use this identity binding.",
+         "type": "complex",
+         "multiValued": false,
+         "required": true,
+         "mutability": "immutable",
+         "returned": "default",
+         "subAttributes": [
+           {
+             "name": "value",
+             "description": "SCIM id of the referenced resource.",
+             "type": "string",
+             "multiValued": false,
+             "required": true,
+             "mutability": "immutable",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none"
+           },
+           {
+             "name": "$ref",
+             "description":
+              "Service-provider reference to the target SCIM resource.",
+             "type": "reference",
+             "multiValued": false,
+             "required": false,
+             "mutability": "readOnly",
+             "returned": "default",
+             "caseExact": true,
+             "uniqueness": "none",
+             "referenceTypes": [
+               "OAuthClient"
+             ]
+           },
+           {
+             "name": "display",
+             "description":
+               "Human-readable label; never an identity lookup key.",
+             "type": "string",
+             "multiValued": false,
+             "required": false,
+             "mutability": "readOnly",
+             "returned": "default",
+             "caseExact": false,
+             "uniqueness": "none"
+           }
+         ]
+       },
+       {
+         "name": "active",
+         "description":
+          "Administrative enablement; other policy checks still apply.",
+         "type": "boolean",
+         "multiValued": false,
+         "required": true,
+         "mutability": "readWrite",
+         "returned": "default"
+       }
+     ]
+   }
+
+C.4.  Resource Types
+
+   {
+     "schemas": [
+       "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+     ],
+     "id": "Agent",
+     "name": "Agent",
+     "endpoint": "/Agents",
+     "schema": "urn:ietf:params:scim:schemas:core:2.0:Agent",
+     "schemaExtensions": [
+       {
+         "schema":
+    "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent",
+         "required": true
+       }
+     ]
+   }
+
+   {
+     "schemas": [
+       "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+     ],
+     "id": "AgentIdentityBinding",
+     "name": "AgentIdentityBinding",
+     "endpoint": "/AgentIdentityBindings",
+     "schema":
+       "urn:ietf:params:scim:schemas:core:2.0:AgentIdentityBinding"
+   }
+
+   {
+     "schemas": [
+       "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+     ],
+     "id": "AgentClientAssociation",
+     "name": "AgentClientAssociation",
+     "endpoint": "/AgentClientAssociations",
+     "schema":
+       "urn:ietf:params:scim:schemas:core:2.0:AgentClientAssociation"
+   }
+
+Appendix D.  Document History
+
+   RFC Editor: Remove this section before publication.
+
+   *  Initial version.
+
+Acknowledgments
+
+   TBD.
 
 Author's Address
 
