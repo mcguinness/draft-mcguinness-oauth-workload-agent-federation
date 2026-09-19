@@ -7,7 +7,7 @@ submissiontype: IETF
 stand_alone: yes
 ipr: trust200902
 area: "Security"
-workgroup: "Web Authorization Protocol"
+workgroup: "System for Cross-domain Identity Management"
 keyword:
  - OAuth
  - agent provisioning
@@ -15,10 +15,10 @@ keyword:
  - lifecycle
  - shared signals
 venue:
-  group: "Web Authorization Protocol"
+  group: "System for Cross-domain Identity Management"
   type: "Working Group"
-  mail: "oauth@ietf.org"
-  arch: "https://mailarchive.ietf.org/arch/browse/oauth/"
+  mail: "scim@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/scim/"
   github: "mcguinness/draft-mcguinness-oauth-workload-agent-federation"
   latest: "https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-oauth-governed-agent-lifecycle.html"
 author:
@@ -52,9 +52,16 @@ normative:
     seriesinfo:
       Internet-Draft: draft-mcguinness-oauth-workload-agent-federation
   SCIM-AGENT: I-D.wzdk-scim-agent-resource
+  OAUTH-CLIENT:
+    title: "SCIM Profile for OAuth 2.0 Client Management"
+    author:
+      - name: Karl McGuinness
+    date: 2026-09-18
+    seriesinfo:
+      Internet-Draft: draft-mcguinness-scim-oauth-client-management
+    target: https://mcguinness.github.io/draft-mcguinness-oauth-workload-agent-federation/draft-mcguinness-scim-oauth-client-management.html
   RFC7643:
   RFC7644:
-  RFC9110:
   RFC7662:
 informative:
   AGENT-MANAGEMENT:
@@ -130,7 +137,10 @@ SCIM is the provisioning baseline. Shared Signals is an optional
 addition, profiled in {{signals}} using existing event types. A
 deployment can use direct SCIM updates, event-driven reconciliation, or
 both, provided that they apply the same authoritative administrative
-decisions.
+decisions. Events trigger retrieval of current state rather than
+carrying it: a late notice resolves to the current decision, whereas a
+late activation applied as an instruction would revive a principal that
+was since disabled. That asymmetry is the design's safety property.
 
 Disabling a principal and revoking a session are separate actions. Once
 applied, disablement prevents new authorization and invalidates existing
@@ -171,10 +181,11 @@ Governing IdP:
 : The IdP governing the Agent Principal. An authorized connector can
   provision its decisions into the resource domain.
 
-Receiver (Service Provider):
+Receiver:
 : The resource-domain SCIM service provider and the components applying
   accepted changes at the RAS. They form one administrative deployment;
-  they need not run in one process.
+  they need not run in one process. It is the resource-domain
+  counterpart of the IdP Service Provider in {{AGENT-MANAGEMENT}}.
 
 Provisioning Domain:
 : Trusted configuration identifying one governing IdP issuer and one
@@ -218,6 +229,16 @@ The IdP continues to enforce current eligibility when issuing grants under
 state; it does not make SCIM availability or event delivery part of client
 authentication.
 
+The Governing IdP, directly or through its connector, MUST apply each
+change to a provisioned Agent Principal's administrative status to every
+resource domain it has provisioned for that principal, by a SCIM write
+or by a subscribed event that triggers reconciliation, and SHOULD do so
+promptly after the decision. Where grant-derived revocation under
+{{grant-revocation}} is enabled, the IdP MUST retain the identifiers of
+the ID-JAGs it issued under each delegation, Identity Binding, and Client
+Association, so that withdrawing any of them can be propagated to the
+authorization derived from those grants.
+
 # Identity and Local Correlation {#identity}
 
 The federation identity remains the exact pair (IdP issuer, Agent
@@ -242,6 +263,10 @@ resource; it cannot merge records on equal `externalId` values across
 issuers. This use of `externalId` is specific to the IdP-to-resource
 interface. A platform's `externalId` at the IdP remains its own
 provisioning correlation value.
+The mutability differs for the same reason: at the platform-to-IdP
+interface of {{AGENT-MANAGEMENT}} it is the connector's record key and
+stays readWrite; here it carries the principal identifier and is
+immutable once established.
 
 When the source uses {{AGENT-MANAGEMENT}}, the connector maps the
 interfaces as follows; it does not copy the source Agent unchanged:
@@ -273,6 +298,27 @@ This profile raises Federation's provisioning recommendation to a
 requirement: the RAS MUST have the authorized local correlation before
 accepting a grant involving the agent. A missing or ambiguous
 correlation fails under Federation's identity-resolution error rules.
+{{jit}} defines the one optional way to establish that correlation
+without a prior SCIM write.
+
+## Just-in-Time Correlation {#jit}
+
+A Receiver MAY be configured to establish the local correlation from a
+validated ID-JAG instead of a prior SCIM write. This option is disabled
+by default and enabled per governing issuer and Target Tenant.
+
+When enabled, on a validated grant whose `act.iss` is that issuer and
+whose `act.sub` has no correlation in that tenant, the RAS MAY create
+the local agent principal and its correlation keyed by the pair, with an
+initial local `active` state set by local policy. The RAS MUST NOT
+attach the pair to an existing principal by name or other descriptive
+match, MUST apply Local Suspension, retained revocation state, and local
+policy before issuance, and MUST subject the created principal to the
+same provisioning, reconciliation, and disablement rules as a
+provisioned one. A grant does not carry the IdP's administrative
+status; just-in-time correlation therefore does not replace SCIM
+provisioning for disablement, and a later SCIM write for the same pair
+updates the created record rather than creating a second principal.
 
 # SCIM Provisioning {#scim}
 
@@ -303,34 +349,13 @@ The Receiver MUST restrict the result to that context. Names, owners,
 groups, and other descriptive attributes do not select the governed
 identity or grant delegation.
 
-Receivers MUST support ETags and return `meta.version` on complete
-resource representations, together with `meta.created` and
-`meta.lastModified`. Connectors SHOULD use `If-Match` for updates and
-deletion of existing resources. Changing an existing inactive resource
-to active MUST use `If-Match` with a resource-version ETag matching the
-current representation. An absent header or `If-Match: *` receives HTTP
-409 with a `detail` directing the connector to retrieve current state
-and use its ETag; no `scimType` is assigned. The wildcard tests existence,
-not version, under {{Section 13.1.1 of RFC9110}}. Other authorized
-unconditional writes remain permitted. A failed version precondition uses
-HTTP 412 under {{Section 3.12 of RFC7644}}; the connector retrieves
-current state and reconciles its intended change before retrying.
-
-`meta.version` is an opaque resource validator, not a monotonic
-lifecycle counter. `meta.lastModified` is the time the service provider
-modified the resource, not a source decision time or a grant-revocation
-boundary. A descriptive edit can change both without affecting
+Versions, ETags, `If-Match`, the conditional requirement for activating
+an inactive resource, and incremental reads on `meta.lastModified`
+follow the common provisioning conventions of {{OAUTH-CLIENT}}. In this
+interface, `meta.version` is not a lifecycle counter and
+`meta.lastModified` is not a source decision time or a grant-revocation
+boundary; a descriptive edit can change both without affecting
 authorization.
-
-The Receiver MUST support `gt` and `ge` filters on `meta.lastModified`,
-including combination with the required equality filters. For example,
-`meta.lastModified ge "2026-09-18T12:00:00Z"` selects records changed
-since a checkpoint. A connector SHOULD overlap successive windows and
-deduplicate by resource `id` and `meta.version`; timestamps are not
-unique sequence numbers. Incremental queries cannot discover deletions
-and do not form a transactional snapshot. Periodic complete
-reconciliation remains necessary, and an incomplete listing cannot
-establish absence.
 
 ## Applying Administrative State {#application}
 
@@ -346,15 +371,12 @@ administrative updates.
 | Delete the local Agent | Deny because the authorized correlation is absent | Revoke associated authorization sessions |
 | Change display name, owner, or other descriptive data | No implicit change to eligibility or delegation | No implicit revocation or grant of authority |
 
-Before reporting successful disablement or deletion, the Receiver MUST
-persist the restriction in durable state consulted by the RAS decision
-point. An inactive record or a separate deny marker can provide that
-state. If the decision point cannot observe it, the write MUST NOT be
-reported successful. Decisions beginning after the response MUST apply
-it. If session invalidation is asynchronous, a local restriction MUST
-deny use of the affected sessions until invalidation completes.
-In-flight decisions may already have completed; API observation of
-revocation follows {{enforcement}}.
+The durable restriction rule of {{OAUTH-CLIENT}} applies to disablement
+and deletion with the RAS decision point as the decision point; an
+inactive record or a separate deny marker can provide that state. If
+session invalidation is asynchronous, a local restriction MUST deny use
+of the affected sessions until invalidation completes. API observation
+of revocation follows {{enforcement}}.
 
 Reactivation MUST NOT cancel pending invalidation or restore revoked
 sessions. Recreating a deleted representation likewise does not restore
@@ -435,15 +457,137 @@ RAS remain revoked.
 
 Deployments requiring revocation to survive every missed transition need
 retained revocation history, an authoritative authorization check, or a
-separately specified authorization-generation mechanism. SCIM
-modification times, SET issuance times, and event timestamps MUST NOT be
-treated as interchangeable grant-issuance cutoffs under this profile.
+separately specified authorization-generation mechanism. That mechanism
+is a deferred composition rather than a prohibition: it would carry an
+authenticated authorization generation in the grant, agreed with ID-JAG,
+and define the comparison the RAS applies. SCIM modification times, SET
+issuance times, and event timestamps MUST NOT be treated as
+interchangeable grant-issuance cutoffs under this profile.
+
+# OAuth Enforcement {#enforcement}
+
+The RAS requirements that apply administrative state to authorization
+are specified in {{FEDERATION}}: checking current locally applied
+eligibility at redemption and refresh, retaining the association needed
+to invalidate authorization by qualified agent and Target Tenant, not
+letting refresh bypass a restriction or restore revoked authorization,
+and reporting revoked or disabled authorization as inactive under
+{{RFC7662}}. This document supplies the provisioning and signals that
+feed those decisions and adds no grant issuance-time claim or timestamp
+comparison. The optional capability in {{grant-revocation}} additionally
+retains the ID-JAG issuer and `jti`. Once reactivated, the principal may
+establish new authorization under ordinary Federation processing,
+subject to {{missed-transitions}}. Existing tokens whose agent
+correlation cannot be established MUST NOT be represented as covered by
+this profile.
+
+## Resource Enforcement and Delay {#api-enforcement}
+
+The API applies Federation's token validation, actor gate, tenant, and
+sender-constraint rules. The following are deployment choices, not new
+conformance levels:
+
+| Resource processing | When an applied RAS revocation becomes visible |
+|---|---|
+| Introspection on each request | On the next successful authorization check; a failed or timed-out check cannot authorize the request |
+| Cached introspection | After any permitted active-response cache entry expires or is invalidated |
+| Offline JWT validation | At token expiration, unless an independent local restriction takes effect earlier |
+
+Caching follows Federation and {{Section 4 of RFC7662}}. In particular,
+cached active responses cannot outlive token expiration or the
+configured freshness limit. Offline validation does not consult
+principal lifecycle state by itself. The RAS and API MUST configure
+token lifetimes, expiry leeway, and caching consistently with their
+accepted revocation delay.
+
+Deployments SHOULD document their expected and maximum disablement
+delays, including propagation, reconciliation, local application, token
+lifetime, and caching. A SCIM acknowledgment is not the starting point
+of an end-to-end guarantee from the governing IdP's original decision.
+Without a bound on propagation and enforcement, this profile claims no
+finite end-to-end denial bound. A local stale-state restriction can
+limit new issuance; it does not by itself revoke already-issued tokens.
+
+# Relationship Boundaries {#relationship-changes}
+
+| Change | Boundary |
+|---|---|
+| Disable an Identity Binding | Stop new grants through that binding; other bindings remain independent |
+| Withdraw a Client Association | Stop that client use; do not infer agent-wide disablement |
+| Revoke a user's delegation | Affect that delegation, not unrelated users or self-acting authority |
+| Revoke a workload credential | Apply credential validation and IdP policy; do not automatically retire the Agent Principal |
+| Revoke a known ID-JAG | Invalidate its derived sessions; do not change principal eligibility |
+
+{{FEDERATION}} defines the first three authorization relationships.
+Grant-derived revocation under {{grant-revocation}} can target known
+ID-JAGs. Determining all grants affected by withdrawal of a binding or
+delegation remains an IdP responsibility; the agent identity alone
+cannot identify that set. OAuth token revocation {{RFC7009}} can revoke a known token at its
+issuing server but is not a principal-provisioning or cross-domain
+notification protocol.
+
+{{WISE}} can inform the IdP about workloads and credentials. The IdP evaluates those changes against its Identity Bindings before deciding on
+agent-wide action. Sharing a credential source does not merge principals;
+losing one credential does not necessarily disable a principal with other
+valid bindings.
+
+## Self-Acting Access
+
+The intended {{WAG}} composition correlates the same Agent Principal
+with the same local principal. Delegated access preserves the qualified
+actor in `act`; self-acting access represents the correlated agent as a
+local subject. Their authority remains distinct. This document defines
+no WAG wire composition or additional WAG claim.
+
+# Security Considerations
+
+Provisioning writers can enable principals and change eligibility. Their
+authority MUST remain scoped to the configured issuer and Target Tenant.
+An event signature, matching display name, or equal `externalId` outside
+that context does not establish permission to correlate a principal.
+
+Conditional writes prevent stale updates to a known receiver version;
+they do not prove that a connector consulted current source state.
+Compromised or stale connectors can re-enable principals if their write
+permission remains valid. Administrative authorization, reconciliation,
+and local suspension therefore remain separate controls.
+
+Event trust, provisioning permission, and session-revocation authority
+remain separate. Receivers MUST constrain source retrieval and
+credential forwarding to authorized endpoints. A signed subject does not
+authorize arbitrary URL retrieval or cross-tenant revocation.
+
+Event loss and reordering can delay enforcement. Receivers SHOULD retry
+reconciliation, monitor failures, and retain revoked-session state across
+restarts. Recovery from lost revocation state MUST NOT silently restore
+sessions represented as revoked. The explicit limit in
+{{missed-transitions}} is particularly relevant to unattended refresh.
+
+A disabled principal may still have tokens accepted by an offline API.
+Token expiry and cached responses MUST be included in operational
+claims; stopping issuance alone does not terminate ongoing work or
+retract operations already performed.
+
+# Privacy Considerations
+
+The qualified identity permits correlation across users and resources.
+Provisioning and event access SHOULD be limited to the receiving domains
+that need it. Logs SHOULD retain administrative actions and affected
+identities without copying reusable grants, access tokens, or
+credentials.
+
+# IANA Considerations
+
+This document requests no IANA actions.
+
+--- back
 
 # Optional Shared Signals Profile {#signals}
 
-This section profiles existing SCIM Events {{RFC9967}} and CAEP
-session-revocation events {{CAEP}} over Shared Signals {{SSF}}. It
-defines no new event type or subject format. SCIM event reconciliation
+This appendix profiles existing SCIM Events {{RFC9967}} and CAEP
+session-revocation events {{CAEP}} over Shared Signals {{SSF}}. It is
+normative for deployments that enable either capability and defines no
+new event type or subject format. SCIM event reconciliation
 and CAEP revocation are independently optional capabilities. A deployment
 MAY use either or both; it MUST apply the requirements for each enabled
 capability. Direct SCIM provisioning with CAEP revocation does not
@@ -582,131 +726,6 @@ against grant `iat`. No new claims are introduced.
 None establishes a shorter API enforcement delay than
 {{api-enforcement}}.
 
-# OAuth Enforcement {#enforcement}
-
-## RAS Processing
-
-The RAS MUST check current locally applied eligibility at grant
-redemption and refresh, in addition to Federation's validation and actor
-gate. It MUST retain enough association to invalidate authorization
-sessions by the qualified agent and Target Tenant, including related
-refresh tokens. The optional capability in {{grant-revocation}}
-additionally retains the ID-JAG issuer and `jti`; it does not add an
-issuance-time requirement.
-
-Refresh MUST NOT bypass a principal restriction or restore revoked
-sessions. No additional grant issuance-time claim, comparison with a
-lifecycle timestamp, or original-grant timestamp retention is required
-by this companion.
-
-The RAS MUST report revoked or disabled authorization as inactive under
-{{RFC7662}}. Once reactivated, the principal may establish new authorization
-under ordinary Federation processing, subject to {{missed-transitions}}.
-Existing tokens whose agent correlation cannot be established MUST NOT be
-represented as covered by this profile; a deployment can obtain new grants
-or establish that correlation from trustworthy retained issuance records.
-
-## Resource Enforcement and Delay {#api-enforcement}
-
-The API applies Federation's token validation, actor gate, tenant, and
-sender-constraint rules. The following are deployment choices, not new
-conformance levels:
-
-| Resource processing | When an applied RAS revocation becomes visible |
-|---|---|
-| Introspection on each request | On the next successful authorization check; a failed or timed-out check cannot authorize the request |
-| Cached introspection | After any permitted active-response cache entry expires or is invalidated |
-| Offline JWT validation | At token expiration, unless an independent local restriction takes effect earlier |
-
-Caching follows Federation and {{Section 4 of RFC7662}}. In particular,
-cached active responses cannot outlive token expiration or the
-configured freshness limit. Offline validation does not consult
-principal lifecycle state by itself. The RAS and API MUST configure
-token lifetimes, expiry leeway, and caching consistently with their
-accepted revocation delay.
-
-Deployments SHOULD document their expected and maximum disablement
-delays, including propagation, reconciliation, local application, token
-lifetime, and caching. A SCIM acknowledgment is not the starting point
-of an end-to-end guarantee from the governing IdP's original decision.
-Without a bound on propagation and enforcement, this profile claims no
-finite end-to-end denial bound. A local stale-state restriction can
-limit new issuance; it does not by itself revoke already-issued tokens.
-
-# Relationship Boundaries {#relationship-changes}
-
-| Change | Boundary |
-|---|---|
-| Disable an Identity Binding | Stop new grants through that binding; other bindings remain independent |
-| Withdraw a Client Association | Stop that client use; do not infer agent-wide disablement |
-| Revoke a user's delegation | Affect that delegation, not unrelated users or self-acting authority |
-| Revoke a workload credential | Apply credential validation and IdP policy; do not automatically retire the Agent Principal |
-| Revoke a known ID-JAG | Invalidate its derived sessions; do not change principal eligibility |
-
-{{FEDERATION}} defines the first three authorization relationships.
-Grant-derived revocation under {{grant-revocation}} can target known
-ID-JAGs. Determining all grants affected by withdrawal of a binding or
-delegation remains an IdP responsibility; the agent identity alone
-cannot identify that set. OAuth token revocation {{RFC7009}} can revoke a known token at its
-issuing server but is not a principal-provisioning or cross-domain
-notification protocol.
-
-{{WISE}} can inform the IdP about workloads and credentials. The IdP evaluates those changes against its Identity Bindings before deciding on
-agent-wide action. Sharing a credential source does not merge principals;
-losing one credential does not necessarily disable a principal with other
-valid bindings.
-
-## Self-Acting Access
-
-The intended {{WAG}} composition correlates the same Agent Principal
-with the same local principal. Delegated access preserves the qualified
-actor in `act`; self-acting access represents the correlated agent as a
-local subject. Their authority remains distinct. This document defines
-no WAG wire composition or additional WAG claim.
-
-# Security Considerations
-
-Provisioning writers can enable principals and change eligibility. Their
-authority MUST remain scoped to the configured issuer and Target Tenant.
-An event signature, matching display name, or equal `externalId` outside
-that context does not establish permission to correlate a principal.
-
-Conditional writes prevent stale updates to a known receiver version;
-they do not prove that a connector consulted current source state.
-Compromised or stale connectors can re-enable principals if their write
-permission remains valid. Administrative authorization, reconciliation,
-and local suspension therefore remain separate controls.
-
-Event trust, provisioning permission, and session-revocation authority
-remain separate. Receivers MUST constrain source retrieval and
-credential forwarding to authorized endpoints. A signed subject does not
-authorize arbitrary URL retrieval or cross-tenant revocation.
-
-Event loss and reordering can delay enforcement. Receivers SHOULD retry
-reconciliation, monitor failures, and retain revoked-session state across
-restarts. Recovery from lost revocation state MUST NOT silently restore
-sessions represented as revoked. The explicit limit in
-{{missed-transitions}} is particularly relevant to unattended refresh.
-
-A disabled principal may still have tokens accepted by an offline API.
-Token expiry and cached responses MUST be included in operational
-claims; stopping issuance alone does not terminate ongoing work or
-retract operations already performed.
-
-# Privacy Considerations
-
-The qualified identity permits correlation across users and resources.
-Provisioning and event access SHOULD be limited to the receiving domains
-that need it. Logs SHOULD retain administrative actions and affected
-identities without copying reusable grants, access tokens, or
-credentials.
-
-# IANA Considerations
-
-This document requests no IANA actions.
-
---- back
-
 # Shared Delegated Federation Walkthrough {#example}
 
 This non-normative walkthrough uses the dedicated-client exchange in
@@ -730,8 +749,10 @@ Agent:
 }
 ~~~
 
-The RAS assigns SCIM `id` `local-108` and correlates the context's
-`(https://idp.example/, agent-42)` with that local agent principal.
+The RAS assigns SCIM `id` `local-108` to the management representation
+of local principal `service-principal-42` and correlates the context's
+`(https://idp.example/, agent-42)` with that principal. The SCIM `id`
+is not the principal identifier.
 Alice is separately represented as `user-108`; the client is
 `analysis-api`. Neither is the agent's correlation identifier.
 
@@ -879,4 +900,11 @@ involving the same agent.
 
 # Document History
 
-Initial version.
+RFC Editor: Remove this section before publication.
+
+* Initial version.
+
+# Acknowledgments
+{:numbered="false"}
+
+TBD.
