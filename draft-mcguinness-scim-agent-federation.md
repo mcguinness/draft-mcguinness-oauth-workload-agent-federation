@@ -43,6 +43,7 @@ normative:
   SCIM-AGENT: I-D.wzdk-scim-agent-resource
   RFC7643:
   RFC7644:
+  RFC9110:
   RFC6901:
 informative:
   LIFECYCLE:
@@ -93,7 +94,7 @@ managed separately through {{OAUTH-CLIENT}}.
     Agent                                     Agent
 
  Dedicated binding: identity + client-use permission
- Shared client: OAuthClient -- Client Association --> Identity Binding
+ Shared client: OAuthClient -- Client Association -> Identity Binding
 ~~~
 
 A platform can administer only the identities and permissions delegated
@@ -109,7 +110,7 @@ The management resources correspond to existing federation concepts:
 | OAuthClient ({{OAUTH-CLIENT}}) | Which OAuth client is admitted at this IdP? |
 | Agent | Which stable principal does the enterprise govern? |
 | AgentIdentityBinding | Which validated client or workload identity resolves to that principal? |
-| AgentClientAssociation | May this OAuth client use this binding in this flow? |
+| AgentClientAssociation | May this OAuth client use this binding for delegated ID-JAG issuance? |
 
 Successful provisioning does not authorize user delegation or resource
 access. Token processing continues to apply every applicable check in
@@ -203,7 +204,7 @@ attribute against this administrative context. In particular:
 * Binding administration MUST be restricted to approved credential
   classes, authorities, source identities, and destination agents.
 * Association administration MUST be restricted to approved OAuth
-  clients, bindings, and flows.
+  clients and bindings for delegated ID-JAG issuance.
 * Permission to disable a resource MUST NOT imply permission to enable
   it. An active resource is an approved relationship, not a pending request.
 * Resource references MUST resolve within the authorized Governance
@@ -274,12 +275,11 @@ The schema tables below and JSON definitions in {{schema-json}} are
 normative. Unless specified otherwise, attributes are required,
 immutable, single-valued, returned by default, and have uniqueness
 `none`. String values are case-exact. Exceptions appear with each table.
-`credentialClass` and `flow` are case-exact enumerations: `/Schemas`
-MUST publish accepted credential classes as `canonicalValues`, drawn
-from {{classes}}, and `id-jag` for `flow`. Values outside the advertised
-set are rejected with `invalidValue`. The common attributes retain
-SCIM's characteristics except for the explicit `externalId` uniqueness
-rule above. Attribute-name processing remains that of SCIM,
+`credentialClass` is a case-exact enumeration: `/Schemas` MUST publish
+accepted values from {{classes}} as `canonicalValues`. Values outside
+the advertised set are rejected with `invalidValue`. The common
+attributes retain SCIM's characteristics except for the explicit
+`externalId` uniqueness rule above. Attribute-name processing remains that of SCIM,
 independently of case-exact identity values.
 
 Reference sub-attributes have `value` mutability `immutable`; `$ref` and
@@ -340,7 +340,6 @@ representation applies. Its schema URI is:
 | `agent` | complex | Reference to the Agent whose principal is resolved |
 | `credentialClass` | string | Input class from {{classes}} |
 | `client` | complex | OAuthClient reference; required only for `dedicated-client` |
-| `flow` | string | Client-use permission; required only for `dedicated-client`, with value `id-jag` |
 | `sourceAuthority` | string | Approved authority; required for all other classes |
 | `sourceSubject` | string | Exact external identity; required for all other classes |
 | `selectors` | complex | Additional platform-JWT claim constraints |
@@ -350,16 +349,16 @@ representation applies. Its schema URI is:
 readWrite. Creation and PUT MUST supply an explicit boolean; removal is
 invalid. Only true permits use, subject to the remaining checks. The
 reference target type of `agent` is Agent; that of `client` is
-OAuthClient. `client`, `flow`, `sourceAuthority`, and `sourceSubject`
+OAuthClient. `client`, `sourceAuthority`, and `sourceSubject`
 have schema characteristic `required: false` with these conditional
 requirements:
 
-* For `dedicated-client`, `client` and `flow` MUST be present and `sourceAuthority`,
+* For `dedicated-client`, `client` MUST be present and `sourceAuthority`,
   `sourceSubject`, and `selectors` MUST be absent. The IdP resolves the
   authenticated client to the referenced OAuthClient using its configured
   authorization-server issuer and exact `client_id`.
 * For all other classes, `sourceAuthority` and `sourceSubject` MUST be
-  present and `client` and `flow` MUST be absent. The external identity is validated
+  present and `client` MUST be absent. The external identity is validated
   and matched under {{classes}}; an OAuthClient reference cannot substitute
   for that evidence.
 
@@ -372,10 +371,11 @@ binding.
 
 A dedicated-client binding explicitly administers identity resolution
 and Client Association together: `client` identifies the resolution
-source, and `flow` gives that same client's permission to use the binding.
-Creation and activation MUST be authorized for both decisions. `active`
-controls both. This is the combined administration permitted by
-{{FEDERATION}}, not permission inferred from client authentication.
+source; the active binding permits that client to use it for delegated
+ID-JAG issuance. Creation and activation MUST be authorized for both
+decisions. `active` controls both. This is the combined administration
+permitted by {{FEDERATION}}, not permission inferred from client
+authentication.
 No separate AgentClientAssociation is used for this class. Withdrawing
 client use deactivates the binding without changing the Agent Principal.
 Other input classes keep identity resolution and client-use permission
@@ -458,9 +458,9 @@ silently authorize its use.
 ## Client Association {#association-schema}
 
 An `AgentClientAssociation` permits one authenticated IdP OAuth client
-to use one external-identity binding in one flow. A dedicated-client
-binding carries its own permission and MUST NOT be referenced here.
-Multiple resources can express an explicitly enumerated binding set.
+to use one external-identity binding for delegated ID-JAG issuance. A
+dedicated-client binding carries its own permission and MUST NOT be
+referenced here. Multiple resources can express an explicitly enumerated binding set.
 This is an explicit narrowing of Federation's policy-defined binding
 sets to one binding per resource. This profile defines no predicates
 that automatically cover future bindings. Its schema URI is:
@@ -471,7 +471,6 @@ that automatically cover future bindings. Its schema URI is:
 |---|---|---|
 | `binding` | complex | Reference to the binding the client may use |
 | `client` | complex | Reference to the OAuthClient registration at this IdP, not the RAS |
-| `flow` | string | `id-jag` in this revision |
 | `active` | boolean | Whether the permission may be used |
 
 `active` has the same characteristics as in {{binding-schema}}. The
@@ -496,11 +495,12 @@ MUST NOT create or expand those relationships.
 
 The Service Provider MUST validate the referenced binding and client
 registration and authorize their use together. It MUST reject duplicate
-associations for the same binding, client, and flow in the Governance
-Tenant, regardless of active state. Other flow values are unsupported in
-this revision; accepting `id-jag` does not imply WAG support.
+associations for the same binding and client in the Governance Tenant,
+regardless of active state. All client-use permissions in this profile
+apply only to delegated ID-JAG issuance. No per-resource flow attribute
+is needed; these permissions MUST NOT authorize WAG or another grant path.
 
-The association is necessary permission for this binding and flow.
+The association is necessary permission to use this binding.
 Target, scope, user delegation, and other policy constraints remain
 independently configured and evaluated by the IdP. This resource does
 not express or override them.
@@ -553,13 +553,13 @@ Service Providers MUST support SCIM ETags and conditional updates under
 `If-Match` for PUT, PATCH, and DELETE. A failed precondition receives
 HTTP 412 under {{Section 3.12 of RFC7644}}.
 
-An unconditional write MUST NOT change an existing inactive resource to
-active. The Service Provider returns HTTP 409 with a `detail` directing
-the client to retrieve the resource and use `If-Match`; no `scimType` is
-assigned. Unconditional descriptive edits, disablement, and deletion
-remain permitted when authorized. This restriction prevents a stale PUT
-from undoing a newer disablement without requiring conditional writes
-for every operation.
+Changing an existing inactive resource to active MUST use `If-Match`
+with a resource-version ETag matching the current representation. An
+absent header or `If-Match: *` receives HTTP 409 with a `detail`
+directing the client to retrieve current state and use its ETag; no
+`scimType` is assigned. The wildcard tests existence, not version, under
+{{Section 13.1.1 of RFC9110}}. Unconditional descriptive edits,
+disablement, and deletion remain permitted when authorized.
 
 SCIM PATCH is atomic for one resource. An authorization or validation
 failure MUST leave that resource unchanged. Clients MUST NOT retry a
@@ -595,18 +595,19 @@ Deletion has the following dependency effects:
 
 OAuthClient deletion follows {{OAUTH-CLIENT}}, including CIMD
 readmission controls and the treatment of outstanding authorization. The
-rules here do not weaken that behavior. The Service Provider MUST retain
-dependent resources as non-effective references until explicitly
-deleted. A new OAuthClient with the same OAuth identifier has a new SCIM
-`id` and MUST NOT inherit the deleted resource's bindings or
-associations. GET of a retained dependent returns its original immutable
-`value`, omits `$ref` and `display` for a missing target, and retains
-its administrative `active` value. That value does not assert effective
-eligibility. GET of the deleted target returns 404; recreating the
-target never repairs the reference.
+rules here do not weaken that behavior. The Service Provider MAY retain
+dependent resources as non-effective references or cascade their deletion
+under documented administrative policy. Cascading deletion MUST be
+authorized for the affected dependents; otherwise they remain unusable.
+A new target receives a new SCIM `id` and MUST NOT inherit or repair the
+deleted resource's bindings or associations.
 
+GET of a retained dependent returns its original immutable `value`,
+omits `$ref` and `display` for a missing target, and retains its
+administrative `active` value. That value does not assert effective
+eligibility. GET of a deleted target or cascaded dependent returns 404.
 Direct and filtered reads allow authorized connectors to find and remove
-these references. A missing target MUST NOT prevent an authorized
+retained references. A missing target MUST NOT prevent an authorized
 disablement or deletion of a dependent resource. Creation or activation
 with a missing target MUST be rejected.
 
@@ -627,7 +628,7 @@ following `eq` filters, together with `and` combinations:
 | The three agent-management types | `id`, `externalId` |
 | Agent | `active`, extension `subject`; `issuer` when exposed |
 | AgentIdentityBinding | `agent.value`, `client.value`, `credentialClass`, `active` |
-| AgentClientAssociation | `binding.value`, `client.value`, `flow`, `active` |
+| AgentClientAssociation | `binding.value`, `client.value`, `active` |
 
 OAuthClient queries follow {{OAUTH-CLIENT}}. Collection reads MUST
 return only resources within the caller's read permission. For a
@@ -646,11 +647,6 @@ the extension schema URI followed by `:subject`, with the expression `eq
 "agent-42"`. The connector URI-encodes the complete filter under SCIM's
 query rules.
 
-Enumeration is not a transactional snapshot. Reconciliation reads
-current resource versions and uses conditional changes; it MUST NOT
-delete records solely because they were absent from an incomplete or
-failed enumeration. This profile defines no change feed or event type.
-
 The Service Provider MUST support `gt` and `ge` filters on
 `meta.lastModified`, including combination with the required equality
 filters. For example, `meta.lastModified ge "2026-09-18T12:00:00Z"`
@@ -658,8 +654,9 @@ selects records changed since a checkpoint. A connector SHOULD overlap
 successive windows and deduplicate by resource `id` and `meta.version`;
 timestamps are not unique sequence numbers. Incremental queries cannot
 discover deletions and do not form a transactional snapshot. Periodic
-complete reconciliation remains necessary, and an incomplete listing
-cannot establish absence.
+complete reconciliation remains necessary. A connector MUST NOT delete
+records solely because they were absent from an incomplete or failed
+listing. This profile defines no change feed or event type.
 
 ## Discovery {#discovery}
 
@@ -686,9 +683,9 @@ the profile's failures predictable:
 |---|---|
 | Unauthorized operation, tenant, or protected attribute | `403`; no new `scimType` |
 | Duplicate externalId in its scope, binding key, or association key | `409`, `uniqueness` |
-| Unsupported class or flow, invalid combination of binding fields, ambiguous authority configuration, malformed selector, or missing/invalid reference | `400`, `invalidValue` |
+| Unsupported class, invalid combination of binding fields, ambiguous authority configuration, malformed selector, or missing/invalid reference | `400`, `invalidValue` |
 | Attempt to change an immutable identity or reference | `400`, `mutability` |
-| Unconditional reactivation | `409`; retrieve the resource and use `If-Match` |
+| Reactivation without a version ETag, including `If-Match: *` | `409`; retrieve and use the current ETag |
 | Failed conditional-write precondition | `412`; no new `scimType` |
 
 Standard SCIM request syntax, filter, authentication, and not-found
@@ -707,8 +704,8 @@ For new issuance, the IdP evaluates the conjunction of:
 * Exactly one matching, active Identity Binding whose Agent exists.
   Dedicated-client matching uses the authenticated OAuthClient reference;
   other classes use the independently validated external identity.
-* Client-use permission for the requested flow: either the active
-  dedicated-client binding's `client` and `flow`, or an active
+* Client-use permission for delegated ID-JAG issuance: either the active
+  dedicated-client binding's `client`, or an active
   AgentClientAssociation referencing the matched external-identity
   binding and authenticated OAuthClient.
 * All remaining credential, delegation, target, and policy checks in
@@ -820,7 +817,7 @@ namespace registrations require Expert Review and RFC publication under
 * Intended or Associated Resource Type: AgentIdentityBinding
 * Purpose: Manage an approved resolution identity's binding to an Agent
   Principal.
-* Single-value Attributes: `agent`, `credentialClass`, `client`, `flow`,
+* Single-value Attributes: `agent`, `credentialClass`, `client`,
   `sourceAuthority`,
   `sourceSubject`, `active`, defined in {{binding-schema}}.
 * Multi-valued Attributes: `selectors`, defined in {{binding-schema}}.
@@ -832,8 +829,8 @@ namespace registrations require Expert Review and RFC publication under
 * Schema Name: Agent Client Association
 * Intended or Associated Resource Type: AgentClientAssociation
 * Purpose: Manage an OAuth client's permission to use an Identity
-  Binding in a flow.
-* Single-value Attributes: `binding`, `client`, `flow`, `active`,
+  Binding for delegated ID-JAG issuance.
+* Single-value Attributes: `binding`, `client`, `active`,
   defined in {{association-schema}}.
 * Multi-valued Attributes: None.
 
@@ -891,9 +888,9 @@ Accept: application/scim+json
 {
   "schemas": [
     "urn:ietf:params:scim:schemas:core:2.0:Agent",
-    "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent"
+  "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent"
   ],
-  "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent":
+ "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent":
     {},
   "externalId": "agent-7",
   "agentUserName": "analysis-agent-7",
@@ -913,14 +910,15 @@ Content-Type: application/scim+json
 {
   "schemas": [
     "urn:ietf:params:scim:schemas:core:2.0:Agent",
-    "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent"
+  "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent"
   ],
   "id": "a17",
   "externalId": "agent-7",
   "agentUserName": "analysis-agent-7",
   "displayName": "Analysis agent",
   "active": false,
-  "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent": {
+ "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent":
+    {
     "issuer": "https://idp.example/",
     "subject": "agent-42"
   },
@@ -976,7 +974,6 @@ Content-Type: application/scim+json
   "externalId": "platform-association-7",
   "binding": {"value": "b9"},
   "client": {"value": "oc7"},
-  "flow": "id-jag",
   "active": true
 }
 ~~~
@@ -1059,7 +1056,7 @@ SCIM operation.
 | Change a binding's Agent or source subject | `400`, `mutability`; create a separately authorized replacement |
 | Enable an association while its binding is disabled | Permission can be recorded but cannot authorize issuance |
 | Change displayName with a connector lacking enable permission | Descriptive change can succeed; eligibility is unchanged |
-| Unconditional PUT would reactivate a disabled resource | `409`; retrieve and use `If-Match` |
+| PUT would reactivate without a version ETag, including `If-Match: *` | `409`; retrieve and use the current ETag |
 | PATCH with a stale version | `412`; reconcile before retrying |
 | Delete a binding and create another with the same externalId | New id; old association does not attach to the replacement |
 | Delete a CIMD OAuthClient and readmit the same URL | New SCIM id; prior bindings and associations remain unusable |
@@ -1081,7 +1078,6 @@ client use:
   "agent": {"value": "a17"},
   "credentialClass": "dedicated-client",
   "client": {"value": "oc9"},
-  "flow": "id-jag",
   "active": true
 }
 ~~~
@@ -1089,7 +1085,7 @@ client use:
 The connector needs authorization for both binding and client use. No
 AgentClientAssociation is created. At issuance, the IdP authenticates
 `analysis-client`, matches `oc9`, resolves the binding to `a17`, and
-checks its `flow` and all remaining delegation policy. The actor remains
+applies the delegated ID-JAG permission and remaining policy. The actor remains
 (`https://idp.example/`, `agent-42`). Deactivating this binding
 withdraws both its resolution path and its client-use permission; it
 does not change the Agent Principal.
@@ -1104,9 +1100,7 @@ These JSON definitions specify the new schema characteristics. Common
 attributes retain RFC 7643 definitions; profile-level conditional
 requirements and uniqueness constraints still apply. A Service Provider
 advertises only the supported subset of `credentialClass` canonical
-values. `id-jag` is the only flow value in this profile. Descriptive
-metadata and service-specific `meta` values are omitted from these
-definitions.
+values. Service-specific `meta` values are omitted from these definitions.
 
 ## AgentFederation Schema
 
@@ -1116,11 +1110,13 @@ definitions.
     "urn:ietf:params:scim:schemas:core:2.0:Schema"
   ],
   "id":
-    "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent",
+ "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent",
   "name": "AgentFederation",
   "attributes": [
     {
       "name": "issuer",
+      "description":
+        "Governing IdP issuer from the provisioning context.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -1131,6 +1127,8 @@ definitions.
     },
     {
       "name": "subject",
+      "description":
+        "Stable Agent Principal identifier in the IdP namespace.",
       "type": "string",
       "multiValued": false,
       "required": true,
@@ -1155,6 +1153,7 @@ definitions.
   "attributes": [
     {
       "name": "agent",
+      "description": "Agent resolved through this identity binding.",
       "type": "complex",
       "multiValued": false,
       "required": true,
@@ -1163,6 +1162,7 @@ definitions.
       "subAttributes": [
         {
           "name": "value",
+          "description": "SCIM id of the referenced resource.",
           "type": "string",
           "multiValued": false,
           "required": true,
@@ -1173,6 +1173,8 @@ definitions.
         },
         {
           "name": "$ref",
+          "description":
+           "Service-provider reference to the target SCIM resource.",
           "type": "reference",
           "multiValued": false,
           "required": false,
@@ -1186,6 +1188,8 @@ definitions.
         },
         {
           "name": "display",
+          "description":
+            "Human-readable label; never an identity lookup key.",
           "type": "string",
           "multiValued": false,
           "required": false,
@@ -1198,6 +1202,8 @@ definitions.
     },
     {
       "name": "credentialClass",
+      "description":
+        "Credential class used to resolve the Agent Principal.",
       "type": "string",
       "multiValued": false,
       "required": true,
@@ -1216,6 +1222,8 @@ definitions.
     },
     {
       "name": "client",
+      "description":
+        "OAuthClient authorized to use this identity binding.",
       "type": "complex",
       "multiValued": false,
       "required": false,
@@ -1224,6 +1232,7 @@ definitions.
       "subAttributes": [
         {
           "name": "value",
+          "description": "SCIM id of the referenced resource.",
           "type": "string",
           "multiValued": false,
           "required": true,
@@ -1234,6 +1243,8 @@ definitions.
         },
         {
           "name": "$ref",
+          "description":
+           "Service-provider reference to the target SCIM resource.",
           "type": "reference",
           "multiValued": false,
           "required": false,
@@ -1247,6 +1258,8 @@ definitions.
         },
         {
           "name": "display",
+          "description":
+            "Human-readable label; never an identity lookup key.",
           "type": "string",
           "multiValued": false,
           "required": false,
@@ -1258,20 +1271,9 @@ definitions.
       ]
     },
     {
-      "name": "flow",
-      "type": "string",
-      "multiValued": false,
-      "required": false,
-      "mutability": "immutable",
-      "returned": "default",
-      "caseExact": true,
-      "uniqueness": "none",
-      "canonicalValues": [
-        "id-jag"
-      ]
-    },
-    {
       "name": "sourceAuthority",
+      "description":
+        "Preconfigured authority for the external identity.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -1282,6 +1284,8 @@ definitions.
     },
     {
       "name": "sourceSubject",
+      "description":
+        "Exact external identity under the source authority.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -1292,6 +1296,8 @@ definitions.
     },
     {
       "name": "selectors",
+      "description":
+        "Additional exact platform-JWT claim constraints.",
       "type": "complex",
       "multiValued": true,
       "required": false,
@@ -1300,6 +1306,8 @@ definitions.
       "subAttributes": [
         {
           "name": "path",
+          "description":
+            "JSON Pointer to a claim in the JWT Claims Set.",
           "type": "string",
           "multiValued": false,
           "required": true,
@@ -1310,6 +1318,8 @@ definitions.
         },
         {
           "name": "value",
+          "description":
+            "Expected exact string value of the selected JWT claim.",
           "type": "string",
           "multiValued": false,
           "required": true,
@@ -1322,6 +1332,8 @@ definitions.
     },
     {
       "name": "active",
+      "description":
+       "Administrative enablement; other policy checks still apply.",
       "type": "boolean",
       "multiValued": false,
       "required": true,
@@ -1339,11 +1351,14 @@ definitions.
   "schemas": [
     "urn:ietf:params:scim:schemas:core:2.0:Schema"
   ],
-  "id": "urn:ietf:params:scim:schemas:core:2.0:AgentClientAssociation",
+  "id":
+    "urn:ietf:params:scim:schemas:core:2.0:AgentClientAssociation",
   "name": "AgentClientAssociation",
   "attributes": [
     {
       "name": "binding",
+      "description":
+        "External-identity binding the client may use for ID-JAG.",
       "type": "complex",
       "multiValued": false,
       "required": true,
@@ -1352,6 +1367,7 @@ definitions.
       "subAttributes": [
         {
           "name": "value",
+          "description": "SCIM id of the referenced resource.",
           "type": "string",
           "multiValued": false,
           "required": true,
@@ -1362,6 +1378,8 @@ definitions.
         },
         {
           "name": "$ref",
+          "description":
+           "Service-provider reference to the target SCIM resource.",
           "type": "reference",
           "multiValued": false,
           "required": false,
@@ -1375,6 +1393,8 @@ definitions.
         },
         {
           "name": "display",
+          "description":
+            "Human-readable label; never an identity lookup key.",
           "type": "string",
           "multiValued": false,
           "required": false,
@@ -1387,6 +1407,8 @@ definitions.
     },
     {
       "name": "client",
+      "description":
+        "OAuthClient authorized to use this identity binding.",
       "type": "complex",
       "multiValued": false,
       "required": true,
@@ -1395,6 +1417,7 @@ definitions.
       "subAttributes": [
         {
           "name": "value",
+          "description": "SCIM id of the referenced resource.",
           "type": "string",
           "multiValued": false,
           "required": true,
@@ -1405,6 +1428,8 @@ definitions.
         },
         {
           "name": "$ref",
+          "description":
+           "Service-provider reference to the target SCIM resource.",
           "type": "reference",
           "multiValued": false,
           "required": false,
@@ -1418,6 +1443,8 @@ definitions.
         },
         {
           "name": "display",
+          "description":
+            "Human-readable label; never an identity lookup key.",
           "type": "string",
           "multiValued": false,
           "required": false,
@@ -1429,20 +1456,9 @@ definitions.
       ]
     },
     {
-      "name": "flow",
-      "type": "string",
-      "multiValued": false,
-      "required": true,
-      "mutability": "immutable",
-      "returned": "default",
-      "caseExact": true,
-      "uniqueness": "none",
-      "canonicalValues": [
-        "id-jag"
-      ]
-    },
-    {
       "name": "active",
+      "description":
+       "Administrative enablement; other policy checks still apply.",
       "type": "boolean",
       "multiValued": false,
       "required": true,
@@ -1467,7 +1483,7 @@ definitions.
   "schemaExtensions": [
     {
       "schema":
-    "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent",
+ "urn:ietf:params:scim:schemas:extension:agent-federation:2.0:Agent",
       "required": true
     }
   ]
@@ -1482,7 +1498,8 @@ definitions.
   "id": "AgentIdentityBinding",
   "name": "AgentIdentityBinding",
   "endpoint": "/AgentIdentityBindings",
-  "schema": "urn:ietf:params:scim:schemas:core:2.0:AgentIdentityBinding"
+  "schema":
+    "urn:ietf:params:scim:schemas:core:2.0:AgentIdentityBinding"
 }
 ~~~
 

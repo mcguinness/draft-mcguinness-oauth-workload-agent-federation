@@ -54,6 +54,7 @@ normative:
   SCIM-AGENT: I-D.wzdk-scim-agent-resource
   RFC7643:
   RFC7644:
+  RFC9110:
   RFC7662:
 informative:
   AGENT-MANAGEMENT:
@@ -226,7 +227,7 @@ correlation; it is not an additional component of that identity.
 For this provisioning interface:
 
 * The governing issuer MUST come from the authenticated Provisioning
-  Context, not from a caller-selected attribute.
+  Domain, not from a caller-selected attribute.
 * The connector MUST set the Agent's `externalId` to the exact Agent
   Principal identifier in that issuer's namespace.
 * The Receiver MUST enforce uniqueness of `externalId` within that
@@ -241,6 +242,20 @@ resource; it cannot merge records on equal `externalId` values across
 issuers. This use of `externalId` is specific to the IdP-to-resource
 interface. A platform's `externalId` at the IdP remains its own
 provisioning correlation value.
+
+When the source uses {{AGENT-MANAGEMENT}}, the connector maps the
+interfaces as follows; it does not copy the source Agent unchanged:
+
+| IdP-side source | Resource-domain use |
+|---|---|
+| Configured governing issuer | Issuer established by the authenticated Provisioning Domain |
+| `AgentFederation.subject` | Exact value of the destination Agent's `externalId` |
+| Agent `active` | Upstream administrative state; local restrictions remain independent |
+| Agent `id` | Source-resource correlation, not the destination SCIM `id` |
+| Platform-assigned `externalId` | Platform correlation only; not the federated principal identifier |
+
+This mapping applies equally to direct provisioning and event-driven
+reconciliation. It introduces no additional destination attributes.
 
 For delegated access, the RAS MUST resolve the validated ID-JAG's
 `act.iss` and `act.sub` to this pair within the authorized Target
@@ -291,12 +306,15 @@ identity or grant delegation.
 Receivers MUST support ETags and return `meta.version` on complete
 resource representations, together with `meta.created` and
 `meta.lastModified`. Connectors SHOULD use `If-Match` for updates and
-deletion of existing resources. The Receiver MUST reject an unconditional
-change from inactive to active with HTTP 409 and a `detail` directing the
-connector to retrieve current state and use `If-Match`; no `scimType` is
-assigned. Other authorized unconditional writes remain permitted. A failed precondition uses HTTP 412 under
-{{Section 3.12 of RFC7644}}; the connector retrieves current state and
-reconciles its intended change before retrying.
+deletion of existing resources. Changing an existing inactive resource
+to active MUST use `If-Match` with a resource-version ETag matching the
+current representation. An absent header or `If-Match: *` receives HTTP
+409 with a `detail` directing the connector to retrieve current state
+and use its ETag; no `scimType` is assigned. The wildcard tests existence,
+not version, under {{Section 13.1.1 of RFC9110}}. Other authorized
+unconditional writes remain permitted. A failed version precondition uses
+HTTP 412 under {{Section 3.12 of RFC7644}}; the connector retrieves
+current state and reconciles its intended change before retrying.
 
 `meta.version` is an opaque resource validator, not a monotonic
 lifecycle counter. `meta.lastModified` is the time the service provider
@@ -425,20 +443,27 @@ treated as interchangeable grant-issuance cutoffs under this profile.
 
 This section profiles existing SCIM Events {{RFC9967}} and CAEP
 session-revocation events {{CAEP}} over Shared Signals {{SSF}}. It
-defines no new event type or subject format. Deployments using this
-section MUST support the SCIM reconciliation triggers below;
-grant-derived revocation is an independently configured optional
-capability.
+defines no new event type or subject format. SCIM event reconciliation
+and CAEP revocation are independently optional capabilities. A deployment
+MAY use either or both; it MUST apply the requirements for each enabled
+capability. Direct SCIM provisioning with CAEP revocation does not
+require SCIM event subscription or source-resource retrieval.
 
 ## Trust and Delivery {#signal-trust}
 
-Stream configuration MUST identify the trusted Transmitter, receiving
-Target Tenant, audience, and source SCIM service with retrieval
-authority. For grant-derived revocation it MUST also bind the stream to
-one governing ID-JAG issuer and authorize the Transmitter to revoke that
-issuer's grants. The SET issuer can differ from the IdP issuer; their
-relationship comes from configuration, not the event's subject or a
-matching host name.
+Trusted stream configuration MUST establish:
+
+* The Transmitter, receiving Target Tenant, and audience.
+* For SCIM event reconciliation, the source SCIM service, retrieval
+  authority, and source-resource correlation under {{recovery}}.
+* For grant-derived revocation, the governing ID-JAG issuer whose grants
+  the Transmitter may revoke, and agreement to apply {{grant-revocation}}.
+* For coarse user-and-tenant revocation, the authorized user namespace
+  and revocation scope defined in {{grant-revocation}}.
+
+The SET issuer can differ from the IdP issuer. Their trust relationship
+comes from configuration; a subject identifier or matching host name
+cannot establish it.
 
 The authenticated delivery context selects the stream. SET issuer and
 audience validation, including audience arrays, follows {{SSF}} and
@@ -452,9 +477,14 @@ delivery, not completed reconciliation or API enforcement.
 
 Receivers MUST accept every provisioning and feed event defined in
 Sections 2.3 and 2.4 of {{RFC9967}} as a reconciliation trigger when
-subscribed to that event type. Configuration and metadata advertise the
-subscribed event types; new types are not inferred from arbitrary URIs.
-The table uses suffixes under `urn:ietf:params:scim:event:`.
+subscribed to that event type. SCIM event capability is exposed through
+`securityEvents.eventUris` in `/ServiceProviderConfig` under
+{{Section 4 of RFC9967}}. SSF stream configuration uses
+`events_supported`, `events_requested`, and `events_delivered` to
+establish event delivery. These lists do not authorize a provisioning action
+or establishes the grant-revocation composition. This profile adds no
+discovery field. The table uses suffixes under
+`urn:ietf:params:scim:event:`.
 
 | Event suffix | Reconciliation behavior |
 |---|---|
@@ -495,15 +525,20 @@ instructions.
 The optional capability uses CAEP's existing event type
 `https://schemas.openid.net/secevent/caep/event-type/session-revoked`.
 CAEP permits session properties to identify affected sessions; here the
-property is the ID-JAG that established their authorization.
+property is the ID-JAG that established their authorization. This
+composition additionally requires denial before redemption and rejection
+of later redemption. Ordinary CAEP support or advertisement of the
+event URI alone does not establish these receiver semantics.
 
-* The Transmitter uses an `opaque` subject under {{RFC9493}}, with `id`
-  equal to the issued ID-JAG's `jti`. It MUST name a grant it is authorized
+* The Transmitter MUST use the `jwt_id` subject format from
+  Section 3.5.1 of {{SSF}}, with `iss` and `jti` equal to the issued
+  ID-JAG's corresponding claims. It MUST name a grant it is authorized
   to revoke. The SET's own `jti` identifies the event, not the grant.
-* Stream configuration supplies the ID-JAG issuer and Target Tenant.
-  The revocation key is therefore (ID-JAG issuer, ID-JAG `jti`, Target
-  Tenant). It MUST NOT be matched as a bare RAS session identifier or
-  interpreted in another issuer's namespace.
+* The Receiver MUST verify that the subject's `iss` matches the
+  governing ID-JAG issuer authorized in the stream configuration. That
+  configuration supplies the Target Tenant. The revocation key is
+  (ID-JAG issuer, ID-JAG `jti`, Target Tenant); it MUST NOT be matched as
+  a bare RAS session identifier or used outside that tenant.
 * On redemption, a participating RAS MUST retain that key with every
   derived authorization session, access token, and refresh authorization.
   The Receiver MUST invalidate all authorization derived from that grant
@@ -516,13 +551,15 @@ property is the ID-JAG that established their authorization.
   receipt before redemption MUST NOT be treated as a no-op.
 
 This identifies the same grant at both parties without registration of a
-RAS-generated session ID. Implementations lacking the retained
-correlation MUST NOT advertise this capability. Existing sessions need
-trustworthy backfilled correlation or remain outside its coverage.
+RAS-generated session ID. Parties MUST NOT enable this composition
+unless the RAS retains the required correlation and enforces the grant
+denial. Existing sessions need trustworthy backfilled correlation or
+remain outside its coverage.
 
 A deployment MAY additionally configure CAEP's complex subject with
-`user` in `iss_sub` format and `tenant` in `opaque` format to revoke
-existing sessions for that user and tenant. The parties MUST agree on
+`user` in `iss_sub` format and `tenant` in `opaque` format under
+{{RFC9493}} to revoke existing sessions for that user and tenant. The
+parties MUST agree on
 the user namespace and map it authoritatively to the RAS user, and the
 tenant MUST match the stream's Target Tenant. All supplied subject
 conditions MUST match; an unmappable component MUST NOT broaden the
@@ -758,7 +795,9 @@ subject to normal grant validation, not a new lifecycle cutoff.
 | Delayed activation notice | Retrieve current source state; do not apply the notice as an activation command |
 | Entire disable-and-reenable cycle missed | Current active state cannot recover revocation history |
 | Grant revocation arrives before redemption | Retain the denial; reject later redemption |
-| Unconditional reactivation | HTTP 409; retrieve and use `If-Match` |
+| Grant subject issuer differs from the stream's authorized issuer | Reject; no cross-issuer revocation |
+| Direct SCIM provisioning with CAEP revocation only | No SCIM event subscription or source GET required |
+| Reactivation without a version ETag, including `If-Match: *` | HTTP 409; retrieve and use the current ETag |
 | Feed removal event | Reconcile coverage; do not infer deletion |
 | Source unavailable | No activation inferred; local stale-state policy applies |
 | SCIM success or SET acknowledgment | Does not establish immediate API denial |
@@ -817,12 +856,13 @@ active:
  "iat": 1789646520,
  "jti": "revoke-grant-7",
  "sub_id": {
-  "format": "opaque",
-  "id": "grant-7"
+  "format": "jwt_id",
+  "iss": "https://idp.example/",
+  "jti": "grant-7"
  },
  "events": {
-  "https://schemas.openid.net/secevent/caep/event-type/session-revoked":
-   {
+"https://schemas.openid.net/secevent/caep/event-type/session-revoked"
+  : {
    "event_timestamp": 1789646520,
    "initiating_entity": "admin",
    "reason_admin": {

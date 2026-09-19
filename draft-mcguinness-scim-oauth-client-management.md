@@ -30,6 +30,7 @@ normative:
   RFC7592:
   RFC7643:
   RFC7644:
+  RFC9110:
   RFC8414:
   RFC9700:
 informative:
@@ -375,6 +376,13 @@ OAuth registration or merge clients based on names, redirect URIs, or
 keys. Attachment and read permission are administrative decisions, not
 an unauthenticated discovery mechanism.
 
+When exposing an existing locally managed registration, the Service
+Provider MUST represent its effective supported metadata, including
+values established by RFC 7591 omission defaults. This materializes
+configuration without changing OAuth behavior; it does not require the
+original registration request to have supplied those values. Unmapped
+metadata and credentials remain subject to {{coexistence}}.
+
 An existing CIMD client's representation includes
 `clientIdMetadataDocument`. When exposing an existing registration
 without a creation request, `active` reflects its administrative
@@ -393,12 +401,15 @@ An authorized reader spanning provisioning domains cannot assume
 Complete representations MUST carry `meta.created`, `meta.lastModified`,
 and `meta.version`; individual responses MUST carry the corresponding
 ETag. Clients SHOULD use `If-Match` on PUT, PATCH, and DELETE. A failed
-precondition receives HTTP 412 under {{Section 3.12 of RFC7644}}. An
-unconditional write MUST NOT change an existing inactive OAuthClient to
-active: the server returns HTTP 409 with a `detail` directing the client
-to retrieve the current resource and use `If-Match`, without a
-`scimType`. Other authorized unconditional writes remain permitted.
-After a conflict, the client retrieves and reconciles before retrying.
+precondition receives HTTP 412 under {{Section 3.12 of RFC7644}}.
+Changing an existing inactive OAuthClient to active MUST use `If-Match`
+with a resource-version ETag matching the current representation. An
+absent header or `If-Match: *` receives HTTP 409 with a `detail`
+directing the client to retrieve current state and use its ETag; no
+`scimType` is assigned. The wildcard tests existence, not version, under
+{{Section 13.1.1 of RFC9110}}. Other authorized unconditional writes
+remain permitted. After a conflict, the client retrieves and reconciles
+before retrying.
 
 PATCH and PUT retain their SCIM semantics. The Service Provider MUST
 validate and authorize the resulting registration before committing the
@@ -464,7 +475,8 @@ disabled.
 | CIMD requested at a server without CIMD support | `400`, `invalidValue` |
 | CIMD metadata temporarily unavailable when creation or activation requires retrieval | `503` |
 | Unauthorized administrative change | `403` |
-| Unconditional reactivation / failed conditional-write precondition | `409` with explanatory `detail` / `412` |
+| Reactivation without a version ETag, including `If-Match: *` | `409` with explanatory `detail` |
+| Failed conditional-write precondition | `412` |
 
 Other errors retain SCIM meanings. OAuth DCR errors such as
 `invalid_client_metadata` are not substituted for SCIM error responses.
@@ -779,6 +791,8 @@ applicable even though ResourceType marks the extension optional.
   "attributes": [
     {
       "name": "authorizationServer",
+      "description":
+        "Configured authorization-server issuer identifier.",
       "type": "string",
       "multiValued": false,
       "required": true,
@@ -789,6 +803,8 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "clientId",
+      "description":
+        "OAuth client_id at the configured authorization server.",
       "type": "string",
       "multiValued": false,
       "required": true,
@@ -799,6 +815,8 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "clientIdMetadataDocument",
+      "description":
+        "Immutable Client Identifier URL selecting CIMD metadata.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -809,6 +827,8 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "active",
+      "description":
+       "Administrative enablement; other policy checks still apply.",
       "type": "boolean",
       "multiValued": false,
       "required": true,
@@ -826,11 +846,14 @@ applicable even though ResourceType marks the extension optional.
   "schemas": [
     "urn:ietf:params:scim:schemas:core:2.0:Schema"
   ],
-  "id": "urn:ietf:params:scim:schemas:extension:oauth:2.0:OAuthClient",
+  "id":
+    "urn:ietf:params:scim:schemas:extension:oauth:2.0:OAuthClient",
   "name": "OAuthClientMetadata",
   "attributes": [
     {
       "name": "token_endpoint_auth_method",
+      "description":
+        "Registered token-endpoint client-authentication method.",
       "type": "string",
       "multiValued": false,
       "required": true,
@@ -841,6 +864,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "grant_types",
+      "description": "Permitted OAuth grant types.",
       "type": "string",
       "multiValued": true,
       "required": true,
@@ -851,6 +875,8 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "response_types",
+      "description":
+        "Permitted authorization-endpoint response types.",
       "type": "string",
       "multiValued": true,
       "required": false,
@@ -861,6 +887,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "redirect_uris",
+      "description": "Registered OAuth redirect URIs.",
       "type": "string",
       "multiValued": true,
       "required": false,
@@ -871,6 +898,8 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "scope",
+      "description":
+     "Space-separated registration scopes; not delegated authority.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -881,6 +910,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "jwks_uri",
+      "description": "URL of the public JWK Set used by the client.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -891,6 +921,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "client_name",
+      "description": "OAuth client name for display to users.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -901,6 +932,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "client_uri",
+      "description": "URL of information about the OAuth client.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -911,6 +943,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "logo_uri",
+      "description": "URL of the OAuth client logo.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -921,6 +954,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "tos_uri",
+      "description": "URL of the client terms of service.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -931,6 +965,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "policy_uri",
+      "description": "URL of the client privacy policy.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -941,6 +976,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "contacts",
+      "description": "Contact addresses for the client.",
       "type": "string",
       "multiValued": true,
       "required": false,
@@ -951,6 +987,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "software_id",
+      "description": "Identifier for the client software.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -961,6 +998,7 @@ applicable even though ResourceType marks the extension optional.
     },
     {
       "name": "software_version",
+      "description": "Version of the client software.",
       "type": "string",
       "multiValued": false,
       "required": false,
@@ -987,7 +1025,7 @@ applicable even though ResourceType marks the extension optional.
   "schemaExtensions": [
     {
       "schema":
-        "urn:ietf:params:scim:schemas:extension:oauth:2.0:OAuthClient",
+      "urn:ietf:params:scim:schemas:extension:oauth:2.0:OAuthClient",
       "required": false
     }
   ]
